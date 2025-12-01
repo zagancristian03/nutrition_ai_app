@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "237383593904",
+    "project_id": "nutritionaiapp-a700a",
+    "storage_bucket": "nutritionaiapp-a700a.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:237383593904:android:f1ac59266130a8d4723075",
+        "android_client_info": {
+          "package_name": "com.example.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCCr-uCoW6Ol6iPGElr7aD_-O2ZRjFTWPY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
