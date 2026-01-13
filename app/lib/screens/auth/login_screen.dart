@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../services/auth_service.dart';
 import '../../widgets/custom_button.dart';
-import '../home/home_screen.dart';
 import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -41,11 +40,9 @@ class _LoginScreenState extends State<LoginScreen> {
       });
 
       if (user != null) {
+        // AuthGate will automatically route to HomeScreen
         if (mounted) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (_) => const HomeScreen()),
-          );
+          Navigator.of(context).popUntil((route) => route.isFirst);
         }
       } else {
         if (mounted) {
