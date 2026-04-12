@@ -1,0 +1,12 @@
+# environment
+backend/.env
+
+# python cache
+backend/__pycache__/
+
+# datasets
+backend/data/*
+!backend/data/.gitkeep
+*.csv
+*.tsv
+*.gz

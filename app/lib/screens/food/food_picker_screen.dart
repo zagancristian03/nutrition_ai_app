@@ -29,6 +29,7 @@ class _FoodPickerScreenState extends State<FoodPickerScreen> {
 
   void _performSearch(String query) {
     if (query.trim().isEmpty) {
+      _debounceTimer.cancel();
       setState(() {
         _searchResults = [];
         _hasSearched = false;
@@ -42,14 +43,15 @@ class _FoodPickerScreenState extends State<FoodPickerScreen> {
       _hasSearched = true;
     });
 
+    final q = query.trim();
     _debounceTimer.run(() async {
-      final results = await _foodSearchService.search(query);
-      if (mounted) {
-        setState(() {
-          _searchResults = results;
-          _isSearching = false;
-        });
-      }
+      final results = await _foodSearchService.search(q);
+      if (!mounted) return;
+      if (_searchController.text.trim() != q) return;
+      setState(() {
+        _searchResults = results;
+        _isSearching = false;
+      });
     });
   }
 
@@ -75,10 +77,12 @@ class _FoodPickerScreenState extends State<FoodPickerScreen> {
                     ? IconButton(
                         icon: const Icon(Icons.clear),
                         onPressed: () {
+                          _debounceTimer.cancel();
                           _searchController.clear();
                           setState(() {
                             _searchResults = [];
                             _hasSearched = false;
+                            _isSearching = false;
                           });
                         },
                       )
@@ -178,6 +182,8 @@ class Debouncer {
   Timer? _timer;
 
   Debouncer({required this.milliseconds});
+
+  void cancel() => _timer?.cancel();
 
   void run(VoidCallback action) {
     _timer?.cancel();

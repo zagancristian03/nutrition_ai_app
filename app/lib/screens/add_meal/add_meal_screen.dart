@@ -79,10 +79,10 @@ class _AddMealScreenState extends State<AddMealScreen> {
   void _selectFood(FoodItem food) {
     setState(() {
       _foodNameController.text = food.name;
-      _caloriesController.text = food.calories.toInt().toString();
-      _proteinController.text = food.protein.toStringAsFixed(1);
-      _carbsController.text = food.carbs.toStringAsFixed(1);
-      _fatsController.text = food.fat.toStringAsFixed(1);
+      _caloriesController.text = food.caloriesPer100g.toInt().toString();
+      _proteinController.text = food.proteinPer100g.toStringAsFixed(1);
+      _carbsController.text = food.carbsPer100g.toStringAsFixed(1);
+      _fatsController.text = food.fatPer100g.toStringAsFixed(1);
       _showSearchResults = false;
       _searchController.clear();
       _searchResults = [];
@@ -198,10 +198,10 @@ class _AddMealScreenState extends State<AddMealScreen> {
                           leading: const Icon(Icons.restaurant),
                           title: Text(food.name),
                           subtitle: Text(
-                            '${food.calories.toInt()} cal • '
-                            'P: ${food.protein.toStringAsFixed(1)}g • '
-                            'C: ${food.carbs.toStringAsFixed(1)}g • '
-                            'F: ${food.fat.toStringAsFixed(1)}g',
+                            '${food.caloriesPer100g.toInt()} cal/100g • '
+                            'P: ${food.proteinPer100g.toStringAsFixed(1)}g • '
+                            'C: ${food.carbsPer100g.toStringAsFixed(1)}g • '
+                            'F: ${food.fatPer100g.toStringAsFixed(1)}g',
                           ),
                           onTap: () => _selectFood(food),
                         );

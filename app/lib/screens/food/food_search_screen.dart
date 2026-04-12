@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'dart:async';
 import '../../models/food_item.dart';
+import '../../services/food_api_service.dart';
 import '../../services/food_search_service.dart';
-import '../../providers/saved_items_provider.dart';
 import 'food_result_tile.dart';
 import 'food_detail_screen.dart';
 import 'manual_food_entry_screen.dart';
@@ -20,6 +19,7 @@ class FoodSearchScreen extends StatefulWidget {
 class _FoodSearchScreenState extends State<FoodSearchScreen> {
   final _searchController = TextEditingController();
   final _foodSearchService = FoodSearchService();
+  final _foodApiService = FoodApiService();
   final _debounceTimer = Debouncer(milliseconds: 500);
 
   List<FoodItem> _searchResults = [];
@@ -35,6 +35,7 @@ class _FoodSearchScreenState extends State<FoodSearchScreen> {
 
   void _performSearch(String query) {
     if (query.trim().isEmpty) {
+      _debounceTimer.cancel();
       setState(() {
         _searchResults = [];
         _hasSearched = false;
@@ -48,14 +49,15 @@ class _FoodSearchScreenState extends State<FoodSearchScreen> {
       _hasSearched = true;
     });
 
+    final q = query.trim();
     _debounceTimer.run(() async {
-      final results = await _foodSearchService.search(query);
-      if (mounted) {
-        setState(() {
-          _searchResults = results;
-          _isSearching = false;
-        });
-      }
+      final results = await _foodSearchService.search(q);
+      if (!mounted) return;
+      if (_searchController.text.trim() != q) return;
+      setState(() {
+        _searchResults = results;
+        _isSearching = false;
+      });
     });
   }
 
@@ -65,6 +67,20 @@ class _FoodSearchScreenState extends State<FoodSearchScreen> {
       appBar: AppBar(
         title: const Text('Add Food'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.cloud_outlined),
+            tooltip: 'Test API (debug)',
+            onPressed: () async {
+              final msg = await _foodApiService.testBackendConnection();
+              if (!context.mounted) return;
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(msg),
+                  duration: const Duration(seconds: 8),
+                ),
+              );
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.add),
             onPressed: () {
@@ -133,10 +149,12 @@ class _FoodSearchScreenState extends State<FoodSearchScreen> {
                     ? IconButton(
                         icon: const Icon(Icons.clear),
                         onPressed: () {
+                          _debounceTimer.cancel();
                           _searchController.clear();
                           setState(() {
                             _searchResults = [];
                             _hasSearched = false;
+                            _isSearching = false;
                           });
                         },
                       )
@@ -241,6 +259,8 @@ class Debouncer {
   Timer? _timer;
 
   Debouncer({required this.milliseconds});
+
+  void cancel() => _timer?.cancel();
 
   void run(VoidCallback action) {
     _timer?.cancel();

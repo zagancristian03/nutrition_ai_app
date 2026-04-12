@@ -37,16 +37,24 @@ class FoodItem {
     return (fatPer100g * grams) / 100.0;
   }
 
-  /// Create FoodItem from JSON (from backend API)
+  /// Create FoodItem from JSON (FastAPI: `*_per_100g`; legacy: short keys).
   factory FoodItem.fromJson(Map<String, dynamic> json) {
-    // Backend returns per 100g values
+    double per100(String snake, String shortKey) {
+      final v = json[snake] ?? json[shortKey];
+      if (v is num) return v.toDouble();
+      return 0.0;
+    }
+
+    final idRaw = json['id'];
+    final id = idRaw == null ? '' : idRaw.toString();
+
     return FoodItem(
-      id: json['id'] as String? ?? '',
+      id: id,
       name: json['name'] as String? ?? '',
-      caloriesPer100g: (json['calories'] as num?)?.toDouble() ?? 0.0,
-      proteinPer100g: (json['protein'] as num?)?.toDouble() ?? 0.0,
-      carbsPer100g: (json['carbs'] as num?)?.toDouble() ?? 0.0,
-      fatPer100g: (json['fat'] as num?)?.toDouble() ?? 0.0,
+      caloriesPer100g: per100('calories_per_100g', 'calories'),
+      proteinPer100g: per100('protein_per_100g', 'protein'),
+      carbsPer100g: per100('carbs_per_100g', 'carbs'),
+      fatPer100g: per100('fat_per_100g', 'fat'),
       unit: json['unit'] as String? ?? 'g',
     );
   }
