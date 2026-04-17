@@ -5,6 +5,7 @@ import 'firebase_options.dart';
 import 'screens/auth/auth_gate.dart';
 import 'providers/daily_log_provider.dart';
 import 'providers/saved_items_provider.dart';
+import 'providers/user_profile_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -23,6 +24,7 @@ class MyApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => DailyLogProvider()),
         ChangeNotifierProvider(create: (_) => SavedItemsProvider()),
+        ChangeNotifierProvider(create: (_) => UserProfileProvider()),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,

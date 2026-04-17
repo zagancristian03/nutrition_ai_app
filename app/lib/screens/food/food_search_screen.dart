@@ -10,7 +10,13 @@ import '../meals/my_meals_screen.dart';
 import '../recipes/my_recipes_screen.dart';
 
 class FoodSearchScreen extends StatefulWidget {
-  const FoodSearchScreen({super.key});
+  /// Meal type the user was adding to (propagated from the diary's "+" button).
+  /// Passed through to [FoodDetailScreen] and [ManualFoodEntryScreen] so the
+  /// meal dropdown is pre-filled correctly instead of always defaulting to
+  /// "Breakfast".
+  final String? initialMealType;
+
+  const FoodSearchScreen({super.key, this.initialMealType});
 
   @override
   State<FoodSearchScreen> createState() => _FoodSearchScreenState();
@@ -82,12 +88,40 @@ class _FoodSearchScreenState extends State<FoodSearchScreen> {
             },
           ),
           IconButton(
+            icon: const Icon(Icons.analytics_outlined),
+            tooltip: 'DB stats (debug)',
+            onPressed: () async {
+              final msg = await _foodApiService.debugStats();
+              if (!context.mounted) return;
+              showDialog<void>(
+                context: context,
+                builder: (ctx) => AlertDialog(
+                  title: const Text('DB stats'),
+                  content: SingleChildScrollView(
+                    child: SelectableText(
+                      msg,
+                      style: const TextStyle(fontSize: 12, fontFamily: 'monospace'),
+                    ),
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.of(ctx).pop(),
+                      child: const Text('Close'),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+          IconButton(
             icon: const Icon(Icons.add),
             onPressed: () {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (_) => const ManualFoodEntryScreen(),
+                  builder: (_) => ManualFoodEntryScreen(
+                    initialMealType: widget.initialMealType,
+                  ),
                 ),
               );
             },
@@ -243,7 +277,10 @@ class _FoodSearchScreenState extends State<FoodSearchScreen> {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (_) => FoodDetailScreen(food: food),
+                builder: (_) => FoodDetailScreen(
+                  food: food,
+                  initialMealType: widget.initialMealType,
+                ),
               ),
             );
           },

@@ -47,7 +47,9 @@ class DiaryScreen extends StatelessWidget {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) => const FoodSearchScreen(),
+                        builder: (_) => FoodSearchScreen(
+                          initialMealType: mealType,
+                        ),
                       ),
                     );
                   },

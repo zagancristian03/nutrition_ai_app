@@ -3,6 +3,9 @@ backend/.env
 
 # python cache
 backend/__pycache__/
+backend/**/__pycache__/
+**/__pycache__/
+*.pyc
 
 # datasets
 backend/data/*

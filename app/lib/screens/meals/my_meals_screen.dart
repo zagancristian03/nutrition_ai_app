@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/saved_items_provider.dart';
 import '../../models/saved_meal.dart';
-import '../../models/food_entry.dart';
 import '../../providers/daily_log_provider.dart';
 import 'create_meal_screen.dart';
 
@@ -106,29 +105,36 @@ class MyMealsScreen extends StatelessWidget {
     );
   }
 
-  void _addMealToDiary(BuildContext context, SavedMeal meal) {
+  Future<void> _addMealToDiary(BuildContext context, SavedMeal meal) async {
     final dailyProvider = Provider.of<DailyLogProvider>(context, listen: false);
-    
-    // Add each item in the meal as a separate entry
+
+    int added = 0;
+    int failed = 0;
+
     for (final item in meal.items) {
-      final entry = FoodEntry(
-        foodId: item.foodId,
-        foodName: item.foodName,
-        mealType: 'Lunch', // Default, user can edit later
-        servingSize: item.servingSize,
+      final entry = await dailyProvider.addEntryForFood(
+        foodId:   item.foodId,
+        mealType: 'Lunch',
+        grams:    item.servingSize,
         servings: 1.0,
-        totalCalories: item.totalCalories,
-        totalProtein: item.totalProtein,
-        totalCarbs: item.totalCarbs,
-        totalFat: item.totalFat,
       );
-      dailyProvider.addEntry(entry);
+      if (entry != null) {
+        added++;
+      } else {
+        failed++;
+      }
     }
 
+    if (!context.mounted) return;
+
+    final ok = failed == 0 && added > 0;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('${meal.name} added to diary!'),
-        backgroundColor: Colors.green,
+        content: Text(ok
+            ? '${meal.name} added to diary!'
+            : 'Added $added / ${meal.items.length} items '
+              '(${failed} failed — those foods may no longer exist).'),
+        backgroundColor: ok ? Colors.green : Colors.orange,
       ),
     );
   }

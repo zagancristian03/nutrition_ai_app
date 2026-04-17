@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/saved_items_provider.dart';
 import '../../models/saved_recipe.dart';
-import '../../models/food_entry.dart';
 import '../../providers/daily_log_provider.dart';
 import 'create_recipe_screen.dart';
 
@@ -105,29 +104,38 @@ class MyRecipesScreen extends StatelessWidget {
     );
   }
 
-  void _addRecipeToDiary(BuildContext context, SavedRecipe recipe) {
+  Future<void> _addRecipeToDiary(BuildContext context, SavedRecipe recipe) async {
     final dailyProvider = Provider.of<DailyLogProvider>(context, listen: false);
-    
-    // Add each item in the recipe as a separate entry (per serving)
+
+    int added = 0;
+    int failed = 0;
+
+    // Add each item in the recipe as a separate entry (per serving).
     for (final item in recipe.items) {
-      final entry = FoodEntry(
-        foodId: item.foodId,
-        foodName: item.foodName,
-        mealType: 'Dinner', // Default, user can edit later
-        servingSize: item.servingSize / recipe.servings, // Per serving
+      final gramsPerServing = item.servingSize / recipe.servings;
+      final entry = await dailyProvider.addEntryForFood(
+        foodId:   item.foodId,
+        mealType: 'Dinner',
+        grams:    gramsPerServing,
         servings: 1.0,
-        totalCalories: item.totalCalories / recipe.servings,
-        totalProtein: item.totalProtein / recipe.servings,
-        totalCarbs: item.totalCarbs / recipe.servings,
-        totalFat: item.totalFat / recipe.servings,
       );
-      dailyProvider.addEntry(entry);
+      if (entry != null) {
+        added++;
+      } else {
+        failed++;
+      }
     }
 
+    if (!context.mounted) return;
+
+    final ok = failed == 0 && added > 0;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('${recipe.name} (1 serving) added to diary!'),
-        backgroundColor: Colors.green,
+        content: Text(ok
+            ? '${recipe.name} (1 serving) added to diary!'
+            : 'Added $added / ${recipe.items.length} items '
+              '(${failed} failed — those foods may no longer exist).'),
+        backgroundColor: ok ? Colors.green : Colors.orange,
       ),
     );
   }

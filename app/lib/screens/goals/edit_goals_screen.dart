@@ -42,25 +42,33 @@ class _EditGoalsScreenState extends State<EditGoalsScreen> {
     super.dispose();
   }
 
-  void _saveGoals() {
+  bool _saving = false;
+
+  Future<void> _saveGoals() async {
     final provider = Provider.of<DailyLogProvider>(context, listen: false);
 
     final calorieGoal = double.tryParse(_calorieController.text) ?? 2000.0;
     final proteinGoal = double.tryParse(_proteinController.text) ?? 150.0;
-    final carbsGoal = double.tryParse(_carbsController.text) ?? 250.0;
-    final fatGoal = double.tryParse(_fatController.text) ?? 65.0;
+    final carbsGoal   = double.tryParse(_carbsController.text)   ?? 250.0;
+    final fatGoal     = double.tryParse(_fatController.text)     ?? 65.0;
 
-    provider.updateGoals(
+    setState(() => _saving = true);
+    final ok = await provider.updateGoals(
       calorieGoal: calorieGoal,
       proteinGoal: proteinGoal,
-      carbsGoal: carbsGoal,
-      fatGoal: fatGoal,
+      carbsGoal:   carbsGoal,
+      fatGoal:     fatGoal,
     );
 
+    if (!mounted) return;
+    setState(() => _saving = false);
+
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Goals updated successfully!'),
-        backgroundColor: Colors.green,
+      SnackBar(
+        content: Text(ok
+            ? 'Goals updated successfully!'
+            : 'Saved locally — check your connection to sync.'),
+        backgroundColor: ok ? Colors.green : Colors.orange,
       ),
     );
 
@@ -119,13 +127,13 @@ class _EditGoalsScreenState extends State<EditGoalsScreen> {
             ),
             const SizedBox(height: 32),
             ElevatedButton(
-              onPressed: _saveGoals,
+              onPressed: _saving ? null : _saveGoals,
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 16),
               ),
-              child: const Text(
-                'Save Goals',
-                style: TextStyle(fontSize: 16),
+              child: Text(
+                _saving ? 'Saving…' : 'Save Goals',
+                style: const TextStyle(fontSize: 16),
               ),
             ),
           ],

@@ -65,33 +65,36 @@ class _EditFoodEntryScreenState extends State<EditFoodEntryScreen> {
     super.dispose();
   }
 
-  void _handleSave() {
-    if (_formKey.currentState!.validate()) {
-      final newEntry = FoodEntry(
-        foodId: widget.entry.foodId,
-        foodName: _foodNameController.text.trim(),
-        mealType: _selectedMealType!,
-        servingSize: double.tryParse(_servingSizeController.text) ?? 0.0,
-        servings: double.tryParse(_servingsController.text) ?? 1.0,
-        totalCalories: double.tryParse(_caloriesController.text) ?? 0.0,
-        totalProtein: double.tryParse(_proteinController.text) ?? 0.0,
-        totalCarbs: double.tryParse(_carbsController.text) ?? 0.0,
-        totalFat: double.tryParse(_fatController.text) ?? 0.0,
-        timestamp: widget.entry.timestamp,
-      );
+  bool _saving = false;
 
-      final provider = Provider.of<DailyLogProvider>(context, listen: false);
-      provider.updateEntry(widget.entry, newEntry);
+  Future<void> _handleSave() async {
+    if (!_formKey.currentState!.validate()) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Food entry updated!'),
-          backgroundColor: Colors.green,
-        ),
-      );
+    final newEntry = widget.entry.copyWith(
+      foodName:      _foodNameController.text.trim(),
+      mealType:      _selectedMealType!,
+      servingSize:   double.tryParse(_servingSizeController.text) ?? 0.0,
+      servings:      double.tryParse(_servingsController.text) ?? 1.0,
+      totalCalories: double.tryParse(_caloriesController.text) ?? 0.0,
+      totalProtein:  double.tryParse(_proteinController.text) ?? 0.0,
+      totalCarbs:    double.tryParse(_carbsController.text) ?? 0.0,
+      totalFat:      double.tryParse(_fatController.text) ?? 0.0,
+    );
 
-      Navigator.pop(context);
-    }
+    setState(() => _saving = true);
+    final provider = Provider.of<DailyLogProvider>(context, listen: false);
+    final ok = await provider.updateEntry(widget.entry, newEntry);
+
+    if (!mounted) return;
+    setState(() => _saving = false);
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(ok ? 'Food entry updated!' : 'Could not save changes.'),
+        backgroundColor: ok ? Colors.green : Colors.redAccent,
+      ),
+    );
+    if (ok) Navigator.pop(context);
   }
 
   @override
@@ -215,13 +218,13 @@ class _EditFoodEntryScreenState extends State<EditFoodEntryScreen> {
               ),
               const SizedBox(height: 32),
               ElevatedButton(
-                onPressed: _handleSave,
+                onPressed: _saving ? null : _handleSave,
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
                 ),
-                child: const Text(
-                  'Save Changes',
-                  style: TextStyle(fontSize: 16),
+                child: Text(
+                  _saving ? 'Saving…' : 'Save Changes',
+                  style: const TextStyle(fontSize: 16),
                 ),
               ),
             ],

@@ -21,9 +21,10 @@ class FoodApiService {
   ///   Firewall. `No route to host` = no L2/L3 path (wrong IP, isolation, or
   ///   PC not reachable on that interface).
   /// - **Android http://** also needs `usesCleartextTraffic` in AndroidManifest.
-  static const String baseUrl = 'http://192.168.137.1:8000';
+  static const String baseUrl = 'http://192.168.1.46:8000';
 
   static const String _searchPath = '/foods/search';
+  static const String _foodsPath = '/foods';
   static const Duration _timeout = Duration(seconds: 10);
 
   static void _logNetworkFailure(String context, Uri uri, Object e, StackTrace st) {
@@ -130,6 +131,16 @@ class FoodApiService {
           .timeout(_timeout);
 
       if (response.statusCode == 200) {
+        // Log enough of the raw body to diagnose "0 macros everywhere"
+        // without flooding the terminal on large responses.
+        final previewLen = response.body.length > 1200 ? 1200 : response.body.length;
+        debugPrint(
+          '[FoodApiService] searchFood 200 cache=${response.headers['x-cache']} '
+          'elapsed=${response.headers['x-elapsed-ms']}ms '
+          'bytes=${response.body.length} '
+          'body[0..$previewLen]=${response.body.substring(0, previewLen)}',
+        );
+
         final decoded = json.decode(response.body);
         if (decoded is! List) {
           debugPrint(
@@ -137,9 +148,21 @@ class FoodApiService {
           );
           return [];
         }
-        return decoded
+
+        final items = decoded
             .map((item) => FoodItem.fromJson(item as Map<String, dynamic>))
             .toList();
+
+        if (items.isNotEmpty) {
+          final f = items.first;
+          debugPrint(
+            '[FoodApiService] searchFood parsed[0] name=${f.name} '
+            'brand=${f.brand} kcal=${f.caloriesPer100g} '
+            'p=${f.proteinPer100g} c=${f.carbsPer100g} f=${f.fatPer100g}',
+          );
+        }
+
+        return items;
       }
 
       debugPrint(
@@ -151,4 +174,148 @@ class FoodApiService {
       return [];
     }
   }
+
+  /// Calls GET /foods/_debug/stats and returns a short human-readable summary
+  /// for display in the UI (SnackBar / AlertDialog).
+  Future<String> debugStats() async {
+    final uri = Uri.parse('$baseUrl/foods/_debug/stats');
+    try {
+      final response = await http.get(
+        uri,
+        headers: {'Content-Type': 'application/json'},
+      ).timeout(_timeout);
+
+      if (response.statusCode != 200) {
+        return 'stats HTTP ${response.statusCode}: ${response.body}';
+      }
+      final decoded = json.decode(response.body);
+      if (decoded is! Map) return 'unexpected stats payload: ${response.body}';
+      final counts = decoded['counts'];
+      final top = decoded['top_by_kcal'];
+      return 'counts=$counts\ntop_by_kcal=$top';
+    } catch (e) {
+      return 'stats error: $e';
+    }
+  }
+
+  /// Insert a user-entered food into the catalog via `POST /foods`.
+  ///
+  /// All macros must be expressed **per 100 g** (the canonical storage format).
+  /// Returns the newly created [FoodItem] with the DB-assigned `id`, or
+  /// `null` on any failure — the caller should treat a null as "keep the row
+  /// local only" and surface an error to the user.
+  Future<FoodItem?> createFood({
+    required String name,
+    String? brand,
+    required double caloriesPer100g,
+    double proteinPer100g = 0,
+    double carbsPer100g = 0,
+    double fatPer100g = 0,
+    double? servingSizeG,
+  }) async {
+    final r = await createFoodWithDiagnostics(
+      name: name,
+      brand: brand,
+      caloriesPer100g: caloriesPer100g,
+      proteinPer100g: proteinPer100g,
+      carbsPer100g: carbsPer100g,
+      fatPer100g: fatPer100g,
+      servingSizeG: servingSizeG,
+    );
+    return r.food;
+  }
+
+  /// Same as [createFood] but also returns the error payload from the server
+  /// so the UI can show the real reason (HTTP 500 detail, 422 validation, …)
+  /// instead of a generic "please try again".
+  Future<CreateFoodResult> createFoodWithDiagnostics({
+    required String name,
+    String? brand,
+    required double caloriesPer100g,
+    double proteinPer100g = 0,
+    double carbsPer100g = 0,
+    double fatPer100g = 0,
+    double? servingSizeG,
+  }) async {
+    final uri = Uri.parse('$baseUrl$_foodsPath');
+
+    final body = <String, dynamic>{
+      'name': name,
+      if (brand != null && brand.trim().isNotEmpty) 'brand': brand,
+      'calories_per_100g': caloriesPer100g,
+      'protein_per_100g': proteinPer100g,
+      'carbs_per_100g': carbsPer100g,
+      'fat_per_100g': fatPer100g,
+      if (servingSizeG != null) 'serving_size_g': servingSizeG,
+    };
+
+    debugPrint('[FoodApiService] createFood uri=$uri body=$body');
+
+    try {
+      final response = await http
+          .post(
+            uri,
+            headers: {'Content-Type': 'application/json'},
+            body: json.encode(body),
+          )
+          .timeout(_timeout);
+
+      if (response.statusCode == 201) {
+        final decoded = json.decode(response.body);
+        if (decoded is! Map<String, dynamic>) {
+          debugPrint(
+            '[FoodApiService] createFood unexpected JSON: ${response.body}',
+          );
+          return CreateFoodResult(
+            food: null,
+            errorMessage: 'Server returned an unexpected response.',
+          );
+        }
+        return CreateFoodResult(food: FoodItem.fromJson(decoded));
+      }
+
+      debugPrint(
+        '[FoodApiService] createFood HTTP ${response.statusCode} body=${response.body}',
+      );
+      return CreateFoodResult(
+        food: null,
+        errorMessage: _extractErrorMessage(response.statusCode, response.body),
+      );
+    } catch (e, st) {
+      _logNetworkFailure('createFood', uri, e, st);
+      return CreateFoodResult(
+        food: null,
+        errorMessage: 'Network error: $e',
+      );
+    }
+  }
+
+  static String _extractErrorMessage(int status, String body) {
+    try {
+      final decoded = json.decode(body);
+      if (decoded is Map<String, dynamic>) {
+        final d = decoded['detail'];
+        if (d is String && d.isNotEmpty) return 'Error $status: $d';
+        if (d is List && d.isNotEmpty) {
+          // FastAPI validation errors
+          final first = d.first;
+          if (first is Map && first['msg'] is String) {
+            return 'Error $status: ${first['msg']}';
+          }
+        }
+      }
+    } catch (_) {
+      // fall through
+    }
+    return 'Error $status. Please try again.';
+  }
+}
+
+/// Outcome of `createFoodWithDiagnostics` — either `food` is non-null or
+/// `errorMessage` explains what went wrong (never both).
+class CreateFoodResult {
+  final FoodItem? food;
+  final String? errorMessage;
+
+  const CreateFoodResult({this.food, this.errorMessage});
 }
