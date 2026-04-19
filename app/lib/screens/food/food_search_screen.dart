@@ -69,7 +69,10 @@ class _FoodSearchScreenState extends State<FoodSearchScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+
     return Scaffold(
+      backgroundColor: cs.surface,
       appBar: AppBar(
         title: const Text('Add Food'),
         actions: [
@@ -116,9 +119,8 @@ class _FoodSearchScreenState extends State<FoodSearchScreen> {
           IconButton(
             icon: const Icon(Icons.add),
             onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
+              Navigator.of(context, rootNavigator: true).push<void>(
+                MaterialPageRoute<void>(
                   builder: (_) => ManualFoodEntryScreen(
                     initialMealType: widget.initialMealType,
                   ),
@@ -134,7 +136,7 @@ class _FoodSearchScreenState extends State<FoodSearchScreen> {
           // Quick access sections
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-            color: Colors.grey[50],
+            color: cs.surfaceContainerLow,
             child: Row(
               children: [
                 Expanded(
@@ -172,7 +174,7 @@ class _FoodSearchScreenState extends State<FoodSearchScreen> {
           // Search bar
           Container(
             padding: const EdgeInsets.all(16.0),
-            color: Colors.grey[100],
+            color: cs.surfaceContainerHighest,
             child: TextField(
               controller: _searchController,
               autofocus: false,
@@ -197,7 +199,7 @@ class _FoodSearchScreenState extends State<FoodSearchScreen> {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 filled: true,
-                fillColor: Colors.white,
+                fillColor: cs.surface,
               ),
               onChanged: (value) {
                 setState(() {});
@@ -207,14 +209,14 @@ class _FoodSearchScreenState extends State<FoodSearchScreen> {
           ),
           // Search results
           Expanded(
-            child: _buildResults(),
+            child: _buildResults(cs),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildResults() {
+  Widget _buildResults(ColorScheme cs) {
     if (!_hasSearched) {
       return Center(
         child: Column(
@@ -223,13 +225,13 @@ class _FoodSearchScreenState extends State<FoodSearchScreen> {
             Icon(
               Icons.search,
               size: 64,
-              color: Colors.grey[400],
+              color: cs.outlineVariant,
             ),
             const SizedBox(height: 16),
             Text(
               'Search for food to add',
               style: TextStyle(
-                color: Colors.grey[600],
+                color: cs.onSurfaceVariant,
                 fontSize: 16,
               ),
             ),
@@ -252,13 +254,13 @@ class _FoodSearchScreenState extends State<FoodSearchScreen> {
             Icon(
               Icons.search_off,
               size: 64,
-              color: Colors.grey[400],
+              color: cs.outlineVariant,
             ),
             const SizedBox(height: 16),
             Text(
               'No results found',
               style: TextStyle(
-                color: Colors.grey[600],
+                color: cs.onSurfaceVariant,
                 fontSize: 16,
               ),
             ),
@@ -274,9 +276,8 @@ class _FoodSearchScreenState extends State<FoodSearchScreen> {
         return FoodResultTile(
           food: food,
           onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
+            Navigator.of(context, rootNavigator: true).push<void>(
+              MaterialPageRoute<void>(
                 builder: (_) => FoodDetailScreen(
                   food: food,
                   initialMealType: widget.initialMealType,

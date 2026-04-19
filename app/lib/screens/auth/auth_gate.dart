@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
 
+import '../../providers/ai_provider.dart';
 import '../../providers/daily_log_provider.dart';
 import '../../providers/user_profile_provider.dart';
 import '../../services/auth_service.dart';
@@ -31,12 +32,14 @@ class AuthGate extends StatelessWidget {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           final diaryProvider   = context.read<DailyLogProvider>();
           final profileProvider = context.read<UserProfileProvider>();
+          final aiProvider      = context.read<AiProvider>();
           if (diaryProvider.userId != user?.uid) {
             diaryProvider.setUser(user?.uid);
           }
           if (profileProvider.userId != user?.uid) {
             profileProvider.setUser(user?.uid);
           }
+          aiProvider.setUser(user?.uid);
         });
 
         if (user != null) return const MainShell();

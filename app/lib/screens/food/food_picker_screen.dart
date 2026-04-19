@@ -57,6 +57,8 @@ class _FoodPickerScreenState extends State<FoodPickerScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Select Food'),
@@ -66,7 +68,7 @@ class _FoodPickerScreenState extends State<FoodPickerScreen> {
           // Search bar
           Container(
             padding: const EdgeInsets.all(16.0),
-            color: Colors.grey[100],
+            color: cs.surfaceContainerHighest,
             child: TextField(
               controller: _searchController,
               autofocus: true,
@@ -91,7 +93,7 @@ class _FoodPickerScreenState extends State<FoodPickerScreen> {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 filled: true,
-                fillColor: Colors.white,
+                fillColor: cs.surface,
               ),
               onChanged: (value) {
                 setState(() {});
@@ -101,14 +103,14 @@ class _FoodPickerScreenState extends State<FoodPickerScreen> {
           ),
           // Search results
           Expanded(
-            child: _buildResults(),
+            child: _buildResults(cs),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildResults() {
+  Widget _buildResults(ColorScheme cs) {
     if (!_hasSearched) {
       return Center(
         child: Column(
@@ -117,13 +119,13 @@ class _FoodPickerScreenState extends State<FoodPickerScreen> {
             Icon(
               Icons.search,
               size: 64,
-              color: Colors.grey[400],
+              color: cs.outlineVariant,
             ),
             const SizedBox(height: 16),
             Text(
               'Search for food to add',
               style: TextStyle(
-                color: Colors.grey[600],
+                color: cs.onSurfaceVariant,
                 fontSize: 16,
               ),
             ),
@@ -146,13 +148,13 @@ class _FoodPickerScreenState extends State<FoodPickerScreen> {
             Icon(
               Icons.search_off,
               size: 64,
-              color: Colors.grey[400],
+              color: cs.outlineVariant,
             ),
             const SizedBox(height: 16),
             Text(
               'No results found',
               style: TextStyle(
-                color: Colors.grey[600],
+                color: cs.onSurfaceVariant,
                 fontSize: 16,
               ),
             ),

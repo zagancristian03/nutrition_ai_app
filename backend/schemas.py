@@ -186,3 +186,178 @@ class WeightLogOut(BaseModel):
     logged_on:  date
     note:       str | None
     created_at: datetime
+
+
+# =============================================================================
+# /ai — coaching layer
+# =============================================================================
+# Enumerations below are Literal-typed only where the value is truly closed.
+# Open-ended sets (goals, struggles, training types) use free `str` values +
+# a dedicated `*_note` free-text column, so the UI can evolve without
+# requiring a DB or backend change.
+ApproachStyle     = Literal["aggressive", "balanced", "flexible", "sustainable"]
+DietaryPattern    = Literal["omnivore", "vegetarian", "vegan", "pescatarian", "other"]
+BudgetSensitivity = Literal["low", "medium", "high"]
+CookingPreference = Literal["none", "simple", "enjoys"]
+StruggleTiming    = Literal["morning", "afternoon", "evening", "night", "weekends", "stress"]
+LowMedHigh        = Literal["low", "medium", "high"]
+CoachTone         = Literal["direct", "balanced", "gentler"]
+
+TrainingIntensity = Literal["light", "moderate", "hard", "very_hard"]
+JobActivity       = Literal["desk", "mostly_seated", "on_feet", "physical_labor"]
+StepsBand         = Literal["under_5k", "5k_7k", "7k_10k", "10k_15k", "over_15k"]
+SleepBand         = Literal["under_5", "5_6", "6_7", "7_8", "over_8"]
+AlcoholFrequency  = Literal["none", "occasional", "weekly", "frequent"]
+EatingOutFreq     = Literal["rarely", "weekly", "often", "daily"]
+
+
+class AiOnboardingPayload(BaseModel):
+    """All fields optional — the client may save partial progress with
+    `mark_completed=false`. Arrays default to null when omitted."""
+
+    # ---------------------------------------------------------------- Goals
+    main_goals:                  list[str] | None = Field(default=None, max_length=10)
+    main_goal_note:              str | None = Field(default=None, max_length=1000)
+    approach_style:              ApproachStyle | None = None
+
+    # --------------------------------------------------------------- Diet
+    dietary_pattern:             DietaryPattern | None = None
+    dietary_pattern_note:        str | None = Field(default=None, max_length=512)
+    allergies:                   str | None = Field(default=None, max_length=512)
+    disliked_foods:              str | None = Field(default=None, max_length=512)
+    favorite_foods:              str | None = Field(default=None, max_length=512)
+    cuisines_enjoyed:            str | None = Field(default=None, max_length=512)
+    eating_out_frequency:        EatingOutFreq | None = None
+    budget_sensitivity:          BudgetSensitivity | None = None
+    cooking_preference:          CookingPreference | None = None
+    meal_frequency:              int | None = Field(default=None, ge=1, le=10)
+
+    # --------------------------------------------------------- Training / activity
+    training_frequency_per_week: int | None = Field(default=None, ge=0, le=14)
+    training_types:              list[str] | None = Field(default=None, max_length=15)
+    training_intensity:          TrainingIntensity | None = None
+    training_notes:              str | None = Field(default=None, max_length=512)
+    job_activity:                JobActivity | None = None
+    steps_per_day_band:          StepsBand | None = None
+
+    # -------------------------------------------------------- Lifestyle / recovery
+    sleep_hours_band:            SleepBand | None = None
+    stress_level:                LowMedHigh | None = None
+    water_intake:                LowMedHigh | None = None
+    alcohol_frequency:           AlcoholFrequency | None = None
+
+    # ---------------------------------------------------------- Behavioral
+    biggest_struggles:           list[str] | None = Field(default=None, max_length=10)
+    biggest_struggle_note:       str | None = Field(default=None, max_length=1000)
+    struggle_timing:             StruggleTiming | None = None
+    motivation_level:            LowMedHigh | None = None
+    structure_preference:        LowMedHigh | None = None
+
+    # ---------------------------------------------------------------- Tone
+    coach_tone:                  CoachTone | None = None
+
+    extras:                      dict | None = None
+
+
+class AiProfileOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    user_id:                     str
+    onboarding_completed:        bool
+
+    main_goals:                  list[str] = Field(default_factory=list)
+    main_goal_note:              str | None = None
+    approach_style:              str | None = None
+
+    dietary_pattern:             str | None = None
+    dietary_pattern_note:        str | None = None
+    allergies:                   str | None = None
+    disliked_foods:              str | None = None
+    favorite_foods:              str | None = None
+    cuisines_enjoyed:            str | None = None
+    eating_out_frequency:        str | None = None
+    budget_sensitivity:          str | None = None
+    cooking_preference:          str | None = None
+    meal_frequency:              int | None = None
+
+    training_frequency_per_week: int | None = None
+    training_types:              list[str] = Field(default_factory=list)
+    training_intensity:          str | None = None
+    training_notes:              str | None = None
+    job_activity:                str | None = None
+    steps_per_day_band:          str | None = None
+
+    sleep_hours_band:            str | None = None
+    stress_level:                str | None = None
+    water_intake:                str | None = None
+    alcohol_frequency:           str | None = None
+
+    biggest_struggles:           list[str] = Field(default_factory=list)
+    biggest_struggle_note:       str | None = None
+    struggle_timing:             str | None = None
+    motivation_level:            str | None = None
+    structure_preference:        str | None = None
+
+    coach_tone:                  str  = "balanced"
+    extras:                      dict = Field(default_factory=dict)
+    derived_summary:             str | None = None
+
+    created_at:                  datetime | None = None
+    updated_at:                  datetime | None = None
+
+
+class AiChatRequest(BaseModel):
+    user_id:   str  = Field(..., min_length=1, max_length=128)
+    message:   str  = Field(..., min_length=1, max_length=4000)
+    thread_id: int  | None = None
+
+
+class AiChatResponse(BaseModel):
+    thread_id: int
+    reply:     str
+
+
+class AiChatMessage(BaseModel):
+    role:       Literal["user", "assistant", "system"]
+    content:    str
+    created_at: datetime | None = None
+
+
+class AiChatHistory(BaseModel):
+    thread_id: int   | None
+    title:     str   | None = None
+    summary:   str   | None = None
+    messages:  list[AiChatMessage] = Field(default_factory=list)
+
+
+class AiThreadOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id:            int
+    user_id:       str
+    title:         str | None = None
+    summary:       str | None = None
+    message_count: int = 0
+    created_at:    datetime | None = None
+    updated_at:    datetime | None = None
+
+
+class AiReviewOut(BaseModel):
+    review: str
+    on_date: str | None = None
+    start:   str | None = None
+    end:     str | None = None
+
+
+class AiMealSuggestion(BaseModel):
+    name:                 str
+    why:                  str | None = None
+    estimated_calories:   int | float | None = None
+    estimated_protein:    int | float | None = None
+    estimated_carbs:      int | float | None = None
+    estimated_fat:        int | float | None = None
+
+
+class AiMealRecommendations(BaseModel):
+    remaining:   dict[str, float]
+    suggestions: list[AiMealSuggestion] = Field(default_factory=list)

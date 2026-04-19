@@ -2,8 +2,10 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../providers/theme_mode_provider.dart';
 import '../../providers/user_profile_provider.dart';
 import '../../services/auth_service.dart';
+import '../ai/ai_coach_screen.dart';
 import '../goals/edit_goals_screen.dart';
 import '../profile/edit_profile_screen.dart';
 
@@ -32,6 +34,17 @@ class MoreScreen extends StatelessWidget {
           _ProfileHeader(name: name, email: email, profileSummary: _summary(profile)),
           const SizedBox(height: 16),
 
+          const _AppearanceCard(),
+          const SizedBox(height: 8),
+
+          _ActionTile(
+            icon: Icons.auto_awesome,
+            title: 'AI Coach',
+            subtitle: 'Chat, meal ideas, daily & weekly reviews',
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const AiCoachScreen()),
+            ),
+          ),
           _ActionTile(
             icon: Icons.person_outline,
             title: 'Edit profile',
@@ -48,16 +61,6 @@ class MoreScreen extends StatelessWidget {
               MaterialPageRoute(builder: (_) => const EditGoalsScreen()),
             ),
           ),
-          _ActionTile(
-            icon: Icons.settings_outlined,
-            title: 'Settings',
-            subtitle: 'App preferences',
-            onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Settings coming soon')),
-              );
-            },
-          ),
 
           const SizedBox(height: 20),
           SizedBox(
@@ -66,11 +69,14 @@ class MoreScreen extends StatelessWidget {
               onPressed: () async {
                 await AuthService().logout();
               },
-              icon: const Icon(Icons.logout, color: Colors.red),
-              label: const Text('Log out', style: TextStyle(color: Colors.red)),
+              icon: Icon(Icons.logout, color: Theme.of(context).colorScheme.error),
+              label: Text(
+                'Log out',
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              ),
               style: OutlinedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 14),
-                side: const BorderSide(color: Colors.red),
+                side: BorderSide(color: Theme.of(context).colorScheme.error),
               ),
             ),
           ),
@@ -97,6 +103,70 @@ class MoreScreen extends StatelessWidget {
   }
 }
 
+class _AppearanceCard extends StatelessWidget {
+  const _AppearanceCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final themeProv = context.watch<ThemeModeProvider>();
+    final cs = Theme.of(context).colorScheme;
+
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: cs.outlineVariant),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Appearance',
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Light, dark, or match your device',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: cs.onSurfaceVariant,
+                  ),
+            ),
+            const SizedBox(height: 12),
+            SegmentedButton<ThemeMode>(
+              showSelectedIcon: false,
+              segments: const [
+                ButtonSegment<ThemeMode>(
+                  value: ThemeMode.light,
+                  icon: Icon(Icons.light_mode_outlined, size: 18),
+                  label: Text('Light'),
+                ),
+                ButtonSegment<ThemeMode>(
+                  value: ThemeMode.dark,
+                  icon: Icon(Icons.dark_mode_outlined, size: 18),
+                  label: Text('Dark'),
+                ),
+                ButtonSegment<ThemeMode>(
+                  value: ThemeMode.system,
+                  icon: Icon(Icons.brightness_auto_outlined, size: 18),
+                  label: Text('System'),
+                ),
+              ],
+              selected: {themeProv.themeMode},
+              onSelectionChanged: (Set<ThemeMode> next) {
+                context.read<ThemeModeProvider>().setThemeMode(next.first);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _ProfileHeader extends StatelessWidget {
   final String name;
   final String email;
@@ -116,14 +186,14 @@ class _ProfileHeader extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         side: BorderSide(color: cs.primary.withValues(alpha: 0.4)),
       ),
-      color: cs.primary.withValues(alpha: 0.06),
+      color: cs.primary.withValues(alpha: 0.08),
       child: Padding(
         padding: const EdgeInsets.all(18),
         child: Row(
           children: [
             CircleAvatar(
               radius: 30,
-              backgroundColor: cs.primary.withValues(alpha: 0.15),
+              backgroundColor: cs.primary.withValues(alpha: 0.2),
               child: Icon(Icons.person, size: 34, color: cs.primary),
             ),
             const SizedBox(width: 14),
@@ -141,7 +211,7 @@ class _ProfileHeader extends StatelessWidget {
                   Text(email,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(color: Colors.grey[700], fontSize: 13)),
+                      style: TextStyle(color: cs.onSurfaceVariant, fontSize: 13)),
                   if (profileSummary != null) ...[
                     const SizedBox(height: 6),
                     Text(profileSummary!,
@@ -175,24 +245,24 @@ class _ActionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Card(
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: Colors.grey.shade300),
+        side: BorderSide(color: cs.outlineVariant),
       ),
       margin: const EdgeInsets.only(bottom: 10),
       child: ListTile(
         onTap: onTap,
         leading: CircleAvatar(
-          backgroundColor:
-              Theme.of(context).colorScheme.primary.withValues(alpha: 0.12),
-          child: Icon(icon, color: Theme.of(context).colorScheme.primary),
+          backgroundColor: cs.primary.withValues(alpha: 0.12),
+          child: Icon(icon, color: cs.primary),
         ),
         title: Text(title,
             style: const TextStyle(fontWeight: FontWeight.w600)),
         subtitle: Text(subtitle),
-        trailing: const Icon(Icons.chevron_right),
+        trailing: Icon(Icons.chevron_right, color: cs.outline),
       ),
     );
   }

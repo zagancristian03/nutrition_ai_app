@@ -19,6 +19,7 @@ class FoodResultTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     final title = _titleCase(food.name);
     final brand = food.brand?.trim();
 
@@ -31,8 +32,8 @@ class FoodResultTile extends StatelessWidget {
           children: [
             CircleAvatar(
               radius: 22,
-              backgroundColor: Colors.blue.shade50,
-              child: const Icon(Icons.restaurant, color: Colors.blue, size: 22),
+              backgroundColor: cs.primaryContainer,
+              child: Icon(Icons.restaurant, color: cs.onPrimaryContainer, size: 22),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -56,7 +57,7 @@ class FoodResultTile extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        color: Colors.grey.shade600,
+                        color: cs.onSurfaceVariant,
                         fontSize: 12,
                       ),
                     ),
@@ -68,26 +69,26 @@ class FoodResultTile extends StatelessWidget {
                     children: [
                       _MacroChip(
                         label: '${food.caloriesPer100g.round()} kcal',
-                        color: Colors.orange,
+                        accent: cs.tertiary,
                       ),
                       _MacroChip(
                         label: 'P ${_fmt(food.proteinPer100g)}g',
-                        color: Colors.red,
+                        accent: cs.error,
                       ),
                       _MacroChip(
                         label: 'C ${_fmt(food.carbsPer100g)}g',
-                        color: Colors.blueAccent,
+                        accent: cs.primary,
                       ),
                       _MacroChip(
                         label: 'F ${_fmt(food.fatPer100g)}g',
-                        color: Colors.green,
+                        accent: cs.secondary,
                       ),
                     ],
                   ),
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right, color: Colors.grey),
+            Icon(Icons.chevron_right, color: cs.outline),
           ],
         ),
       ),
@@ -112,37 +113,28 @@ class FoodResultTile extends StatelessWidget {
 
 class _MacroChip extends StatelessWidget {
   final String label;
-  final Color color;
+  final Color accent;
 
-  const _MacroChip({required this.label, required this.color});
+  const _MacroChip({required this.label, required this.accent});
 
   @override
   Widget build(BuildContext context) {
+    final onText = Theme.of(context).colorScheme.onSurface;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.10),
+        color: accent.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: color.withValues(alpha: 0.35), width: 0.8),
+        border: Border.all(color: accent.withValues(alpha: 0.4), width: 0.8),
       ),
       child: Text(
         label,
         style: TextStyle(
-          color: color.shade900ish,
+          color: onText.withValues(alpha: 0.9),
           fontSize: 11,
           fontWeight: FontWeight.w600,
         ),
       ),
     );
-  }
-}
-
-/// Small helper so we can pull a readable dark shade from a base MaterialColor,
-/// falling back for non-MaterialColor values (like Colors.blueAccent).
-extension on Color {
-  Color get shade900ish {
-    final c = this;
-    if (c is MaterialColor) return c.shade700;
-    return HSLColor.fromColor(c).withLightness(0.28).toColor();
   }
 }

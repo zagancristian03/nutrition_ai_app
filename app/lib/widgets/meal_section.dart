@@ -20,6 +20,7 @@ class MealSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
       child: Padding(
@@ -39,7 +40,7 @@ class MealSection extends StatelessWidget {
                 Text(
                   '$totalCalories cal',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: Colors.grey[700],
+                        color: cs.onSurfaceVariant,
                       ),
                 ),
               ],
@@ -47,13 +48,24 @@ class MealSection extends StatelessWidget {
             const SizedBox(height: 12),
             if (foods.isEmpty)
               Padding(
-                padding: const EdgeInsets.symmetric(vertical: 16.0),
-                child: Text(
-                  'No foods added yet',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Colors.grey[600],
-                        fontStyle: FontStyle.italic,
+                padding: const EdgeInsets.symmetric(vertical: 12.0),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.restaurant_outlined,
+                      size: 20,
+                      color: cs.outline,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'No foods yet — tap Add food below to search and log.',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: cs.onSurfaceVariant,
+                            ),
                       ),
+                    ),
+                  ],
                 ),
               )
             else
@@ -82,14 +94,14 @@ class MealSection extends StatelessWidget {
                             Text(
                               '${food['calories'] ?? 0} cal',
                               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    color: Colors.grey[600],
+                                    color: cs.onSurfaceVariant,
                                   ),
                             ),
                             if (onDeleteFood != null) ...[
                               const SizedBox(width: 8),
                               IconButton(
                                 icon: const Icon(Icons.delete_outline, size: 20),
-                                color: Colors.red,
+                                color: cs.error,
                                 onPressed: () => onDeleteFood!(index),
                                 padding: EdgeInsets.zero,
                                 constraints: const BoxConstraints(),

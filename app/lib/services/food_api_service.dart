@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
+import '../config/constants.dart';
 import '../models/food_item.dart';
 
 /// HTTP client for the FastAPI food backend.
@@ -21,7 +22,7 @@ class FoodApiService {
   ///   Firewall. `No route to host` = no L2/L3 path (wrong IP, isolation, or
   ///   PC not reachable on that interface).
   /// - **Android http://** also needs `usesCleartextTraffic` in AndroidManifest.
-  static const String baseUrl = 'http://192.168.1.46:8000';
+  static const String baseUrl = 'http://$kBackendLanHost:$kBackendPort';
 
   static const String _searchPath = '/foods/search';
   static const String _foodsPath = '/foods';

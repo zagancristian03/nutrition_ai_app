@@ -39,6 +39,25 @@ class DiaryApiService {
       '${d.month.toString().padLeft(2, '0')}-'
       '${d.day.toString().padLeft(2, '0')}';
 
+  /// SQL/JSON `date` values are calendar days — always interpret in the local
+  /// timezone so diary grouping matches [DateTime(year, month, day)].
+  static DateTime _parseLoggedDate(Object? raw) {
+    if (raw == null) return DateTime.now();
+    final s = raw.toString().trim();
+    if (s.isEmpty) return DateTime.now();
+    final head = s.split('T').first;
+    final parts = head.split('-');
+    if (parts.length == 3) {
+      final y = int.tryParse(parts[0]);
+      final m = int.tryParse(parts[1]);
+      final d = int.tryParse(parts[2]);
+      if (y != null && m != null && d != null) {
+        return DateTime(y, m, d);
+      }
+    }
+    return DateTime.tryParse(s) ?? DateTime.now();
+  }
+
   static const Map<String, String> _clientMealToServer = {
     'Breakfast': 'breakfast',
     'Lunch':     'lunch',
@@ -64,7 +83,10 @@ class DiaryApiService {
   // ----------------------------------------------------------------------- //
 
   /// GET /food-logs?user_id=...&logged_date=YYYY-MM-DD
-  Future<List<FoodEntry>> listFoodLogs({
+  ///
+  /// Returns `null` if the request failed (network or non-200). An empty
+  /// list means the day was loaded successfully but has no entries.
+  Future<List<FoodEntry>?> listFoodLogs({
     required String userId,
     required DateTime date,
   }) async {
@@ -84,7 +106,7 @@ class DiaryApiService {
           '[DiaryApiService] listFoodLogs HTTP ${response.statusCode} '
           'body=${response.body}',
         );
-        return const [];
+        return null;
       }
 
       final decoded = json.decode(response.body);
@@ -96,7 +118,7 @@ class DiaryApiService {
           .toList();
     } catch (e, st) {
       debugPrint('[DiaryApiService] listFoodLogs error: $e\n$st');
-      return const [];
+      return null;
     }
   }
 
@@ -220,8 +242,7 @@ class DiaryApiService {
 
   static FoodEntry _entryFromLogJson(Map<String, dynamic> j) {
     final mealRaw = j['meal_type'] as String? ?? '';
-    final loggedDate = DateTime.tryParse(j['logged_date']?.toString() ?? '') ??
-        DateTime.now();
+    final loggedDate = _parseLoggedDate(j['logged_date']);
     final createdAt = DateTime.tryParse(j['created_at']?.toString() ?? '') ??
         DateTime.now();
 

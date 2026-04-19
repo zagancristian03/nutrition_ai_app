@@ -18,6 +18,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from db import close_pool, init_pool
+from routers import ai as ai_router
 from routers import foods as foods_router
 from routers import logs as logs_router
 from routers import user_goals as user_goals_router
@@ -59,6 +60,7 @@ app.include_router(logs_router.router)
 app.include_router(user_goals_router.router)
 app.include_router(user_profile_router.router)
 app.include_router(weight_logs_router.router)
+app.include_router(ai_router.router)
 
 
 @app.get("/", tags=["meta"])

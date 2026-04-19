@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../widgets/stat_card.dart';
-import '../../widgets/macro_ring.dart';
+
 import '../../providers/daily_log_provider.dart';
+import '../../services/ai_service.dart';
+import '../../widgets/diary_day_controls.dart';
+import '../../widgets/macro_ring.dart';
+import '../../widgets/stat_card.dart';
 import '../diary/diary_screen.dart';
 import '../goals/edit_goals_screen.dart';
 
@@ -23,34 +26,39 @@ class DashboardScreen extends StatelessWidget {
         final fatsGoal = provider.fatGoal;
 
         final selectedDate = provider.selectedDate;
-        final isToday = selectedDate.year == DateTime.now().year &&
-            selectedDate.month == DateTime.now().month &&
-            selectedDate.day == DateTime.now().day;
+        final now = DateTime.now();
+        final isToday = selectedDate.year == now.year &&
+            selectedDate.month == now.month &&
+            selectedDate.day == now.day;
+
+        final cs = Theme.of(context).colorScheme;
+
+        final insights = NutritionInsights.build(
+          selectedDate: selectedDate,
+          isLoading: provider.isLoading,
+          entryCount: provider.entries.length,
+          calorieGoal: provider.calorieGoal,
+          calories: provider.totalCalories,
+          proteinGoal: provider.proteinGoal,
+          protein: provider.totalProtein,
+          carbsGoal: provider.carbsGoal,
+          carbs: provider.totalCarbs,
+          fatGoal: provider.fatGoal,
+          fat: provider.totalFat,
+        );
 
         return Scaffold(
           appBar: AppBar(
-            title: GestureDetector(
-              onTap: () async {
-                final pickedDate = await showDatePicker(
-                  context: context,
-                  initialDate: selectedDate,
-                  firstDate: DateTime(2020),
-                  lastDate: DateTime.now().add(const Duration(days: 365)),
-                );
-                if (pickedDate != null) {
-                  provider.setSelectedDate(pickedDate);
-                }
-              },
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(isToday ? 'Today' : _formatDate(selectedDate)),
-                  const SizedBox(width: 4),
-                  const Icon(Icons.calendar_today, size: 18),
-                ],
-              ),
+            title: DiaryDayControls(
+              selectedDate: selectedDate,
+              onDateChanged: provider.setSelectedDate,
             ),
             actions: [
+              IconButton(
+                icon: const Icon(Icons.refresh),
+                tooltip: 'Reload this day',
+                onPressed: provider.isLoading ? null : () => provider.refresh(),
+              ),
               IconButton(
                 icon: const Icon(Icons.settings),
                 onPressed: () {
@@ -70,7 +78,92 @@ class DashboardScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Daily calorie summary (tappable)
+                if (provider.diaryLoadError != null)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: Material(
+                      color: Theme.of(context).colorScheme.errorContainer,
+                      borderRadius: BorderRadius.circular(12),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 10,
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.warning_amber_rounded,
+                              color: Theme.of(context).colorScheme.onErrorContainer,
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                provider.diaryLoadError!,
+                                style: TextStyle(
+                                  color: Theme.of(context).colorScheme.onErrorContainer,
+                                ),
+                              ),
+                            ),
+                            TextButton(
+                              onPressed: () => provider.refresh(),
+                              child: const Text('Retry'),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                if (insights.isNotEmpty) ...[
+                  Card(
+                    elevation: 0,
+                    color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                    child: Padding(
+                      padding: const EdgeInsets.all(14),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.auto_awesome,
+                                size: 20,
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Coach',
+                                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+                          for (final line in insights)
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 8),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    '• ',
+                                    style: Theme.of(context).textTheme.bodyLarge,
+                                  ),
+                                  Expanded(
+                                    child: Text(
+                                      line,
+                                      style: Theme.of(context).textTheme.bodyMedium,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ],
                 GestureDetector(
                   onTap: () {
                     Navigator.push(
@@ -81,13 +174,12 @@ class DashboardScreen extends StatelessWidget {
                     );
                   },
                   child: StatCard(
-                    label: 'Calories',
+                    label: isToday ? 'Calories (today)' : 'Calories (${_shortDate(selectedDate)})',
                     value: '$consumedCalories / $goalCalories',
-                    color: Colors.blue,
+                    color: cs.primary,
                   ),
                 ),
                 const SizedBox(height: 24),
-                // Macro indicators
                 Text(
                   'Macros',
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
@@ -102,19 +194,19 @@ class DashboardScreen extends StatelessWidget {
                       label: 'Protein',
                       consumed: proteinConsumed,
                       goal: proteinGoal,
-                      color: Colors.red,
+                      color: cs.error,
                     ),
                     MacroRing(
                       label: 'Carbs',
                       consumed: carbsConsumed,
                       goal: carbsGoal,
-                      color: Colors.blue,
+                      color: cs.tertiary,
                     ),
                     MacroRing(
                       label: 'Fats',
                       consumed: fatsConsumed,
                       goal: fatsGoal,
-                      color: Colors.orange,
+                      color: cs.secondary,
                     ),
                   ],
                 ),
@@ -126,18 +218,11 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  String _formatDate(DateTime date) {
-    final now = DateTime.now();
-    final difference = now.difference(date).inDays;
-
-    if (difference == 0) {
-      return 'Today';
-    } else if (difference == 1) {
-      return 'Yesterday';
-    } else if (difference == -1) {
-      return 'Tomorrow';
-    } else {
-      return '${date.day}/${date.month}/${date.year}';
-    }
+  static String _shortDate(DateTime date) {
+    const months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    ];
+    return '${date.day} ${months[date.month - 1]}';
   }
 }

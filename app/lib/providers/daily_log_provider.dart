@@ -30,12 +30,17 @@ class DailyLogProvider extends ChangeNotifier {
 
   bool _loading = false;
 
+  /// Set when [listFoodLogs] fails so the UI can show a banner instead of
+  /// looking like an empty diary.
+  String? _diaryLoadError;
+
   // ----------------------------------------------------------------------- //
   // Public state                                                            //
   // ----------------------------------------------------------------------- //
 
   String? get userId => _userId;
   bool    get isLoading => _loading;
+  String? get diaryLoadError => _diaryLoadError;
   DateTime get selectedDate => _selectedDate;
   DateTime get date => _selectedDate; // backward compat
 
@@ -80,10 +85,12 @@ class DailyLogProvider extends ChangeNotifier {
       _proteinGoal = 150;
       _carbsGoal   = 250;
       _fatGoal     = 65;
+      _diaryLoadError = null;
       notifyListeners();
       return;
     }
 
+    _diaryLoadError = null;
     notifyListeners();
     await _loadGoals();
     await _loadEntriesFor(_selectedDate);
@@ -109,8 +116,16 @@ class DailyLogProvider extends ChangeNotifier {
   /// Force a reload of the currently-selected day from the backend.
   Future<void> refresh() async {
     if (_userId == null) return;
+    _diaryLoadError = null;
     _logsByDate.remove(_dateKey(_selectedDate));
     await _loadEntriesFor(_selectedDate);
+  }
+
+  /// Clears [diaryLoadError] without fetching (e.g. user dismissed a banner).
+  void clearDiaryLoadError() {
+    if (_diaryLoadError == null) return;
+    _diaryLoadError = null;
+    notifyListeners();
   }
 
   // ----------------------------------------------------------------------- //
@@ -264,9 +279,17 @@ class DailyLogProvider extends ChangeNotifier {
     if (uid == null) return;
 
     _loading = true;
+    _diaryLoadError = null;
     notifyListeners();
     try {
       final rows = await _api.listFoodLogs(userId: uid, date: d);
+      if (rows == null) {
+        _diaryLoadError =
+            'Could not load your diary. Check your connection and try again.';
+        _loading = false;
+        notifyListeners();
+        return;
+      }
       final log = DailyLog(
         date: d,
         calorieGoal: _calorieGoal,

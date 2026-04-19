@@ -16,6 +16,7 @@ class MacroRing extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     final percentage = goal > 0 ? (consumed / goal).clamp(0.0, 1.0) : 0.0;
 
     return Column(
@@ -32,7 +33,7 @@ class MacroRing extends StatelessWidget {
                 child: CircularProgressIndicator(
                   value: percentage,
                   strokeWidth: 8,
-                  backgroundColor: color.withOpacity(0.2),
+                  backgroundColor: color.withValues(alpha: 0.22),
                   valueColor: AlwaysStoppedAnimation<Color>(color),
                 ),
               ),
@@ -51,7 +52,7 @@ class MacroRing extends StatelessWidget {
                     '/ ${goal.toInt()}g',
                     style: TextStyle(
                       fontSize: 12,
-                      color: Colors.grey[600],
+                      color: cs.onSurfaceVariant,
                     ),
                   ),
                 ],
@@ -63,7 +64,7 @@ class MacroRing extends StatelessWidget {
         Text(
           label,
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Colors.grey[600],
+                color: cs.onSurfaceVariant,
               ),
         ),
       ],

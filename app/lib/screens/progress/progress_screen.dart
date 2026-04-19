@@ -53,6 +53,7 @@ class ProgressScreen extends StatelessWidget {
 
             _TodayCard(
               profile: profile,
+              selectedDate: diaryProv.selectedDate,
               consumedCalories: diaryProv.totalCalories,
               calorieGoal:      diaryProv.calorieGoal,
               consumedProtein:  diaryProv.totalProtein,
@@ -124,7 +125,10 @@ class _ProfileSummaryCard extends StatelessWidget {
                     hasData
                         ? _profileSubtitle(profile!)
                         : 'Tell us a bit about yourself to unlock personalised targets.',
-                    style: TextStyle(color: Colors.grey[700], fontSize: 13),
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      fontSize: 13,
+                    ),
                   ),
                 ],
               ),
@@ -206,7 +210,7 @@ class _WeightCard extends StatelessWidget {
             Expanded(child: _StatBlock(
               label: 'Target',
               value: target == null ? '—' : '${target.toStringAsFixed(1)} kg',
-              color: Colors.deepPurple,
+              color: Theme.of(context).colorScheme.tertiary,
             )),
             const SizedBox(width: 8),
             Expanded(child: _StatBlock(
@@ -224,15 +228,19 @@ class _WeightCard extends StatelessWidget {
             height: 160,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: Colors.grey.shade100,
+              color: Theme.of(context).colorScheme.surfaceContainerHighest,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.grey.shade300),
+              border: Border.all(
+                color: Theme.of(context).colorScheme.outlineVariant,
+              ),
             ),
             padding: const EdgeInsets.all(16),
             child: Text(
               'No weight logged yet.\nTap "Log" to add your first measurement.',
               textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.grey[700]),
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
             ),
           )
         else
@@ -276,6 +284,7 @@ class _WeightCard extends StatelessWidget {
 
 class _TodayCard extends StatelessWidget {
   final UserProfile? profile;
+  final DateTime selectedDate;
   final double consumedCalories, calorieGoal;
   final double consumedProtein, proteinGoal;
   final double consumedCarbs, carbsGoal;
@@ -283,6 +292,7 @@ class _TodayCard extends StatelessWidget {
 
   const _TodayCard({
     required this.profile,
+    required this.selectedDate,
     required this.consumedCalories,
     required this.calorieGoal,
     required this.consumedProtein,
@@ -297,10 +307,16 @@ class _TodayCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final tdee = profile != null ? NutritionMath.tdee(profile!) : null;
     final bmi  = profile != null ? NutritionMath.bmi(profile!)  : null;
+    final now = DateTime.now();
+    final day = DateTime(selectedDate.year, selectedDate.month, selectedDate.day);
+    final today = DateTime(now.year, now.month, now.day);
+    final title = day == today
+        ? 'Intake · today'
+        : 'Intake · ${selectedDate.day}/${selectedDate.month}/${selectedDate.year}';
 
     return _SectionCard(
       icon: Icons.today_outlined,
-      title: 'Today',
+      title: title,
       children: [
         _ProgressRow(
           label: 'Calories',

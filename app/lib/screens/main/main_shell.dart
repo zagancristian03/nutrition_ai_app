@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 
+import '../../providers/daily_log_provider.dart';
+import '../ai/ai_coach_screen.dart';
 import '../dashboard/dashboard_screen.dart';
 import '../diary/diary_screen.dart';
 import '../food/food_search_screen.dart';
@@ -14,10 +17,39 @@ class MainShell extends StatefulWidget {
   State<MainShell> createState() => _MainShellState();
 }
 
-class _MainShellState extends State<MainShell> {
+class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
   static const int _dashboardIndex = 0;
 
   int _selectedIndex = _dashboardIndex;
+
+  AppLifecycleState? _lastLifecycle;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    final wasPaused = _lastLifecycle == AppLifecycleState.paused;
+    _lastLifecycle = state;
+
+    if (state != AppLifecycleState.resumed || !mounted) return;
+    if (!wasPaused) return;
+
+    final diary = context.read<DailyLogProvider>();
+    if (diary.userId != null) {
+      diary.refresh();
+    }
+  }
 
   final List<Widget> _screens = const [
     DashboardScreen(),
@@ -62,7 +94,10 @@ class _MainShellState extends State<MainShell> {
               child: const Text('Cancel'),
             ),
             FilledButton(
-              style: FilledButton.styleFrom(backgroundColor: Colors.redAccent),
+              style: FilledButton.styleFrom(
+                backgroundColor: Theme.of(ctx).colorScheme.error,
+                foregroundColor: Theme.of(ctx).colorScheme.onError,
+              ),
               onPressed: () => Navigator.of(ctx).pop(true),
               child: const Text('Exit'),
             ),
@@ -85,6 +120,17 @@ class _MainShellState extends State<MainShell> {
           index: _selectedIndex,
           children: _screens,
         ),
+        // Persistent AI coach entry point, available from every tab.
+        // Uses `endFloat` so it sits above the bottom nav bar, not over it.
+        floatingActionButton: FloatingActionButton(
+          heroTag: 'ai_coach_fab',
+          tooltip: 'AI Coach',
+          onPressed: () => Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const AiCoachScreen()),
+          ),
+          child: const Icon(Icons.auto_awesome),
+        ),
+        floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
         bottomNavigationBar: BottomNavigationBar(
           type: BottomNavigationBarType.fixed,
           currentIndex: _selectedIndex,

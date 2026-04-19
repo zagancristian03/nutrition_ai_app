@@ -14,6 +14,7 @@ class StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Card(
       elevation: 2,
       child: Padding(
@@ -24,7 +25,7 @@ class StatCard extends StatelessWidget {
             Text(
               label,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Colors.grey[600],
+                    color: cs.onSurfaceVariant,
                   ),
             ),
             const SizedBox(height: 8),
@@ -32,7 +33,7 @@ class StatCard extends StatelessWidget {
               value,
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.bold,
-                    color: color,
+                    color: color ?? cs.primary,
                   ),
             ),
           ],
