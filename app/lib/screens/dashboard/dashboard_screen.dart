@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../providers/daily_log_provider.dart';
+import '../../providers/preferences_provider.dart';
 import '../../services/ai_service.dart';
 import '../../widgets/diary_day_controls.dart';
 import '../../widgets/macro_ring.dart';
@@ -32,6 +33,7 @@ class DashboardScreen extends StatelessWidget {
             selectedDate.day == now.day;
 
         final cs = Theme.of(context).colorScheme;
+        final showCoachTips = context.watch<PreferencesProvider>().showCoachTips;
 
         final insights = NutritionInsights.build(
           selectedDate: selectedDate,
@@ -113,7 +115,7 @@ class DashboardScreen extends StatelessWidget {
                       ),
                     ),
                   ),
-                if (insights.isNotEmpty) ...[
+                if (showCoachTips && insights.isNotEmpty) ...[
                   Card(
                     elevation: 0,
                     color: Theme.of(context).colorScheme.surfaceContainerHighest,

@@ -179,6 +179,49 @@ def create_food_log(payload: FoodLogCreate) -> dict:
 
 
 # --------------------------------------------------------------------------- #
+# GET /food-logs/recent-foods — one row per food_id, latest activity first    #
+# --------------------------------------------------------------------------- #
+_RECENT_FOODS_SQL = f"""
+    SELECT * FROM (
+        SELECT DISTINCT ON (food_id)
+            id,
+            user_id,
+            food_id::text               AS food_id,
+            food_name,
+            logged_date,
+            meal_type,
+            grams::float8               AS grams,
+            servings::float8            AS servings,
+            calories::float8            AS calories,
+            protein::float8             AS protein,
+            carbs::float8               AS carbs,
+            fat::float8                 AS fat,
+            created_at
+        FROM food_logs
+        WHERE user_id = %s
+        ORDER BY food_id, created_at DESC
+    ) AS t
+    ORDER BY t.created_at DESC
+    LIMIT %s
+"""
+
+
+@router.get("/recent-foods", response_model=list[FoodLogOut])
+def list_recent_distinct_foods(
+    user_id: str = Query(..., min_length=1, max_length=128),
+    limit: int = Query(default=30, ge=1, le=100),
+) -> list[dict]:
+    """
+    Foods the user has logged before, ordered by most recently logged instance
+    (any meal). Each `food_id` appears once — the row is the latest diary
+    entry for that catalog item (includes snapshot grams/servings for quick re-log).
+    """
+    with get_conn() as conn, conn.cursor(cursor_factory=RealDictCursor) as cur:
+        cur.execute(_RECENT_FOODS_SQL, (user_id, limit))
+        return [dict(r) for r in cur.fetchall()]
+
+
+# --------------------------------------------------------------------------- #
 # GET /food-logs                                                              #
 # --------------------------------------------------------------------------- #
 @router.get("", response_model=list[FoodLogOut])

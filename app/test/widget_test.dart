@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 
 import 'package:app/config/theme.dart';
+import 'package:app/providers/preferences_provider.dart';
 import 'package:app/providers/theme_mode_provider.dart';
 
 void main() {
@@ -13,6 +14,7 @@ void main() {
           ChangeNotifierProvider(
             create: (_) => ThemeModeProvider(initial: ThemeMode.light),
           ),
+          ChangeNotifierProvider(create: (_) => PreferencesProvider()),
         ],
         child: Consumer<ThemeModeProvider>(
           builder: (context, theme, _) {

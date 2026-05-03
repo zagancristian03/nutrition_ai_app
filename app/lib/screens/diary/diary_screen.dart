@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../models/food_entry.dart';
 import '../../providers/daily_log_provider.dart';
+import '../../providers/preferences_provider.dart';
 import '../../services/ai_service.dart';
 import '../../widgets/diary_day_controls.dart';
 import '../../widgets/meal_section.dart';
@@ -28,6 +29,32 @@ class DiaryScreen extends StatelessWidget {
     );
   }
 
+  Future<bool> _confirmRemove(BuildContext context, String foodName) async {
+    final cs = Theme.of(context).colorScheme;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Remove from diary?'),
+        content: Text('“$foodName” will be removed from this day.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: cs.error,
+              foregroundColor: cs.onError,
+            ),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Remove'),
+          ),
+        ],
+      ),
+    );
+    return ok ?? false;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer<DailyLogProvider>(
@@ -35,6 +62,7 @@ class DiaryScreen extends StatelessWidget {
         final entriesByMeal = provider.entriesByMealType;
         const mealTypes = ['Breakfast', 'Lunch', 'Dinner', 'Snack'];
         final cs = Theme.of(context).colorScheme;
+        final prefs = context.watch<PreferencesProvider>();
 
         final insights = NutritionInsights.build(
           selectedDate: provider.selectedDate,
@@ -121,7 +149,7 @@ class DiaryScreen extends StatelessWidget {
                           ),
                         ),
                       ),
-                      if (insights.isNotEmpty)
+                      if (prefs.showCoachTips && insights.isNotEmpty)
                         SliverPadding(
                           padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
                           sliver: SliverToBoxAdapter(
@@ -231,17 +259,31 @@ class DiaryScreen extends StatelessWidget {
                                 mealName: mealType,
                                 foods: foods,
                                 totalCalories: totalCalories.toInt(),
-                                onAddFood: () =>
-                                    _openFoodSearch(context, mealType),
-                                onDeleteFood: (i) {
-                                  if (i >= 0 && i < foods.length) {
-                                    final entry =
-                                        foods[i]['entry'] as FoodEntry;
-                                    provider.removeEntry(entry);
-                                  }
+                                onAddFood: () {
+                                  prefs.hapticSelect();
+                                  _openFoodSearch(context, mealType);
                                 },
-                                onEditFood: (entry) =>
-                                    _openEditEntry(context, entry as FoodEntry),
+                                onDeleteFood: (i) async {
+                                  if (i < 0 || i >= foods.length) return;
+                                  final entry =
+                                      foods[i]['entry'] as FoodEntry;
+                                  if (prefs.confirmDelete) {
+                                    final ok = await _confirmRemove(
+                                      context,
+                                      entry.foodName,
+                                    );
+                                    if (!ok) return;
+                                  }
+                                  prefs.hapticLight();
+                                  await provider.removeEntry(entry);
+                                },
+                                onEditFood: (entry) {
+                                  prefs.hapticSelect();
+                                  _openEditEntry(
+                                    context,
+                                    entry as FoodEntry,
+                                  );
+                                },
                               );
                             },
                             childCount: mealTypes.length,

@@ -14,7 +14,7 @@ import 'food_api_service.dart';
 ///
 /// Everything is keyed by [userId] — pass in the Firebase UID.
 class DiaryApiService {
-  static const String _baseUrl = FoodApiService.baseUrl;
+  static String get _baseUrl => FoodApiService.baseUrl;
   static const Duration _timeout = Duration(seconds: 10);
 
   /// Convert any incoming JSON value (num OR numeric-string) to double.
@@ -119,6 +119,43 @@ class DiaryApiService {
     } catch (e, st) {
       debugPrint('[DiaryApiService] listFoodLogs error: $e\n$st');
       return null;
+    }
+  }
+
+  /// GET /food-logs/recent-foods?user_id=... — latest logged instance per food_id.
+  Future<List<Map<String, dynamic>>> listRecentDistinctFoodsRaw({
+    required String userId,
+    int limit = 40,
+  }) async {
+    final uri =
+        Uri.parse('$_baseUrl/food-logs/recent-foods').replace(queryParameters: {
+      'user_id': userId,
+      'limit':   '$limit',
+    });
+
+    try {
+      final response = await http
+          .get(uri, headers: {'Content-Type': 'application/json'})
+          .timeout(_timeout);
+
+      if (response.statusCode != 200) {
+        debugPrint(
+          '[DiaryApiService] listRecentDistinctFoodsRaw HTTP '
+          '${response.statusCode} body=${response.body}',
+        );
+        return const [];
+      }
+
+      final decoded = json.decode(response.body);
+      if (decoded is! List) return const [];
+
+      return decoded
+          .whereType<Map<String, dynamic>>()
+          .map((e) => Map<String, dynamic>.from(e))
+          .toList();
+    } catch (e, st) {
+      debugPrint('[DiaryApiService] listRecentDistinctFoodsRaw error: $e\n$st');
+      return const [];
     }
   }
 

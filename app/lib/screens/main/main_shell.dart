@@ -30,8 +30,11 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
   }
 
+  final ValueNotifier<int> _addTabBump = ValueNotifier(0);
+
   @override
   void dispose() {
+    _addTabBump.dispose();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
@@ -51,17 +54,21 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
     }
   }
 
-  final List<Widget> _screens = const [
-    DashboardScreen(),
-    DiaryScreen(),
-    FoodSearchScreen(),
-    ProgressScreen(),
-    MoreScreen(),
-  ];
-
   void _onItemTapped(int index) {
+    final prev = _selectedIndex;
     setState(() => _selectedIndex = index);
+    if (index == 2 && prev != 2) {
+      _addTabBump.value++;
+    }
   }
+
+  List<Widget> _stackChildren() => [
+        const DashboardScreen(),
+        const DiaryScreen(),
+        FoodSearchScreen(addTabActivationCount: _addTabBump),
+        const ProgressScreen(),
+        const MoreScreen(),
+      ];
 
   /// Android/iOS system-back handler.
   /// - Not on Dashboard → jump to Dashboard (no exit).
@@ -118,7 +125,7 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
       child: Scaffold(
         body: IndexedStack(
           index: _selectedIndex,
-          children: _screens,
+          children: _stackChildren(),
         ),
         // Persistent AI coach entry point, available from every tab.
         // Uses `endFloat` so it sits above the bottom nav bar, not over it.

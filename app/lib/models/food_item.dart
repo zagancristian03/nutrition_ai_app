@@ -86,6 +86,42 @@ class FoodItem {
     );
   }
 
+  static FoodItem fromRecentFoodLog(Map<String, dynamic> j) {
+    double asDouble(dynamic v) {
+      if (v == null) return 0.0;
+      if (v is num) return v.toDouble();
+      if (v is String) return double.tryParse(v) ?? 0.0;
+      return 0.0;
+    }
+
+    double? asDoubleOrNull(dynamic v) {
+      if (v == null) return null;
+      if (v is num) return v.toDouble();
+      if (v is String) return double.tryParse(v);
+      return null;
+    }
+
+    final grams = asDoubleOrNull(j['grams']);
+    final calories = asDouble(j['calories']);
+    final protein = asDouble(j['protein']);
+    final carbs = asDouble(j['carbs']);
+    final fat =  asDouble(j['fat']);
+    final g = (grams != null && grams > 0) ? grams : 100.0;
+    final factor = g > 0 ? 100.0 / g : 0.0;
+
+    return FoodItem(
+      id: j['food_id']?.toString() ?? '',
+      name: j['food_name'] as String? ?? '',
+      brand: null,
+      caloriesPer100g: calories * factor,
+      proteinPer100g:  protein * factor,
+      carbsPer100g:    carbs * factor,
+      fatPer100g:      fat * factor,
+      servingSizeG: grams ?? 100.0,
+      unit: 'g',
+    );
+  }
+
   Map<String, dynamic> toJson() {
     return {
       'id': id,

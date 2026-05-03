@@ -11,7 +11,7 @@ import 'food_api_service.dart';
 /// All requests are keyed by the Firebase UID. The OpenAI key NEVER leaves
 /// the FastAPI server — this client only ever talks to our own backend.
 class AiApiService {
-  static const String _baseUrl = FoodApiService.baseUrl;
+  static String get _baseUrl => FoodApiService.baseUrl;
   static const Duration _shortTimeout = Duration(seconds: 10);
   static const Duration _longTimeout  = Duration(seconds: 45);
 
@@ -128,6 +128,199 @@ class AiApiService {
       debugPrint('[AiApiService] getChatHistory error: $e');
     }
     return null;
+  }
+
+  /// GET /ai/chat/threads?user_id=...
+  Future<List<AiChatThreadSummary>> listThreads({
+    required String userId,
+    int limit = 30,
+  }) async {
+    final uri = Uri.parse('$_baseUrl/ai/chat/threads').replace(
+      queryParameters: {
+        'user_id': userId,
+        'limit': '$limit',
+      },
+    );
+    try {
+      final r = await http.get(uri).timeout(_shortTimeout);
+      if (r.statusCode == 200) {
+        final decoded = json.decode(r.body);
+        if (decoded is List) {
+          return decoded
+              .whereType<Map<String, dynamic>>()
+              .map(AiChatThreadSummary.fromJson)
+              .toList();
+        }
+      }
+      debugPrint('[AiApiService] listThreads ${r.statusCode} ${r.body}');
+    } catch (e) {
+      debugPrint('[AiApiService] listThreads error: $e');
+    }
+    return const [];
+  }
+
+  /// POST /ai/chat/threads — empty thread, ready for the first message.
+  Future<AiChatThreadSummary?> createChatThread({
+    required String userId,
+    String? title,
+    int? folderId,
+  }) async {
+    final uri = Uri.parse('$_baseUrl/ai/chat/threads');
+    final body = <String, dynamic>{
+      'user_id': userId,
+      if (title != null && title.trim().isNotEmpty) 'title': title.trim(),
+      if (folderId != null) 'folder_id': folderId,
+    };
+    try {
+      final r = await http
+          .post(
+            uri,
+            headers: {'Content-Type': 'application/json'},
+            body: json.encode(body),
+          )
+          .timeout(_shortTimeout);
+      if (r.statusCode == 200) {
+        final decoded = json.decode(r.body);
+        if (decoded is Map<String, dynamic>) {
+          return AiChatThreadSummary.fromJson(decoded);
+        }
+      }
+      debugPrint('[AiApiService] createChatThread ${r.statusCode} ${r.body}');
+    } catch (e) {
+      debugPrint('[AiApiService] createChatThread error: $e');
+    }
+    return null;
+  }
+
+  /// PATCH /ai/chat/threads/{threadId}?user_id=...
+  ///
+  /// [patch] may include `title` and/or `folder_id` (use `null` for unfiled).
+  Future<AiChatThreadSummary?> patchChatThread({
+    required String userId,
+    required int threadId,
+    required Map<String, dynamic> patch,
+  }) async {
+    if (patch.isEmpty) return null;
+    final uri = Uri.parse('$_baseUrl/ai/chat/threads/$threadId').replace(
+      queryParameters: {'user_id': userId},
+    );
+    try {
+      final r = await http
+          .patch(
+            uri,
+            headers: {'Content-Type': 'application/json'},
+            body: json.encode(patch),
+          )
+          .timeout(_shortTimeout);
+      if (r.statusCode >= 200 && r.statusCode < 300) {
+        final decoded = json.decode(r.body);
+        if (decoded is Map<String, dynamic>) {
+          return AiChatThreadSummary.fromJson(decoded);
+        }
+      }
+      debugPrint('[AiApiService] patchChatThread ${r.statusCode} ${r.body}');
+    } catch (e) {
+      debugPrint('[AiApiService] patchChatThread error: $e');
+    }
+    return null;
+  }
+
+  /// GET /ai/chat/folders?user_id=...
+  Future<List<AiChatFolder>> listFolders({required String userId}) async {
+    final uri = Uri.parse('$_baseUrl/ai/chat/folders').replace(
+      queryParameters: {'user_id': userId},
+    );
+    try {
+      final r = await http.get(uri).timeout(_shortTimeout);
+      if (r.statusCode == 200) {
+        final decoded = json.decode(r.body);
+        if (decoded is List) {
+          return decoded
+              .whereType<Map<String, dynamic>>()
+              .map(AiChatFolder.fromJson)
+              .toList();
+        }
+      }
+      debugPrint('[AiApiService] listFolders ${r.statusCode} ${r.body}');
+    } catch (e) {
+      debugPrint('[AiApiService] listFolders error: $e');
+    }
+    return const [];
+  }
+
+  /// POST /ai/chat/folders
+  Future<AiChatFolder?> createFolder({
+    required String userId,
+    required String name,
+  }) async {
+    final uri = Uri.parse('$_baseUrl/ai/chat/folders');
+    try {
+      final r = await http
+          .post(
+            uri,
+            headers: {'Content-Type': 'application/json'},
+            body: json.encode({'user_id': userId, 'name': name.trim()}),
+          )
+          .timeout(_shortTimeout);
+      if (r.statusCode >= 200 && r.statusCode < 300) {
+        final decoded = json.decode(r.body);
+        if (decoded is Map<String, dynamic>) {
+          return AiChatFolder.fromJson(decoded);
+        }
+      }
+      debugPrint('[AiApiService] createFolder ${r.statusCode} ${r.body}');
+    } catch (e) {
+      debugPrint('[AiApiService] createFolder error: $e');
+    }
+    return null;
+  }
+
+  /// PATCH /ai/chat/folders/{folderId}?user_id=...
+  Future<AiChatFolder?> renameFolder({
+    required String userId,
+    required int folderId,
+    required String name,
+  }) async {
+    final uri = Uri.parse('$_baseUrl/ai/chat/folders/$folderId').replace(
+      queryParameters: {'user_id': userId},
+    );
+    try {
+      final r = await http
+          .patch(
+            uri,
+            headers: {'Content-Type': 'application/json'},
+            body: json.encode({'name': name.trim()}),
+          )
+          .timeout(_shortTimeout);
+      if (r.statusCode == 200) {
+        final decoded = json.decode(r.body);
+        if (decoded is Map<String, dynamic>) {
+          return AiChatFolder.fromJson(decoded);
+        }
+      }
+      debugPrint('[AiApiService] renameFolder ${r.statusCode} ${r.body}');
+    } catch (e) {
+      debugPrint('[AiApiService] renameFolder error: $e');
+    }
+    return null;
+  }
+
+  /// DELETE /ai/chat/folders/{folderId}?user_id=...
+  Future<bool> deleteFolder({
+    required String userId,
+    required int folderId,
+  }) async {
+    final uri = Uri.parse('$_baseUrl/ai/chat/folders/$folderId').replace(
+      queryParameters: {'user_id': userId},
+    );
+    try {
+      final r = await http.delete(uri).timeout(_shortTimeout);
+      if (r.statusCode == 200) return true;
+      debugPrint('[AiApiService] deleteFolder ${r.statusCode} ${r.body}');
+    } catch (e) {
+      debugPrint('[AiApiService] deleteFolder error: $e');
+    }
+    return false;
   }
 
   // --------------------------------------------------------------------- //
@@ -371,6 +564,80 @@ class AiChatReply {
   }
 }
 
+class AiChatFolder {
+  final int id;
+  final String name;
+  final int sortOrder;
+
+  const AiChatFolder({
+    required this.id,
+    required this.name,
+    this.sortOrder = 0,
+  });
+
+  factory AiChatFolder.fromJson(Map<String, dynamic> j) {
+    final idRaw = j['id'];
+    final id = idRaw is int ? idRaw : int.tryParse(idRaw?.toString() ?? '') ?? 0;
+    final so = j['sort_order'];
+    final order = so is int ? so : int.tryParse(so?.toString() ?? '0') ?? 0;
+    return AiChatFolder(
+      id: id,
+      name: (j['name'] as String?)?.trim().isNotEmpty == true
+          ? (j['name'] as String).trim()
+          : 'Folder',
+      sortOrder: order,
+    );
+  }
+}
+
+class AiChatThreadSummary {
+  final int id;
+  final String? title;
+  final int messageCount;
+  final DateTime? updatedAt;
+  final int? folderId;
+
+  const AiChatThreadSummary({
+    required this.id,
+    this.title,
+    this.messageCount = 0,
+    this.updatedAt,
+    this.folderId,
+  });
+
+  String get displayTitle {
+    final t = title?.trim();
+    if (t != null && t.isNotEmpty) return t;
+    return 'Chat #$id';
+  }
+
+  factory AiChatThreadSummary.fromJson(Map<String, dynamic> j) {
+    final idRaw = j['id'];
+    final id = idRaw is int ? idRaw : int.tryParse(idRaw?.toString() ?? '') ?? 0;
+    final mc = j['message_count'];
+    final count = mc is int ? mc : int.tryParse(mc?.toString() ?? '0') ?? 0;
+    DateTime? u;
+    final ur = j['updated_at']?.toString();
+    if (ur != null && ur.isNotEmpty) {
+      u = DateTime.tryParse(ur)?.toLocal();
+    }
+    int? fid;
+    final fr = j['folder_id'];
+    if (fr is int) {
+      fid = fr;
+    } else if (fr != null) {
+      fid = int.tryParse(fr.toString());
+    }
+    return AiChatThreadSummary(
+      id: id,
+      title: j['title'] as String?,
+      messageCount: count,
+      updatedAt: u,
+      folderId: fid,
+    );
+  }
+}
+
 class AiChatMessage {
   final String role;     // 'user' | 'assistant' | 'system'
   final String content;
@@ -420,8 +687,14 @@ class AiChatHistory {
       }
     }
     final tid = j['thread_id'];
+    int? threadId;
+    if (tid is int) {
+      threadId = tid;
+    } else if (tid != null) {
+      threadId = int.tryParse(tid.toString());
+    }
     return AiChatHistory(
-      threadId: tid is int ? tid : int.tryParse(tid?.toString() ?? ''),
+      threadId: threadId,
       title:    j['title']   as String?,
       summary:  j['summary'] as String?,
       messages: msgs,

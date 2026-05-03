@@ -22,7 +22,7 @@ class FoodApiService {
   ///   Firewall. `No route to host` = no L2/L3 path (wrong IP, isolation, or
   ///   PC not reachable on that interface).
   /// - **Android http://** also needs `usesCleartextTraffic` in AndroidManifest.
-  static const String baseUrl = 'http://$kBackendLanHost:$kBackendPort';
+  static String get baseUrl => kBackendBaseUrl;
 
   static const String _searchPath = '/foods/search';
   static const String _foodsPath = '/foods';
@@ -53,8 +53,12 @@ class FoodApiService {
       }
     } else if (e is TimeoutException) {
       debugPrint(
-        '[FoodApiService]   hint: Timeout — host not responding (firewall, '
-        'wrong IP, or server down).',
+        '[FoodApiService]   hint: Timeout — PC not reachable at baseUrl. Fix: '
+        '(1) Run backend: `uvicorn main:app --host 0.0.0.0 --port 8000` from '
+        'backend/; (2) On PC run `ipconfig`, set app/lib/config/constants.dart '
+        '`kBackendLanHost` to the IPv4 on the same subnet as the phone, or '
+        '`flutter run --dart-define=API_BASE_URL=http://THAT_IP:8000`; '
+        '(3) Windows Firewall allow inbound TCP 8000.',
       );
     } else if (e is http.ClientException) {
       debugPrint(

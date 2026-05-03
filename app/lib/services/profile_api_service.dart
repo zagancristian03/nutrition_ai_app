@@ -15,7 +15,7 @@ import 'food_api_service.dart';
 ///
 /// All calls are keyed by the Firebase UID passed in `userId`.
 class ProfileApiService {
-  static const String _baseUrl = FoodApiService.baseUrl;
+  static String get _baseUrl => FoodApiService.baseUrl;
   static const Duration _timeout = Duration(seconds: 10);
 
   static String _dateToIso(DateTime d) =>

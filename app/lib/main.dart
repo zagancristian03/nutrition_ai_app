@@ -7,6 +7,7 @@ import 'config/theme.dart';
 import 'firebase_options.dart';
 import 'providers/ai_provider.dart';
 import 'providers/daily_log_provider.dart';
+import 'providers/preferences_provider.dart';
 import 'providers/saved_items_provider.dart';
 import 'providers/theme_mode_provider.dart';
 import 'providers/user_profile_provider.dart';
@@ -19,13 +20,19 @@ Future<void> main() async {
   );
   final prefs = await SharedPreferences.getInstance();
   final initialTheme = ThemeModeProvider.readInitial(prefs);
-  runApp(MyApp(initialThemeMode: initialTheme));
+  final initialPrefs = PreferencesProvider.readInitial(prefs);
+  runApp(MyApp(initialThemeMode: initialTheme, initialPreferences: initialPrefs));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key, required this.initialThemeMode});
+  const MyApp({
+    super.key,
+    required this.initialThemeMode,
+    required this.initialPreferences,
+  });
 
   final ThemeMode initialThemeMode;
+  final PreferencesProvider initialPreferences;
 
   @override
   Widget build(BuildContext context) {
@@ -34,6 +41,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(
           create: (_) => ThemeModeProvider(initial: initialThemeMode),
         ),
+        ChangeNotifierProvider.value(value: initialPreferences),
         ChangeNotifierProvider(create: (_) => DailyLogProvider()),
         ChangeNotifierProvider(create: (_) => SavedItemsProvider()),
         ChangeNotifierProvider(create: (_) => UserProfileProvider()),

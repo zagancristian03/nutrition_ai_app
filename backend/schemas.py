@@ -338,8 +338,51 @@ class AiThreadOut(BaseModel):
     title:         str | None = None
     summary:       str | None = None
     message_count: int = 0
+    folder_id:     int | None = None
     created_at:    datetime | None = None
     updated_at:    datetime | None = None
+
+
+class AiThreadCreate(BaseModel):
+    """Create an empty conversation; the user can send the first message next."""
+
+    user_id:   str  = Field(..., min_length=1, max_length=128)
+    title:     str | None = Field(default=None, max_length=120)
+    folder_id: int  | None = Field(default=None, ge=1)
+
+
+class AiThreadUpdate(BaseModel):
+    """Partial update: only fields present in the JSON body are applied."""
+
+    title:     str | None = Field(default=None, max_length=120)
+    folder_id: int | None = None
+
+    @model_validator(mode="after")
+    def _folder_id_positive(self) -> AiThreadUpdate:
+        fid = self.folder_id
+        if fid is not None and fid < 1:
+            raise ValueError("folder_id must be a positive integer")
+        return self
+
+
+class AiFolderOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id:          int
+    user_id:     str
+    name:           str
+    sort_order:     int = 0
+    created_at:  datetime | None = None
+    updated_at:  datetime | None = None
+
+
+class AiFolderCreate(BaseModel):
+    user_id: str = Field(..., min_length=1, max_length=128)
+    name:    str = Field(..., min_length=1, max_length=120)
+
+
+class AiFolderRename(BaseModel):
+    name: str = Field(..., min_length=1, max_length=120)
 
 
 class AiReviewOut(BaseModel):

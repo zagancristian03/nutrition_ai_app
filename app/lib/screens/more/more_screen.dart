@@ -2,12 +2,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../providers/theme_mode_provider.dart';
 import '../../providers/user_profile_provider.dart';
-import '../../services/auth_service.dart';
 import '../ai/ai_coach_screen.dart';
-import '../goals/edit_goals_screen.dart';
-import '../profile/edit_profile_screen.dart';
+import '../settings/settings_screen.dart';
 
 class MoreScreen extends StatelessWidget {
   const MoreScreen({super.key});
@@ -25,17 +22,16 @@ class MoreScreen extends StatelessWidget {
             : _emailHandle(email);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('More'),
-      ),
+      appBar: AppBar(title: const Text('More')),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
         children: [
-          _ProfileHeader(name: name, email: email, profileSummary: _summary(profile)),
+          _ProfileHeader(
+            name: name,
+            email: email,
+            profileSummary: _summary(profile),
+          ),
           const SizedBox(height: 16),
-
-          const _AppearanceCard(),
-          const SizedBox(height: 8),
 
           _ActionTile(
             icon: Icons.auto_awesome,
@@ -46,38 +42,11 @@ class MoreScreen extends StatelessWidget {
             ),
           ),
           _ActionTile(
-            icon: Icons.person_outline,
-            title: 'Edit profile',
-            subtitle: 'Body stats, goal, activity level',
+            icon: Icons.settings_outlined,
+            title: 'Settings',
+            subtitle: 'Theme, profile, goals, account, about',
             onTap: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const EditProfileScreen()),
-            ),
-          ),
-          _ActionTile(
-            icon: Icons.flag_outlined,
-            title: 'Daily targets',
-            subtitle: 'Calorie + macro goals',
-            onTap: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const EditGoalsScreen()),
-            ),
-          ),
-
-          const SizedBox(height: 20),
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton.icon(
-              onPressed: () async {
-                await AuthService().logout();
-              },
-              icon: Icon(Icons.logout, color: Theme.of(context).colorScheme.error),
-              label: Text(
-                'Log out',
-                style: TextStyle(color: Theme.of(context).colorScheme.error),
-              ),
-              style: OutlinedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                side: BorderSide(color: Theme.of(context).colorScheme.error),
-              ),
+              MaterialPageRoute(builder: (_) => const SettingsScreen()),
             ),
           ),
         ],
@@ -100,70 +69,6 @@ class MoreScreen extends StatelessWidget {
     }
     if (profile.heightCm != null) parts.add('${profile.heightCm!.round()} cm');
     return parts.isEmpty ? null : parts.join(' · ');
-  }
-}
-
-class _AppearanceCard extends StatelessWidget {
-  const _AppearanceCard();
-
-  @override
-  Widget build(BuildContext context) {
-    final themeProv = context.watch<ThemeModeProvider>();
-    final cs = Theme.of(context).colorScheme;
-
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: cs.outlineVariant),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Appearance',
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'Light, dark, or match your device',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: cs.onSurfaceVariant,
-                  ),
-            ),
-            const SizedBox(height: 12),
-            SegmentedButton<ThemeMode>(
-              showSelectedIcon: false,
-              segments: const [
-                ButtonSegment<ThemeMode>(
-                  value: ThemeMode.light,
-                  icon: Icon(Icons.light_mode_outlined, size: 18),
-                  label: Text('Light'),
-                ),
-                ButtonSegment<ThemeMode>(
-                  value: ThemeMode.dark,
-                  icon: Icon(Icons.dark_mode_outlined, size: 18),
-                  label: Text('Dark'),
-                ),
-                ButtonSegment<ThemeMode>(
-                  value: ThemeMode.system,
-                  icon: Icon(Icons.brightness_auto_outlined, size: 18),
-                  label: Text('System'),
-                ),
-              ],
-              selected: {themeProv.themeMode},
-              onSelectionChanged: (Set<ThemeMode> next) {
-                context.read<ThemeModeProvider>().setThemeMode(next.first);
-              },
-            ),
-          ],
-        ),
-      ),
-    );
   }
 }
 
@@ -201,24 +106,31 @@ class _ProfileHeader extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(name,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.w700,
-                          )),
+                  Text(
+                    name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                  ),
                   const SizedBox(height: 2),
-                  Text(email,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(color: cs.onSurfaceVariant, fontSize: 13)),
+                  Text(
+                    email,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(color: cs.onSurfaceVariant, fontSize: 13),
+                  ),
                   if (profileSummary != null) ...[
                     const SizedBox(height: 6),
-                    Text(profileSummary!,
-                        style: TextStyle(
-                            color: cs.primary,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600)),
+                    Text(
+                      profileSummary!,
+                      style: TextStyle(
+                        color: cs.primary,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ],
                 ],
               ),

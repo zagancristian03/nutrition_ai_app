@@ -138,19 +138,23 @@ class DailyLogProvider extends ChangeNotifier {
   Future<FoodEntry?> addEntryForFood({
     required String foodId,
     required String mealType,
-    required double grams,
-    required double servings,
+    double? grams,
+    double? servings,
   }) async {
     final uid = _userId;
     if (uid == null) return null;
+
+    final gSend = (grams != null && grams > 0) ? grams : null;
+    final sSend = (servings != null && servings > 0) ? servings : null;
+    if (gSend == null && sSend == null) return null;
 
     final created = await _api.createFoodLog(
       userId:     uid,
       foodId:     foodId,
       loggedDate: _selectedDate,
       mealType:   mealType,
-      grams:      grams,
-      servings:   servings,
+      grams:      gSend,
+      servings:   sSend,
     );
 
     if (created == null) return null;

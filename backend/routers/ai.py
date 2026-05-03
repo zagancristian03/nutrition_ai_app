@@ -5,6 +5,12 @@
     POST  /ai/chat                                         -> AiChatResponse
     GET   /ai/chat/history                                 -> AiChatHistory
     GET   /ai/chat/threads                                 -> list[AiThreadOut]
+    POST  /ai/chat/threads                                 -> AiThreadOut (empty thread)
+    PATCH /ai/chat/threads/{id}?user_id=                   -> AiThreadOut (rename / move)
+    GET   /ai/chat/folders                                 -> list[AiFolderOut]
+    POST  /ai/chat/folders                                 -> AiFolderOut
+    PATCH /ai/chat/folders/{id}                            -> AiFolderOut (rename)
+    DELETE /ai/chat/folders/{id}                          -> {ok: true}
     POST  /ai/review/day                                   -> AiReviewOut
     POST  /ai/review/week                                  -> AiReviewOut
     POST  /ai/recommend/meal                               -> AiMealRecommendations
@@ -18,18 +24,23 @@ from __future__ import annotations
 import logging
 from datetime import date
 
-from fastapi import APIRouter, HTTPException, Path, Query
+from fastapi import APIRouter, Body, HTTPException, Path, Query
 
 from ai import services
 from schemas import (
     AiChatHistory,
     AiChatRequest,
     AiChatResponse,
+    AiFolderCreate,
+    AiFolderOut,
+    AiFolderRename,
     AiMealRecommendations,
     AiOnboardingPayload,
     AiProfileOut,
     AiReviewOut,
+    AiThreadCreate,
     AiThreadOut,
+    AiThreadUpdate,
 )
 
 router = APIRouter(prefix="/ai", tags=["ai"])
@@ -119,6 +130,91 @@ def list_threads(
     # Late import to keep the router file tiny.
     from ai import memory
     return memory.list_threads(user_id, limit=limit)
+
+
+@router.post("/chat/threads", response_model=AiThreadOut)
+def create_thread(payload: AiThreadCreate) -> dict:
+    from ai import memory
+
+    try:
+        return memory.create_thread(
+            payload.user_id,
+            payload.title,
+            folder_id=payload.folder_id,
+        )
+    except LookupError as e:
+        raise HTTPException(status_code=404, detail=str(e)) from e
+
+
+@router.patch("/chat/threads/{thread_id}", response_model=AiThreadOut)
+def patch_thread(
+    thread_id: int,
+    user_id: str = Query(..., min_length=1, max_length=128),
+    payload: AiThreadUpdate = Body(...),
+) -> dict:
+    from ai import memory
+
+    try:
+        data = payload.model_dump(exclude_unset=True)
+        row = memory.patch_thread(user_id, thread_id, data)
+    except LookupError as e:
+        raise HTTPException(status_code=404, detail=str(e)) from e
+    if row is None:
+        raise HTTPException(status_code=404, detail="thread not found")
+    return row
+
+
+@router.get("/chat/folders", response_model=list[AiFolderOut])
+def list_chat_folders(
+    user_id: str = Query(..., min_length=1, max_length=128),
+) -> list[dict]:
+    from ai import memory
+    return memory.list_folders(user_id)
+
+
+@router.post("/chat/folders", response_model=AiFolderOut)
+def create_chat_folder(payload: AiFolderCreate) -> dict:
+    from ai import memory
+
+    try:
+        return memory.create_folder(payload.user_id, payload.name)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+    except Exception as e:  # noqa: BLE001
+        log.exception("create_chat_folder failed")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Could not create folder: {type(e).__name__}",
+        ) from e
+
+
+@router.patch("/chat/folders/{folder_id}", response_model=AiFolderOut)
+def rename_chat_folder(
+    folder_id: int,
+    user_id: str = Query(..., min_length=1, max_length=128),
+    payload: AiFolderRename = Body(...),
+) -> dict:
+    from ai import memory
+
+    try:
+        row = memory.rename_folder(user_id, folder_id, payload.name)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+    if row is None:
+        raise HTTPException(status_code=404, detail="folder not found")
+    return row
+
+
+@router.delete("/chat/folders/{folder_id}")
+def delete_chat_folder(
+    folder_id: int,
+    user_id: str = Query(..., min_length=1, max_length=128),
+) -> dict:
+    from ai import memory
+
+    if not memory.delete_folder(user_id, folder_id):
+        raise HTTPException(status_code=404, detail="folder not found")
+    return {"ok": True}
 
 
 # --------------------------------------------------------------------------- #
