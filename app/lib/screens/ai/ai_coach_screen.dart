@@ -290,14 +290,36 @@ class _AiCoachScreenState extends State<AiCoachScreen> {
   }
 
   Future<void> _newChat({int? folderId}) async {
-    await context.read<AiProvider>().createNewChat(folderId: folderId);
+    final ai = context.read<AiProvider>();
+    if (ai.sending) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Wait for the reply to finish first.')),
+      );
+      return;
+    }
+    await ai.createNewChat(folderId: folderId);
     if (!mounted) return;
     _scrollToBottom();
   }
 
   Future<void> _pickThread(int threadId) async {
-    await context.read<AiProvider>().selectThread(threadId);
+    final ai = context.read<AiProvider>();
+    if (ai.sending) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Wait for the reply to finish before switching chats.')),
+      );
+      return;
+    }
+    final ok = await ai.selectThread(threadId);
     if (!mounted) return;
+    if (!ok) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not open that chat.')),
+      );
+      return;
+    }
     _scrollToBottom();
   }
 
@@ -332,7 +354,7 @@ class _AiCoachScreenState extends State<AiCoachScreen> {
             IconButton(
               tooltip: 'New chat',
               icon: const Icon(Icons.add_comment_outlined),
-              onPressed: () => _newChat(),
+              onPressed: ai.sending ? null : () => _newChat(),
             ),
           if (ai.onboardingDone)
             IconButton(
@@ -429,10 +451,11 @@ class _ChatsDrawer extends StatelessWidget {
     return '${t.day}/${t.month}/${t.year}';
   }
 
-  Widget _threadTile(
+  static Widget _threadTile(
     BuildContext context,
     AiProvider ai,
     AiChatThreadSummary t,
+    void Function(int threadId) onSelectThread,
   ) {
     final cs = Theme.of(context).colorScheme;
     final active = t.id == ai.threadId;
@@ -456,11 +479,10 @@ class _ChatsDrawer extends StatelessWidget {
       trailing: PopupMenuButton<String>(
         icon: Icon(Icons.more_vert, color: cs.onSurfaceVariant),
         onSelected: (value) async {
-          switch (value) {
-            case 'rename':
-              await _renameChatDialog(context, t);
-            case 'move':
-              if (context.mounted) _showMoveChatSheet(context, t);
+          if (value == 'rename') {
+            await _renameChatDialog(context, t);
+          } else if (value == 'move') {
+            if (context.mounted) _showMoveChatSheet(context, t);
           }
         },
         itemBuilder: (ctx) => [
@@ -470,7 +492,7 @@ class _ChatsDrawer extends StatelessWidget {
       ),
       selected: active,
       selectedTileColor: cs.primaryContainer.withValues(alpha: 0.45),
-      onTap: () => onSelectThread(t.id),
+      onTap: ai.sending ? null : () => onSelectThread(t.id),
     );
   }
 
@@ -487,88 +509,12 @@ class _ChatsDrawer extends StatelessWidget {
     List<Widget> folderTiles() {
       return ai.folders.map((folder) {
         final inFolder = _threadsForFolder(ai.threads, folder.id);
-        final n = inFolder.length;
-        final hasActive = inFolder.any((t) => t.id == ai.threadId);
-        return Card(
-          margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-          clipBehavior: Clip.antiAlias,
-          child: ExpansionTile(
-            key: ValueKey<int>(folder.id),
-            initiallyExpanded: hasActive,
-            leading: CircleAvatar(
-              backgroundColor: cs.primaryContainer,
-              foregroundColor: cs.onPrimaryContainer,
-              child: const Icon(Icons.folder_outlined, size: 22),
-            ),
-            title: Text(
-              folder.name,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontWeight: FontWeight.w600),
-            ),
-            subtitle: Text(
-              n == 0 ? 'Empty — tap to open' : '$n ${n == 1 ? 'chat' : 'chats'}',
-              style: TextStyle(color: cs.onSurfaceVariant, fontSize: 12.5),
-            ),
-            childrenPadding: const EdgeInsets.only(bottom: 4),
-            children: [
-              Align(
-                alignment: Alignment.centerRight,
-                child: TextButton.icon(
-                  onPressed: () {
-                    showModalBottomSheet<void>(
-                      context: context,
-                      showDragHandle: true,
-                      builder: (ctx) => SafeArea(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            ListTile(
-                              leading: const Icon(Icons.edit_outlined),
-                              title: const Text('Rename folder'),
-                              onTap: () {
-                                Navigator.pop(ctx);
-                                _renameFolderDialog(context, folder);
-                              },
-                            ),
-                            ListTile(
-                              leading: Icon(Icons.delete_outline, color: cs.error),
-                              title: Text(
-                                'Delete folder',
-                                style: TextStyle(color: cs.error),
-                              ),
-                              onTap: () {
-                                Navigator.pop(ctx);
-                                _confirmDeleteFolder(context, folder);
-                              },
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                  icon: const Icon(Icons.tune, size: 18),
-                  label: const Text('Folder options'),
-                ),
-              ),
-              ListTile(
-                dense: true,
-                leading: Icon(Icons.add_comment_outlined, size: 22, color: cs.primary),
-                title: const Text('New chat in this folder'),
-                onTap: () => onNewChat(folderId: folder.id),
-              ),
-              if (inFolder.isEmpty)
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-                  child: Text(
-                    'Move a chat here from the inbox, or start a new one above.',
-                    style: TextStyle(color: cs.onSurfaceVariant, fontSize: 13, height: 1.35),
-                  ),
-                )
-              else
-                ...inFolder.map((t) => _threadTile(context, ai, t)),
-            ],
-          ),
+        return _FolderDrawerEntry(
+          folder: folder,
+          inFolder: inFolder,
+          ai: ai,
+          onNewChat: onNewChat,
+          onSelectThread: onSelectThread,
         );
       }).toList();
     }
@@ -605,7 +551,7 @@ class _ChatsDrawer extends StatelessWidget {
             ),
           )
         else
-          ...inbox.map((t) => _threadTile(context, ai, t)),
+          ...inbox.map((t) => _ChatsDrawer._threadTile(context, ai, t, onSelectThread)),
       ];
     }
 
@@ -634,7 +580,7 @@ class _ChatsDrawer extends StatelessWidget {
                         ),
                         const SizedBox(height: 10),
                         FilledButton.tonalIcon(
-                          onPressed: () => onNewChat(),
+                          onPressed: ai.sending ? null : () => onNewChat(),
                           icon: const Icon(Icons.add),
                           label: const Text('New chat'),
                         ),
@@ -690,6 +636,170 @@ class _ChatsDrawer extends StatelessWidget {
               ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+
+/// One folder row in the chats drawer: keeps an [ExpansibleController] so we
+/// can expand after "move to folder" and when the active thread is inside.
+class _FolderDrawerEntry extends StatefulWidget {
+  final AiChatFolder folder;
+  final List<AiChatThreadSummary> inFolder;
+  final AiProvider ai;
+  final void Function({int? folderId}) onNewChat;
+  final void Function(int threadId) onSelectThread;
+
+  const _FolderDrawerEntry({
+    required this.folder,
+    required this.inFolder,
+    required this.ai,
+    required this.onNewChat,
+    required this.onSelectThread,
+  });
+
+  @override
+  State<_FolderDrawerEntry> createState() => _FolderDrawerEntryState();
+}
+
+class _FolderDrawerEntryState extends State<_FolderDrawerEntry> {
+  late final ExpansibleController _expandCtrl = ExpansibleController();
+
+  @override
+  void dispose() {
+    _expandCtrl.dispose();
+    super.dispose();
+  }
+
+  void _expandFromProviderIfNeeded() {
+    if (!mounted) return;
+    if (widget.inFolder.any((t) => t.id == widget.ai.threadId)) {
+      _expandCtrl.expand();
+    }
+    if (widget.ai.pendingExpandFolderId == widget.folder.id) {
+      _expandCtrl.expand();
+      widget.ai.clearPendingExpandFolder();
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _expandFromProviderIfNeeded());
+  }
+
+  @override
+  void didUpdateWidget(covariant _FolderDrawerEntry oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final nowInside =
+        widget.inFolder.any((t) => t.id == widget.ai.threadId);
+    final wasInside =
+        oldWidget.inFolder.any((t) => t.id == oldWidget.ai.threadId);
+    if (nowInside && !wasInside) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _expandCtrl.expand();
+      });
+    }
+
+    final p = widget.ai.pendingExpandFolderId;
+    if (p == widget.folder.id && p != oldWidget.ai.pendingExpandFolderId) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _expandCtrl.expand();
+        widget.ai.clearPendingExpandFolder();
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final folder = widget.folder;
+    final inFolder = widget.inFolder;
+    final ai = widget.ai;
+    final n = inFolder.length;
+
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      clipBehavior: Clip.antiAlias,
+      child: ExpansionTile(
+        controller: _expandCtrl,
+        leading: CircleAvatar(
+          backgroundColor: cs.primaryContainer,
+          foregroundColor: cs.onPrimaryContainer,
+          child: const Icon(Icons.folder_outlined, size: 22),
+        ),
+        title: Text(
+          folder.name,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(fontWeight: FontWeight.w600),
+        ),
+        subtitle: Text(
+          n == 0 ? 'Empty — tap to open' : '$n ${n == 1 ? 'chat' : 'chats'}',
+          style: TextStyle(color: cs.onSurfaceVariant, fontSize: 12.5),
+        ),
+        childrenPadding: const EdgeInsets.only(bottom: 4),
+        children: [
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton.icon(
+              onPressed: () {
+                showModalBottomSheet<void>(
+                  context: context,
+                  showDragHandle: true,
+                  builder: (ctx) => SafeArea(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        ListTile(
+                          leading: const Icon(Icons.edit_outlined),
+                          title: const Text('Rename folder'),
+                          onTap: () {
+                            Navigator.pop(ctx);
+                            _renameFolderDialog(context, folder);
+                          },
+                        ),
+                        ListTile(
+                          leading: Icon(Icons.delete_outline, color: cs.error),
+                          title: Text(
+                            'Delete folder',
+                            style: TextStyle(color: cs.error),
+                          ),
+                          onTap: () {
+                            Navigator.pop(ctx);
+                            _confirmDeleteFolder(context, folder);
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+              icon: const Icon(Icons.tune, size: 18),
+              label: const Text('Folder options'),
+            ),
+          ),
+          ListTile(
+            dense: true,
+            leading: Icon(Icons.add_comment_outlined, size: 22, color: cs.primary),
+            title: const Text('New chat in this folder'),
+            onTap: ai.sending ? null : () => widget.onNewChat(folderId: folder.id),
+          ),
+          if (inFolder.isEmpty)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+              child: Text(
+                'Move a chat here from the inbox, or start a new one above.',
+                style: TextStyle(color: cs.onSurfaceVariant, fontSize: 13, height: 1.35),
+              ),
+            )
+          else
+            ...inFolder.map(
+              (t) => _ChatsDrawer._threadTile(context, ai, t, widget.onSelectThread),
+            ),
+        ],
       ),
     );
   }

@@ -6,6 +6,19 @@ import 'package:http/http.dart' as http;
 
 import 'food_api_service.dart';
 
+/// JSON integers may decode as [int], [double], or [String]. Avoid
+/// `int.tryParse(value.toString())` alone — `"3.0"` breaks and folder moves
+/// look like no-ops because [folder_id] becomes null.
+int? _parseJsonIntN(dynamic v) {
+  if (v == null) return null;
+  if (v is int) return v;
+  if (v is double) return v.toInt();
+  if (v is num) return v.toInt();
+  return int.tryParse(v.toString());
+}
+
+int _parseJsonInt(dynamic v, [int fallback = 0]) => _parseJsonIntN(v) ?? fallback;
+
 /// HTTP client for the AI coaching backend (`/ai/*`).
 ///
 /// All requests are keyed by the Firebase UID. The OpenAI key NEVER leaves
@@ -95,7 +108,9 @@ class AiApiService {
           .timeout(_longTimeout);
       if (r.statusCode == 200) {
         final decoded = json.decode(r.body);
-        if (decoded is Map<String, dynamic>) return AiChatReply.fromJson(decoded);
+        if (decoded is Map) {
+          return AiChatReply.fromJson(Map<String, dynamic>.from(decoded));
+        }
       }
       debugPrint('[AiApiService] sendChat ${r.statusCode} ${r.body}');
     } catch (e) {
@@ -121,7 +136,9 @@ class AiApiService {
       final r = await http.get(uri).timeout(_shortTimeout);
       if (r.statusCode == 200) {
         final decoded = json.decode(r.body);
-        if (decoded is Map<String, dynamic>) return AiChatHistory.fromJson(decoded);
+        if (decoded is Map) {
+          return AiChatHistory.fromJson(Map<String, dynamic>.from(decoded));
+        }
       }
       debugPrint('[AiApiService] getChatHistory ${r.statusCode} ${r.body}');
     } catch (e) {
@@ -131,9 +148,14 @@ class AiApiService {
   }
 
   /// GET /ai/chat/threads?user_id=...
+  ///
+  /// Use a generous limit: the drawer groups by folder; with only the N most
+  /// recently updated threads, older filed chats disappear until they're in range.
+  static const int coachThreadListLimit = 200;
+
   Future<List<AiChatThreadSummary>> listThreads({
     required String userId,
-    int limit = 30,
+    int limit = coachThreadListLimit,
   }) async {
     final uri = Uri.parse('$_baseUrl/ai/chat/threads').replace(
       queryParameters: {
@@ -147,8 +169,8 @@ class AiApiService {
         final decoded = json.decode(r.body);
         if (decoded is List) {
           return decoded
-              .whereType<Map<String, dynamic>>()
-              .map(AiChatThreadSummary.fromJson)
+              .whereType<Map>()
+              .map((e) => AiChatThreadSummary.fromJson(Map<String, dynamic>.from(e)))
               .toList();
         }
       }
@@ -181,8 +203,8 @@ class AiApiService {
           .timeout(_shortTimeout);
       if (r.statusCode == 200) {
         final decoded = json.decode(r.body);
-        if (decoded is Map<String, dynamic>) {
-          return AiChatThreadSummary.fromJson(decoded);
+        if (decoded is Map) {
+          return AiChatThreadSummary.fromJson(Map<String, dynamic>.from(decoded));
         }
       }
       debugPrint('[AiApiService] createChatThread ${r.statusCode} ${r.body}');
@@ -214,8 +236,8 @@ class AiApiService {
           .timeout(_shortTimeout);
       if (r.statusCode >= 200 && r.statusCode < 300) {
         final decoded = json.decode(r.body);
-        if (decoded is Map<String, dynamic>) {
-          return AiChatThreadSummary.fromJson(decoded);
+        if (decoded is Map) {
+          return AiChatThreadSummary.fromJson(Map<String, dynamic>.from(decoded));
         }
       }
       debugPrint('[AiApiService] patchChatThread ${r.statusCode} ${r.body}');
@@ -236,8 +258,8 @@ class AiApiService {
         final decoded = json.decode(r.body);
         if (decoded is List) {
           return decoded
-              .whereType<Map<String, dynamic>>()
-              .map(AiChatFolder.fromJson)
+              .whereType<Map>()
+              .map((e) => AiChatFolder.fromJson(Map<String, dynamic>.from(e)))
               .toList();
         }
       }
@@ -556,9 +578,8 @@ class AiChatReply {
   const AiChatReply({required this.threadId, required this.reply});
 
   factory AiChatReply.fromJson(Map<String, dynamic> j) {
-    final tid = j['thread_id'];
     return AiChatReply(
-      threadId: tid is int ? tid : int.tryParse(tid?.toString() ?? '') ?? 0,
+      threadId: _parseJsonInt(j['thread_id']),
       reply:    (j['reply'] as String?) ?? '',
     );
   }
@@ -576,16 +597,12 @@ class AiChatFolder {
   });
 
   factory AiChatFolder.fromJson(Map<String, dynamic> j) {
-    final idRaw = j['id'];
-    final id = idRaw is int ? idRaw : int.tryParse(idRaw?.toString() ?? '') ?? 0;
-    final so = j['sort_order'];
-    final order = so is int ? so : int.tryParse(so?.toString() ?? '0') ?? 0;
     return AiChatFolder(
-      id: id,
+      id: _parseJsonInt(j['id']),
       name: (j['name'] as String?)?.trim().isNotEmpty == true
           ? (j['name'] as String).trim()
           : 'Folder',
-      sortOrder: order,
+      sortOrder: _parseJsonInt(j['sort_order']),
     );
   }
 }
@@ -612,28 +629,17 @@ class AiChatThreadSummary {
   }
 
   factory AiChatThreadSummary.fromJson(Map<String, dynamic> j) {
-    final idRaw = j['id'];
-    final id = idRaw is int ? idRaw : int.tryParse(idRaw?.toString() ?? '') ?? 0;
-    final mc = j['message_count'];
-    final count = mc is int ? mc : int.tryParse(mc?.toString() ?? '0') ?? 0;
     DateTime? u;
     final ur = j['updated_at']?.toString();
     if (ur != null && ur.isNotEmpty) {
       u = DateTime.tryParse(ur)?.toLocal();
     }
-    int? fid;
-    final fr = j['folder_id'];
-    if (fr is int) {
-      fid = fr;
-    } else if (fr != null) {
-      fid = int.tryParse(fr.toString());
-    }
     return AiChatThreadSummary(
-      id: id,
+      id: _parseJsonInt(j['id']),
       title: j['title'] as String?,
-      messageCount: count,
+      messageCount: _parseJsonInt(j['message_count']),
       updatedAt: u,
-      folderId: fid,
+      folderId: _parseJsonIntN(j['folder_id'] ?? j['folderId']),
     );
   }
 }
@@ -683,18 +689,13 @@ class AiChatHistory {
     final msgs = <AiChatMessage>[];
     if (raw is List) {
       for (final m in raw) {
-        if (m is Map<String, dynamic>) msgs.add(AiChatMessage.fromJson(m));
+        if (m is Map) {
+          msgs.add(AiChatMessage.fromJson(Map<String, dynamic>.from(m)));
+        }
       }
     }
-    final tid = j['thread_id'];
-    int? threadId;
-    if (tid is int) {
-      threadId = tid;
-    } else if (tid != null) {
-      threadId = int.tryParse(tid.toString());
-    }
     return AiChatHistory(
-      threadId: threadId,
+      threadId: _parseJsonIntN(j['thread_id']),
       title:    j['title']   as String?,
       summary:  j['summary'] as String?,
       messages: msgs,

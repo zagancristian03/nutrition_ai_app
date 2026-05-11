@@ -6,7 +6,6 @@ import 'package:provider/provider.dart';
 import '../../providers/preferences_provider.dart';
 import '../../providers/theme_mode_provider.dart';
 import '../../services/auth_service.dart';
-import '../auth/login_screen.dart';
 import '../goals/edit_goals_screen.dart';
 import '../profile/edit_profile_screen.dart';
 
@@ -167,7 +166,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             subtitle: 'Return to the login screen',
             iconColor: cs.error,
             onTap: () async {
-              final navigator = Navigator.of(context);
+              final navigator = Navigator.of(context, rootNavigator: true);
               final ok = await showDialog<bool>(
                 context: context,
                 builder: (ctx) => AlertDialog(
@@ -191,10 +190,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
               );
               if (ok != true) return;
               await AuthService().logout();
-              navigator.pushAndRemoveUntil(
-                MaterialPageRoute(builder: (_) => const LoginScreen()),
-                (_) => false,
-              );
+              // Keep [AuthGate] as the bottom route — it listens to Firebase and
+              // swaps between LoginScreen vs MainShell. Replacing the stack with a
+              // bare LoginScreen removed that listener so sign-in succeeded in
+              // Firebase while the UI never left the login page.
+              if (navigator.mounted) {
+                navigator.popUntil((route) => route.isFirst);
+              }
             },
           ),
           const SizedBox(height: 18),

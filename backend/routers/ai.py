@@ -125,7 +125,7 @@ def get_chat_history(
 @router.get("/chat/threads", response_model=list[AiThreadOut])
 def list_threads(
     user_id: str = Query(..., min_length=1, max_length=128),
-    limit: int = Query(default=20, ge=1, le=50),
+    limit: int = Query(default=100, ge=1, le=250),
 ) -> list[dict]:
     # Late import to keep the router file tiny.
     from ai import memory

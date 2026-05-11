@@ -31,6 +31,9 @@ class AiProvider extends ChangeNotifier {
   List<AiChatFolder> _folders = [];
   bool _foldersLoading = false;
 
+  /// After [moveThreadToFolder], the drawer can expand this folder once.
+  int? _pendingExpandFolderId;
+
   // ----------------------------------------------------------------------- //
   // Getters                                                                 //
   // ----------------------------------------------------------------------- //
@@ -50,6 +53,9 @@ class AiProvider extends ChangeNotifier {
 
   List<AiChatFolder> get folders => List.unmodifiable(_folders);
   bool get foldersLoading => _foldersLoading;
+
+  /// Non-null briefly after a successful move into a folder (for drawer UX).
+  int? get pendingExpandFolderId => _pendingExpandFolderId;
 
   /// Title of the active thread for the app bar (falls back to generic label).
   String get activeThreadTitle {
@@ -73,6 +79,7 @@ class AiProvider extends ChangeNotifier {
     _messages.clear();
     _threads.clear();
     _folders.clear();
+    _pendingExpandFolderId = null;
     _lastError = null;
     notifyListeners();
 
@@ -220,9 +227,12 @@ class AiProvider extends ChangeNotifier {
   }
 
   /// Switch to another saved conversation.
-  Future<void> selectThread(int threadId) async {
+  ///
+  /// Returns false if a message is still being sent (avoid mixing replies).
+  Future<bool> selectThread(int threadId) async {
     final uid = _userId;
-    if (uid == null) return;
+    if (uid == null) return false;
+    if (_sending) return false;
 
     _lastError = null;
     _historyLoading = true;
@@ -238,13 +248,17 @@ class AiProvider extends ChangeNotifier {
       _historyLoading = false;
       notifyListeners();
     }
+    return true;
   }
 
   /// Creates an empty thread on the server and makes it active.
   /// [folderId] — optional folder to file the new chat under.
-  Future<void> createNewChat({int? folderId}) async {
+  ///
+  /// Does nothing if a message is in flight (keeps thread/reply state consistent).
+  Future<bool> createNewChat({int? folderId}) async {
     final uid = _userId;
-    if (uid == null) return;
+    if (uid == null) return false;
+    if (_sending) return false;
 
     _lastError = null;
     final t = await _api.createChatThread(
@@ -255,16 +269,19 @@ class AiProvider extends ChangeNotifier {
       _lastError =
           "Couldn't start a new chat. Check your connection and try again.";
       notifyListeners();
-      return;
+      return false;
     }
     await loadThreads();
     _threadId = t.id;
     _messages.clear();
     notifyListeners();
+    return true;
   }
 
   /// Backwards-compatible alias.
-  Future<void> startNewThread() => createNewChat();
+  Future<void> startNewThread() async {
+    await createNewChat();
+  }
 
   Future<bool> renameThread(int threadId, String title) async {
     final uid = _userId;
@@ -291,15 +308,41 @@ class AiProvider extends ChangeNotifier {
       patch: {'folder_id': folderId},
     );
     if (row == null) return false;
+    if (folderId != null) {
+      _pendingExpandFolderId = folderId;
+    }
     await loadThreads();
+    _reconcileThreadAfterMove(threadId, row);
     notifyListeners();
     return true;
+  }
+
+  /// If GET /threads still lacks `folder_id` (e.g. list fell back before schema
+  /// existed), keep the PATCH response as source of truth for this row.
+  void _reconcileThreadAfterMove(int threadId, AiChatThreadSummary patched) {
+    final i = _threads.indexWhere((t) => t.id == threadId);
+    if (i < 0) return;
+    if (_threads[i].folderId != patched.folderId) {
+      _threads = List<AiChatThreadSummary>.from(_threads);
+      _threads[i] = patched;
+    }
+  }
+
+  /// Call from the drawer after expanding a folder for [pendingExpandFolderId].
+  void clearPendingExpandFolder() {
+    if (_pendingExpandFolderId == null) return;
+    _pendingExpandFolderId = null;
+    notifyListeners();
   }
 
   Future<bool> sendMessage(String text) async {
     final uid = _userId;
     final trimmed = text.trim();
     if (uid == null || trimmed.isEmpty || _sending) return false;
+
+    /// Thread the user was viewing when this send started. If they open another
+    /// chat before the HTTP response returns, we must not append this reply here.
+    final int? threadWhenSendStarted = _threadId;
 
     _sending = true;
     _lastError = null;
@@ -313,7 +356,7 @@ class AiProvider extends ChangeNotifier {
     final reply = await _api.sendChat(
       userId: uid,
       message: trimmed,
-      threadId: _threadId,
+      threadId: threadWhenSendStarted,
     );
 
     _sending = false;
@@ -323,6 +366,14 @@ class AiProvider extends ChangeNotifier {
           "The coach couldn't reply right now. Check your connection and try again.";
       notifyListeners();
       return false;
+    }
+
+    final stillOnSameThread = _threadId == threadWhenSendStarted;
+    if (!stillOnSameThread) {
+      // Reply is persisted on the server for the thread we sent from; refresh list only.
+      await loadThreads();
+      notifyListeners();
+      return true;
     }
 
     _threadId = reply.threadId;

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 import '../../models/food_item.dart';
+import '../../services/food_api_service.dart';
 import '../../services/food_search_service.dart';
 import 'food_result_tile.dart';
 
@@ -19,6 +20,7 @@ class _FoodPickerScreenState extends State<FoodPickerScreen> {
   List<FoodItem> _searchResults = [];
   bool _isSearching = false;
   bool _hasSearched = false;
+  String? _searchError;
 
   @override
   void dispose() {
@@ -34,6 +36,7 @@ class _FoodPickerScreenState extends State<FoodPickerScreen> {
         _searchResults = [];
         _hasSearched = false;
         _isSearching = false;
+        _searchError = null;
       });
       return;
     }
@@ -41,17 +44,27 @@ class _FoodPickerScreenState extends State<FoodPickerScreen> {
     setState(() {
       _isSearching = true;
       _hasSearched = true;
+      _searchError = null;
     });
 
     final q = query.trim();
     _debounceTimer.run(() async {
-      final results = await _foodSearchService.search(q);
+      final FoodSearchOutcome outcome = await _foodSearchService.searchWithOutcome(q);
       if (!mounted) return;
       if (_searchController.text.trim() != q) return;
       setState(() {
-        _searchResults = results;
+        _searchResults = outcome.items;
         _isSearching = false;
+        _searchError = outcome.errorMessage;
       });
+      if (outcome.errorMessage != null && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(outcome.errorMessage!),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
     });
   }
 
@@ -85,6 +98,7 @@ class _FoodPickerScreenState extends State<FoodPickerScreen> {
                             _searchResults = [];
                             _hasSearched = false;
                             _isSearching = false;
+                            _searchError = null;
                           });
                         },
                       )
@@ -137,6 +151,35 @@ class _FoodPickerScreenState extends State<FoodPickerScreen> {
     if (_isSearching) {
       return const Center(
         child: CircularProgressIndicator(),
+      );
+    }
+
+    if (_searchError != null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.cloud_off, size: 64, color: cs.outlineVariant),
+              const SizedBox(height: 16),
+              Text(
+                'Could not load foods',
+                style: TextStyle(
+                  color: cs.onSurface,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                _searchError!,
+                textAlign: TextAlign.center,
+                style: TextStyle(color: cs.onSurfaceVariant, fontSize: 14),
+              ),
+            ],
+          ),
+        ),
       );
     }
 

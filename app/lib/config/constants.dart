@@ -7,7 +7,14 @@
 ///   flutter run --dart-define=API_BASE_URL=http://YOUR_PC_IP:8000
 ///
 /// Keep [kBackendLanHost] in sync with that IPv4, or rely on the define only.
-const String kBackendLanHost = '192.168.1.16';
+///
+/// Presets you use — switch [kBackendLanHost] between them when you change network.
+const String kBackendLanHostHome = '192.168.1.16';
+const String kBackendLanHostHotspot = '10.186.89.122';
+
+/// Active host (same subnet as the phone for HTTP API).
+const String kBackendLanHost = kBackendLanHostHome;
+
 const int kBackendPort = 8000;
 
 /// Optional full base URL from build/run (no trailing slash).

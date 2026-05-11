@@ -6,10 +6,14 @@ class FoodSearchService {
   final FoodApiService _apiService = FoodApiService();
 
   /// Returns foods matching [query], or an empty list if the query is blank.
-  Future<List<FoodItem>> search(String query) async {
+  Future<List<FoodItem>> search(String query) async =>
+      (await searchWithOutcome(query)).items;
+
+  /// Like [search], but includes [FoodSearchOutcome.errorMessage] on failure.
+  Future<FoodSearchOutcome> searchWithOutcome(String query) async {
     if (query.trim().isEmpty) {
-      return [];
+      return const FoodSearchOutcome(items: []);
     }
-    return _apiService.searchFood(query);
+    return _apiService.searchFoodWithOutcome(query);
   }
 }

@@ -238,6 +238,9 @@ def patch_thread(user_id: str, thread_id: int, updates: dict[str, Any]) -> dict[
 
 
 def list_threads(user_id: str, limit: int = 20) -> list[dict[str, Any]]:
+    # Same DDL as PATCH/create, so the thread list always includes `folder_id`
+    # when the DB supports it (avoids permanent "all unfiled" until first PATCH).
+    _ensure_folder_schema()
     with get_conn() as conn, conn.cursor(cursor_factory=RealDictCursor) as cur:
         try:
             cur.execute(

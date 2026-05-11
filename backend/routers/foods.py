@@ -28,7 +28,9 @@ log = logging.getLogger("foods")
 # Cache the final JSON payload keyed by normalized query.
 _SEARCH_CACHE: TTLCache[list[dict]] = TTLCache(maxsize=512, ttl_seconds=60.0)
 
-_MIN_QUERY_LEN = 2
+# Single-character queries are allowed so short searches still hit the DB
+# (still capped by LIMIT). Empty string is rejected by FastAPI min_length=1.
+_MIN_QUERY_LEN = 1
 _RESULT_LIMIT = 20
 _WS_RE = re.compile(r"\s+")
 

@@ -7,6 +7,7 @@ import '../../models/food_item.dart';
 import '../../models/recent_logged_food.dart';
 import '../../providers/daily_log_provider.dart';
 import '../../services/diary_api_service.dart';
+import '../../services/food_api_service.dart';
 import '../../services/food_search_service.dart';
 import 'food_result_tile.dart';
 import 'food_detail_screen.dart';
@@ -41,6 +42,7 @@ class _FoodSearchScreenState extends State<FoodSearchScreen> {
   List<FoodItem> _searchResults = [];
   bool _isSearching = false;
   bool _hasActiveSearch = false;
+  String? _searchError;
 
   List<RecentLoggedFood> _recentFoods = [];
   bool _loadingRecent = false;
@@ -86,6 +88,7 @@ class _FoodSearchScreenState extends State<FoodSearchScreen> {
         _searchResults = [];
         _hasActiveSearch = false;
         _isSearching = false;
+        _searchError = null;
       });
       return;
     }
@@ -93,17 +96,27 @@ class _FoodSearchScreenState extends State<FoodSearchScreen> {
     setState(() {
       _isSearching = true;
       _hasActiveSearch = true;
+      _searchError = null;
     });
 
     final q = query.trim();
     _debounceTimer.run(() async {
-      final results = await _foodSearchService.search(q);
+      final FoodSearchOutcome outcome = await _foodSearchService.searchWithOutcome(q);
       if (!mounted) return;
       if (_searchController.text.trim() != q) return;
       setState(() {
-        _searchResults = results;
+        _searchResults = outcome.items;
         _isSearching = false;
+        _searchError = outcome.errorMessage;
       });
+      if (outcome.errorMessage != null && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(outcome.errorMessage!),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
     });
   }
 
@@ -269,7 +282,7 @@ class _FoodSearchScreenState extends State<FoodSearchScreen> {
               controller: _searchController,
               autofocus: false,
               decoration: InputDecoration(
-                hintText: 'Search for food...',
+                hintText: 'Search foods (try: rice, egg, milk)...',
                 prefixIcon: const Icon(Icons.search),
                 suffixIcon: _searchController.text.isNotEmpty
                     ? IconButton(
@@ -281,6 +294,7 @@ class _FoodSearchScreenState extends State<FoodSearchScreen> {
                             _searchResults = [];
                             _hasActiveSearch = false;
                             _isSearching = false;
+                            _searchError = null;
                           });
                         },
                       )
@@ -403,6 +417,35 @@ class _FoodSearchScreenState extends State<FoodSearchScreen> {
       return const Center(child: CircularProgressIndicator());
     }
 
+    if (_searchError != null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.cloud_off, size: 64, color: cs.outlineVariant),
+              const SizedBox(height: 16),
+              Text(
+                'Could not load foods',
+                style: TextStyle(
+                  color: cs.onSurface,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                _searchError!,
+                textAlign: TextAlign.center,
+                style: TextStyle(color: cs.onSurfaceVariant, fontSize: 14),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     if (_searchResults.isEmpty) {
       return Center(
         child: Column(
@@ -413,6 +456,15 @@ class _FoodSearchScreenState extends State<FoodSearchScreen> {
             Text(
               'No results found',
               style: TextStyle(color: cs.onSurfaceVariant, fontSize: 16),
+            ),
+            const SizedBox(height: 8),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 32),
+              child: Text(
+                'If the database is new, import or seed foods, or add a food with +.',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: cs.onSurfaceVariant, fontSize: 13),
+              ),
             ),
           ],
         ),

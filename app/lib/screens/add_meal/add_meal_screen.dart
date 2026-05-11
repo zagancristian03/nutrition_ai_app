@@ -68,12 +68,23 @@ class _AddMealScreenState extends State<AddMealScreen> {
       _showSearchResults = true;
     });
 
-    final results = await _foodApiService.searchFood(query);
+    final outcome = await _foodApiService.searchFoodWithOutcome(query);
+
+    if (!mounted) return;
 
     setState(() {
-      _searchResults = results;
+      _searchResults = outcome.items;
       _isSearching = false;
     });
+
+    if (outcome.errorMessage != null && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(outcome.errorMessage!),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+    }
   }
 
   void _selectFood(FoodItem food) {

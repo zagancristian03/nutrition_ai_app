@@ -113,11 +113,17 @@ class FoodApiService {
 
   /// Search foods via `GET /foods/search?q=...`.
   ///
-  /// Returns an empty list on error or empty query; logs URL and errors.
-  Future<List<FoodItem>> searchFood(String query) async {
+  /// On failure, returns an empty list; use [searchFoodWithOutcome] for the reason.
+  Future<List<FoodItem>> searchFood(String query) async =>
+      (await searchFoodWithOutcome(query)).items;
+
+  /// On success, [FoodSearchOutcome.errorMessage] is null (even when [items] is
+  /// empty). On network/HTTP/parse failure, [items] is empty and
+  /// [errorMessage] explains why.
+  Future<FoodSearchOutcome> searchFoodWithOutcome(String query) async {
     final trimmed = query.trim();
     if (trimmed.isEmpty) {
-      return [];
+      return const FoodSearchOutcome(items: []);
     }
 
     final uri = Uri.parse('$baseUrl$_searchPath').replace(
@@ -151,7 +157,10 @@ class FoodApiService {
           debugPrint(
             '[FoodApiService] unexpected JSON (expected list): ${response.body}',
           );
-          return [];
+          return const FoodSearchOutcome(
+            items: [],
+            errorMessage: 'Server returned unexpected data.',
+          );
         }
 
         final items = decoded
@@ -167,17 +176,36 @@ class FoodApiService {
           );
         }
 
-        return items;
+        return FoodSearchOutcome(items: items);
       }
 
       debugPrint(
         '[FoodApiService] error status=${response.statusCode} body=${response.body}',
       );
-      return [];
+      return FoodSearchOutcome(
+        items: [],
+        errorMessage: _extractErrorMessage(response.statusCode, response.body),
+      );
     } catch (e, st) {
       _logNetworkFailure('searchFood', uri, e, st);
-      return [];
+      return FoodSearchOutcome(
+        items: [],
+        errorMessage: _searchNetworkUserMessage(e),
+      );
     }
+  }
+
+  static String _searchNetworkUserMessage(Object e) {
+    if (e is TimeoutException) {
+      return 'Timed out reaching the food server. Is it running on '
+          '${FoodApiService.baseUrl}?';
+    }
+    if (e is SocketException) {
+      return 'Cannot reach the food server at ${FoodApiService.baseUrl}. '
+          'Check Wi‑Fi, IP in constants.dart, firewall, and that uvicorn uses '
+          '--host 0.0.0.0.';
+    }
+    return 'Could not search foods: $e';
   }
 
   /// Calls GET /foods/_debug/stats and returns a short human-readable summary
@@ -314,6 +342,17 @@ class FoodApiService {
     }
     return 'Error $status. Please try again.';
   }
+}
+
+/// Result of [FoodApiService.searchFoodWithOutcome].
+class FoodSearchOutcome {
+  final List<FoodItem> items;
+  final String? errorMessage;
+
+  const FoodSearchOutcome({
+    required this.items,
+    this.errorMessage,
+  });
 }
 
 /// Outcome of `createFoodWithDiagnostics` — either `food` is non-null or
