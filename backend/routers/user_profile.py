@@ -33,7 +33,12 @@ _SELECT_COLUMNS = """
     goal_type,
     activity_level,
     weekly_rate_kg::float8      AS weekly_rate_kg,
-    updated_at
+    updated_at,
+    coalesce(locale_mode, 'system')       AS locale_mode,
+    preferred_locale,
+    timezone,
+    locale_updated_at,
+    measurement_system
 """
 
 # Fields that are writable via PUT — order matters for SQL generation.
@@ -47,6 +52,10 @@ _WRITABLE: tuple[str, ...] = (
     "goal_type",
     "activity_level",
     "weekly_rate_kg",
+    "locale_mode",
+    "preferred_locale",
+    "timezone",
+    "measurement_system",
 )
 
 
@@ -64,6 +73,11 @@ def _empty_profile(user_id: str) -> dict:
         "activity_level":    None,
         "weekly_rate_kg":    None,
         "updated_at":        None,
+        "locale_mode":       "system",
+        "preferred_locale":  None,
+        "timezone":          None,
+        "locale_updated_at": None,
+        "measurement_system": None,
     }
 
 
@@ -102,9 +116,18 @@ def put_user_profile(
 
     # Always use INSERT ... ON CONFLICT. For missing columns we pass NULL and
     # skip updating them in the UPDATE branch.
+    def _coerce_insert_val(col: str) -> object:
+        v = provided.get(col)
+        if col == "locale_mode" and v is None:
+            return "system"
+        return v
+
     insert_cols  = ["user_id", *_WRITABLE]
-    insert_vals  = [user_id] + [provided.get(c) for c in _WRITABLE]
+    insert_vals  = [user_id] + [_coerce_insert_val(c) for c in _WRITABLE]
     update_parts = [f"{c} = excluded.{c}" for c in _WRITABLE if c in provided]
+    locale_touch = {"locale_mode", "preferred_locale", "timezone", "measurement_system"}
+    if locale_touch & set(provided.keys()):
+        update_parts.append("locale_updated_at = now()")
     # updated_at is always refreshed.
     update_parts.append("updated_at = now()")
 

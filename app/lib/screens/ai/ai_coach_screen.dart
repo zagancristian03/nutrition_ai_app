@@ -1,9 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:app/l10n/app_localizations.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
+import '../../l10n/api_error_mapper.dart';
 import '../../providers/ai_provider.dart';
 import '../../services/ai_api_service.dart';
 import 'ai_onboarding_screen.dart';
+
+String _coachAppBarTitle(AppLocalizations loc, AiProvider ai) {
+  if (!ai.onboardingDone) return loc.aiCoachTitle;
+  final id = ai.threadId;
+  if (id == null) return loc.aiCoachTitle;
+  for (final t in ai.threads) {
+    if (t.id == id) return t.displayTitle;
+  }
+  return loc.aiCoachThreadTitle(id.toString());
+}
 
 int _compareThreadsByRecent(AiChatThreadSummary a, AiChatThreadSummary b) {
   final ta = a.updatedAt;
@@ -40,38 +53,42 @@ List<AiChatThreadSummary> _threadsForFolder(
 
 Future<void> _renameChatDialog(BuildContext context, AiChatThreadSummary thread) async {
   final ctrl = TextEditingController(text: thread.title ?? '');
+  final loc = AppLocalizations.of(context)!;
   try {
     final save = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Rename chat'),
-        content: TextField(
-          controller: ctrl,
-          autofocus: true,
-          maxLength: 120,
-          decoration: const InputDecoration(
-            labelText: 'Name',
-            hintText: 'e.g. Meal planning',
+      builder: (ctx) {
+        final dloc = AppLocalizations.of(ctx)!;
+        return AlertDialog(
+          title: Text(dloc.aiCoachRenameChatTitle),
+          content: TextField(
+            controller: ctrl,
+            autofocus: true,
+            maxLength: 120,
+            decoration: InputDecoration(
+              labelText: dloc.aiCoachRenameChatNameLabel,
+              hintText: dloc.aiCoachRenameChatNameHint,
+            ),
+            textCapitalization: TextCapitalization.sentences,
           ),
-          textCapitalization: TextCapitalization.sentences,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Save'),
-          ),
-        ],
-      ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text(dloc.commonCancel),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: Text(dloc.commonSave),
+            ),
+          ],
+        );
+      },
     );
     if (save == true && context.mounted) {
       final ok = await context.read<AiProvider>().renameThread(thread.id, ctrl.text);
       if (!ok && context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not rename chat.')),
+          SnackBar(content: Text(loc.aiCoachSnackRenameChatFailed)),
         );
       }
     }
@@ -82,37 +99,41 @@ Future<void> _renameChatDialog(BuildContext context, AiChatThreadSummary thread)
 
 Future<void> _newFolderDialog(BuildContext context) async {
   final ctrl = TextEditingController();
+  final loc = AppLocalizations.of(context)!;
   try {
     final save = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('New folder'),
-        content: TextField(
-          controller: ctrl,
-          autofocus: true,
-          maxLength: 120,
-          decoration: const InputDecoration(
-            labelText: 'Folder name',
+      builder: (ctx) {
+        final dloc = AppLocalizations.of(ctx)!;
+        return AlertDialog(
+          title: Text(dloc.aiCoachNewFolderTitle),
+          content: TextField(
+            controller: ctrl,
+            autofocus: true,
+            maxLength: 120,
+            decoration: InputDecoration(
+              labelText: dloc.aiCoachFolderNameLabel,
+            ),
+            textCapitalization: TextCapitalization.words,
           ),
-          textCapitalization: TextCapitalization.words,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Create'),
-          ),
-        ],
-      ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text(dloc.commonCancel),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: Text(dloc.commonCreate),
+            ),
+          ],
+        );
+      },
     );
     if (save == true && context.mounted) {
       final ok = await context.read<AiProvider>().createFolder(ctrl.text);
       if (!ok && context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not create folder.')),
+          SnackBar(content: Text(loc.aiCoachSnackCreateFolderFailed)),
         );
       }
     }
@@ -123,37 +144,41 @@ Future<void> _newFolderDialog(BuildContext context) async {
 
 Future<void> _renameFolderDialog(BuildContext context, AiChatFolder folder) async {
   final ctrl = TextEditingController(text: folder.name);
+  final loc = AppLocalizations.of(context)!;
   try {
     final save = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Rename folder'),
-        content: TextField(
-          controller: ctrl,
-          autofocus: true,
-          maxLength: 120,
-          decoration: const InputDecoration(
-            labelText: 'Name',
+      builder: (ctx) {
+        final dloc = AppLocalizations.of(ctx)!;
+        return AlertDialog(
+          title: Text(dloc.aiCoachRenameFolderTitle),
+          content: TextField(
+            controller: ctrl,
+            autofocus: true,
+            maxLength: 120,
+            decoration: InputDecoration(
+              labelText: dloc.aiCoachRenameChatNameLabel,
+            ),
+            textCapitalization: TextCapitalization.words,
           ),
-          textCapitalization: TextCapitalization.words,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Save'),
-          ),
-        ],
-      ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text(dloc.commonCancel),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: Text(dloc.commonSave),
+            ),
+          ],
+        );
+      },
     );
     if (save == true && context.mounted) {
       final ok = await context.read<AiProvider>().renameFolder(folder.id, ctrl.text);
       if (!ok && context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not rename folder.')),
+          SnackBar(content: Text(loc.aiCoachSnackRenameFolderFailed)),
         );
       }
     }
@@ -163,30 +188,32 @@ Future<void> _renameFolderDialog(BuildContext context, AiChatFolder folder) asyn
 }
 
 Future<void> _confirmDeleteFolder(BuildContext context, AiChatFolder folder) async {
+  final loc = AppLocalizations.of(context)!;
   final ok = await showDialog<bool>(
     context: context,
-    builder: (ctx) => AlertDialog(
-      title: const Text('Delete folder?'),
-      content: Text(
-        '“${folder.name}” will be removed. Chats inside move to Unfiled.',
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(ctx, false),
-          child: const Text('Cancel'),
-        ),
-        FilledButton(
-          onPressed: () => Navigator.pop(ctx, true),
-          child: const Text('Delete'),
-        ),
-      ],
-    ),
+    builder: (ctx) {
+      final dloc = AppLocalizations.of(ctx)!;
+      return AlertDialog(
+        title: Text(dloc.aiCoachDeleteFolderTitle),
+        content: Text(dloc.aiCoachDeleteFolderBody(folder.name)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(dloc.commonCancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(dloc.commonDelete),
+          ),
+        ],
+      );
+    },
   );
   if (ok == true && context.mounted) {
     final success = await context.read<AiProvider>().deleteFolder(folder.id);
     if (!success && context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not delete folder.')),
+        SnackBar(content: Text(loc.aiCoachSnackDeleteFolderFailed)),
       );
     }
   }
@@ -194,58 +221,62 @@ Future<void> _confirmDeleteFolder(BuildContext context, AiChatFolder folder) asy
 
 void _showMoveChatSheet(BuildContext context, AiChatThreadSummary thread) {
   final ai = context.read<AiProvider>();
+  final loc = AppLocalizations.of(context)!;
   showModalBottomSheet<void>(
     context: context,
     showDragHandle: true,
-    builder: (ctx) => SafeArea(
-      child: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-              child: Text(
-                'Move “${thread.displayTitle}”',
-                style: Theme.of(ctx).textTheme.titleSmall,
+    builder: (ctx) {
+      final sheetLoc = AppLocalizations.of(ctx)!;
+      return SafeArea(
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                child: Text(
+                  sheetLoc.aiCoachMoveChatSheetTitle(thread.displayTitle),
+                  style: Theme.of(ctx).textTheme.titleSmall,
+                ),
               ),
-            ),
-            ListTile(
-              leading: const Icon(Icons.inbox_outlined),
-              title: const Text('Unfiled'),
-              onTap: () async {
-                Navigator.pop(ctx);
-                final ok = await ai.moveThreadToFolder(thread.id, null);
-                if (!ok && context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Could not move chat. Check your connection and try again.'),
-                    ),
-                  );
-                }
-              },
-            ),
-            ...ai.folders.map(
-              (f) => ListTile(
-                leading: const Icon(Icons.folder_outlined),
-                title: Text(f.name),
+              ListTile(
+                leading: const Icon(Icons.inbox_outlined),
+                title: Text(sheetLoc.aiCoachUnfiled),
                 onTap: () async {
                   Navigator.pop(ctx);
-                  final ok = await ai.moveThreadToFolder(thread.id, f.id);
+                  final ok = await ai.moveThreadToFolder(thread.id, null);
                   if (!ok && context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Could not move chat. Check your connection and try again.'),
+                      SnackBar(
+                        content: Text(loc.aiCoachSnackMoveChatFailed),
                       ),
                     );
                   }
                 },
               ),
-            ),
-          ],
+              ...ai.folders.map(
+                (f) => ListTile(
+                  leading: const Icon(Icons.folder_outlined),
+                  title: Text(f.name),
+                  onTap: () async {
+                    Navigator.pop(ctx);
+                    final ok = await ai.moveThreadToFolder(thread.id, f.id);
+                    if (!ok && context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(loc.aiCoachSnackMoveChatFailed),
+                        ),
+                      );
+                    }
+                  },
+                ),
+              ),
+            ],
+          ),
         ),
-      ),
-    ),
+      );
+    },
   );
 }
 
@@ -291,10 +322,11 @@ class _AiCoachScreenState extends State<AiCoachScreen> {
 
   Future<void> _newChat({int? folderId}) async {
     final ai = context.read<AiProvider>();
+    final loc = AppLocalizations.of(context)!;
     if (ai.sending) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Wait for the reply to finish first.')),
+        SnackBar(content: Text(loc.aiCoachSnackWaitReplyFirst)),
       );
       return;
     }
@@ -305,10 +337,11 @@ class _AiCoachScreenState extends State<AiCoachScreen> {
 
   Future<void> _pickThread(int threadId) async {
     final ai = context.read<AiProvider>();
+    final loc = AppLocalizations.of(context)!;
     if (ai.sending) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Wait for the reply to finish before switching chats.')),
+        SnackBar(content: Text(loc.aiCoachSnackWaitReply)),
       );
       return;
     }
@@ -316,7 +349,7 @@ class _AiCoachScreenState extends State<AiCoachScreen> {
     if (!mounted) return;
     if (!ok) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not open that chat.')),
+        SnackBar(content: Text(loc.aiCoachSnackOpenChatFailed)),
       );
       return;
     }
@@ -337,6 +370,7 @@ class _AiCoachScreenState extends State<AiCoachScreen> {
   @override
   Widget build(BuildContext context) {
     final ai = context.watch<AiProvider>();
+    final loc = AppLocalizations.of(context)!;
 
     return Scaffold(
       drawer: ai.onboardingDone
@@ -348,17 +382,17 @@ class _AiCoachScreenState extends State<AiCoachScreen> {
             )
           : null,
       appBar: AppBar(
-        title: Text(ai.onboardingDone ? ai.activeThreadTitle : 'AI Coach'),
+        title: Text(_coachAppBarTitle(loc, ai)),
         actions: [
           if (ai.onboardingDone)
             IconButton(
-              tooltip: 'New chat',
+              tooltip: loc.aiCoachNewChatTooltip,
               icon: const Icon(Icons.add_comment_outlined),
               onPressed: ai.sending ? null : () => _newChat(),
             ),
           if (ai.onboardingDone)
             IconButton(
-              tooltip: 'Edit onboarding',
+              tooltip: loc.aiCoachEditOnboardingTooltip,
               icon: const Icon(Icons.tune),
               onPressed: () async {
                 await Navigator.of(context).push(
@@ -389,9 +423,9 @@ class _AiCoachScreenState extends State<AiCoachScreen> {
 
     return Column(
       children: [
-        if (ai.lastError != null)
+        if (ai.lastErrorCode != null)
           _ErrorBanner(
-            message: ai.lastError!,
+            message: localizedApiMessage(context, ai.lastErrorCode!),
             onDismiss: () => context.read<AiProvider>().clearError(),
           ),
         Expanded(
@@ -431,35 +465,50 @@ class _ChatsDrawer extends StatelessWidget {
     required this.onSelectThread,
   });
 
-  static String _threadSubtitle(AiChatThreadSummary t) {
+  static String _threadSubtitle(
+    BuildContext context,
+    AppLocalizations loc,
+    AiChatThreadSummary t,
+  ) {
     final parts = <String>[];
     if (t.messageCount > 0) {
-      parts.add(t.messageCount == 1 ? '1 message' : '${t.messageCount} messages');
+      parts.add(loc.aiCoachThreadMessages(t.messageCount));
     }
     final u = t.updatedAt;
-    if (u != null) parts.add(_formatRelative(u));
+    if (u != null) parts.add(_formatRelative(context, loc, u));
     return parts.join(' · ');
   }
 
-  static String _formatRelative(DateTime t) {
+  static String _formatRelative(
+    BuildContext context,
+    AppLocalizations loc,
+    DateTime t,
+  ) {
     final now = DateTime.now();
     final diff = now.difference(t);
-    if (diff.inMinutes < 1) return 'just now';
-    if (diff.inHours < 1) return '${diff.inMinutes}m ago';
-    if (diff.inDays < 1) return '${diff.inHours}h ago';
-    if (diff.inDays < 7) return '${diff.inDays}d ago';
-    return '${t.day}/${t.month}/${t.year}';
+    if (diff.inMinutes < 1) return loc.aiCoachTimeJustNow;
+    if (diff.inHours < 1) {
+      return loc.aiCoachTimeMinutesAgo(diff.inMinutes.toString());
+    }
+    if (diff.inDays < 1) {
+      return loc.aiCoachTimeHoursAgo(diff.inHours.toString());
+    }
+    if (diff.inDays < 7) {
+      return loc.aiCoachTimeDaysAgo(diff.inDays.toString());
+    }
+    return DateFormat.yMd(Localizations.localeOf(context).toString()).format(t);
   }
 
   static Widget _threadTile(
     BuildContext context,
+    AppLocalizations loc,
     AiProvider ai,
     AiChatThreadSummary t,
     void Function(int threadId) onSelectThread,
   ) {
     final cs = Theme.of(context).colorScheme;
     final active = t.id == ai.threadId;
-    final sub = _threadSubtitle(t);
+    final sub = _threadSubtitle(context, loc, t);
     return ListTile(
       leading: Icon(
         active ? Icons.chat_bubble : Icons.chat_bubble_outline,
@@ -485,10 +534,13 @@ class _ChatsDrawer extends StatelessWidget {
             if (context.mounted) _showMoveChatSheet(context, t);
           }
         },
-        itemBuilder: (ctx) => [
-          const PopupMenuItem(value: 'rename', child: Text('Rename')),
-          const PopupMenuItem(value: 'move', child: Text('Move to folder…')),
-        ],
+        itemBuilder: (ctx) {
+          final ml = AppLocalizations.of(ctx)!;
+          return [
+            PopupMenuItem(value: 'rename', child: Text(ml.aiCoachDrawerRename)),
+            PopupMenuItem(value: 'move', child: Text(ml.aiCoachDrawerMoveToFolder)),
+          ];
+        },
       ),
       selected: active,
       selectedTileColor: cs.primaryContainer.withValues(alpha: 0.45),
@@ -500,6 +552,7 @@ class _ChatsDrawer extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
+    final loc = AppLocalizations.of(context)!;
 
     final folderIds = ai.folders.map((f) => f.id).toSet();
     final inbox = _inboxThreads(ai.threads, folderIds);
@@ -527,14 +580,14 @@ class _ChatsDrawer extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Inbox',
+                loc.aiCoachInboxTitle,
                 style: tt.labelLarge?.copyWith(
                   color: cs.onSurfaceVariant,
                   fontWeight: FontWeight.w700,
                 ),
               ),
               Text(
-                'Only chats that are not in a folder. Move one into a folder to remove it from here.',
+                loc.aiCoachInboxSubtitle,
                 style: TextStyle(color: cs.onSurfaceVariant, fontSize: 12, height: 1.3),
               ),
             ],
@@ -545,13 +598,13 @@ class _ChatsDrawer extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Text(
               ai.folders.isEmpty
-                  ? 'No chats yet. Start a new one above.'
-                  : 'No unfiled chats — open a folder above to see the rest.',
+                  ? loc.aiCoachInboxEmptyNoFolders
+                  : loc.aiCoachInboxEmptyWithFolders,
               style: TextStyle(color: cs.onSurfaceVariant, fontSize: 13, height: 1.35),
             ),
           )
         else
-          ...inbox.map((t) => _ChatsDrawer._threadTile(context, ai, t, onSelectThread)),
+          ...inbox.map((t) => _ChatsDrawer._threadTile(context, loc, ai, t, onSelectThread)),
       ];
     }
 
@@ -570,25 +623,25 @@ class _ChatsDrawer extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Coach chats',
+                          loc.aiCoachDrawerTitle,
                           style: tt.titleLarge?.copyWith(fontWeight: FontWeight.w700),
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'Folders keep chats out of the inbox until you expand them.',
+                          loc.aiCoachDrawerSubtitle,
                           style: TextStyle(color: cs.onSurfaceVariant, fontSize: 12.5, height: 1.3),
                         ),
                         const SizedBox(height: 10),
                         FilledButton.tonalIcon(
                           onPressed: ai.sending ? null : () => onNewChat(),
                           icon: const Icon(Icons.add),
-                          label: const Text('New chat'),
+                          label: Text(loc.aiCoachDrawerNewChat),
                         ),
                       ],
                     ),
                   ),
                   IconButton(
-                    tooltip: 'New folder',
+                    tooltip: loc.aiCoachDrawerNewFolderTooltip,
                     icon: const Icon(Icons.create_new_folder_outlined),
                     onPressed: () => _newFolderDialog(context),
                   ),
@@ -606,7 +659,7 @@ class _ChatsDrawer extends StatelessWidget {
                   child: Padding(
                     padding: const EdgeInsets.all(24),
                     child: Text(
-                      'No chats yet.\nTap “New chat” or create a folder.',
+                      loc.aiCoachNoChatsYet,
                       textAlign: TextAlign.center,
                       style: TextStyle(color: cs.onSurfaceVariant, height: 1.4),
                     ),
@@ -622,7 +675,7 @@ class _ChatsDrawer extends StatelessWidget {
                       Padding(
                         padding: const EdgeInsets.fromLTRB(16, 4, 16, 2),
                         child: Text(
-                          'Folders',
+                          loc.aiCoachFoldersHeading,
                           style: tt.titleSmall?.copyWith(fontWeight: FontWeight.w700),
                         ),
                       ),
@@ -715,6 +768,7 @@ class _FolderDrawerEntryState extends State<_FolderDrawerEntry> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final loc = AppLocalizations.of(context)!;
     final folder = widget.folder;
     final inFolder = widget.inFolder;
     final ai = widget.ai;
@@ -737,7 +791,7 @@ class _FolderDrawerEntryState extends State<_FolderDrawerEntry> {
           style: const TextStyle(fontWeight: FontWeight.w600),
         ),
         subtitle: Text(
-          n == 0 ? 'Empty — tap to open' : '$n ${n == 1 ? 'chat' : 'chats'}',
+          loc.aiCoachFolderSubtitleThreads(n),
           style: TextStyle(color: cs.onSurfaceVariant, fontSize: 12.5),
         ),
         childrenPadding: const EdgeInsets.only(bottom: 4),
@@ -749,55 +803,58 @@ class _FolderDrawerEntryState extends State<_FolderDrawerEntry> {
                 showModalBottomSheet<void>(
                   context: context,
                   showDragHandle: true,
-                  builder: (ctx) => SafeArea(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        ListTile(
-                          leading: const Icon(Icons.edit_outlined),
-                          title: const Text('Rename folder'),
-                          onTap: () {
-                            Navigator.pop(ctx);
-                            _renameFolderDialog(context, folder);
-                          },
-                        ),
-                        ListTile(
-                          leading: Icon(Icons.delete_outline, color: cs.error),
-                          title: Text(
-                            'Delete folder',
-                            style: TextStyle(color: cs.error),
+                  builder: (ctx) {
+                    final sheetLoc = AppLocalizations.of(ctx)!;
+                    return SafeArea(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          ListTile(
+                            leading: const Icon(Icons.edit_outlined),
+                            title: Text(sheetLoc.aiCoachRenameFolderTitle),
+                            onTap: () {
+                              Navigator.pop(ctx);
+                              _renameFolderDialog(context, folder);
+                            },
                           ),
-                          onTap: () {
-                            Navigator.pop(ctx);
-                            _confirmDeleteFolder(context, folder);
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
+                          ListTile(
+                            leading: Icon(Icons.delete_outline, color: cs.error),
+                            title: Text(
+                              sheetLoc.aiCoachDeleteFolderMenuItem,
+                              style: TextStyle(color: cs.error),
+                            ),
+                            onTap: () {
+                              Navigator.pop(ctx);
+                              _confirmDeleteFolder(context, folder);
+                            },
+                          ),
+                        ],
+                      ),
+                    );
+                  },
                 );
               },
               icon: const Icon(Icons.tune, size: 18),
-              label: const Text('Folder options'),
+              label: Text(loc.aiCoachFolderOptions),
             ),
           ),
           ListTile(
             dense: true,
             leading: Icon(Icons.add_comment_outlined, size: 22, color: cs.primary),
-            title: const Text('New chat in this folder'),
+            title: Text(loc.aiCoachNewChatInFolder),
             onTap: ai.sending ? null : () => widget.onNewChat(folderId: folder.id),
           ),
           if (inFolder.isEmpty)
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
               child: Text(
-                'Move a chat here from the inbox, or start a new one above.',
+                loc.aiCoachFolderEmptyInboxHint,
                 style: TextStyle(color: cs.onSurfaceVariant, fontSize: 13, height: 1.35),
               ),
             )
           else
             ...inFolder.map(
-              (t) => _ChatsDrawer._threadTile(context, ai, t, widget.onSelectThread),
+              (t) => _ChatsDrawer._threadTile(context, loc, ai, t, widget.onSelectThread),
             ),
         ],
       ),
@@ -817,6 +874,7 @@ class _OnboardingCta extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final loc = AppLocalizations.of(context)!;
     return Padding(
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -825,7 +883,7 @@ class _OnboardingCta extends StatelessWidget {
           Icon(Icons.auto_awesome, size: 56, color: cs.primary),
           const SizedBox(height: 16),
           Text(
-            'Meet your nutrition coach',
+            loc.aiCoachOnboardingHeadline,
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.w700,
                 ),
@@ -833,8 +891,7 @@ class _OnboardingCta extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           Text(
-            'Answer a few quick questions so the coach can tailor advice to '
-            'your goal, food preferences, and habits.',
+            loc.aiCoachOnboardingBody,
             style: TextStyle(color: cs.onSurfaceVariant),
             textAlign: TextAlign.center,
           ),
@@ -845,7 +902,7 @@ class _OnboardingCta extends StatelessWidget {
             child: FilledButton.icon(
               onPressed: onStart,
               icon: const Icon(Icons.play_arrow_rounded),
-              label: const Text('Start onboarding'),
+              label: Text(loc.aiCoachOnboardingStart),
             ),
           ),
         ],
@@ -1012,21 +1069,21 @@ class _QuickActions extends StatelessWidget {
   final void Function(String preset) onTap;
   const _QuickActions({required this.onTap});
 
-  static const _prompts = [
-    ('How is my day going so far?',    'How is today going for my goal?'),
-    ('Suggest something to eat',       "What should I eat next to stay on track?"),
-    ('Review my week',                 'Give me a quick review of my last 7 days.'),
-    ("I'm craving something sweet",    "I'm craving something sweet — what's a smart option?"),
-  ];
-
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
+    final prompts = [
+      (loc.aiCoachQuick1Label, loc.aiCoachQuick1Prompt),
+      (loc.aiCoachQuick2Label, loc.aiCoachQuick2Prompt),
+      (loc.aiCoachQuick3Label, loc.aiCoachQuick3Prompt),
+      (loc.aiCoachQuick4Label, loc.aiCoachQuick4Prompt),
+    ];
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 0, 12, 6),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: Row(
-          children: _prompts.map((p) {
+          children: prompts.map((p) {
             return Padding(
               padding: const EdgeInsets.only(right: 8),
               child: ActionChip(
@@ -1061,6 +1118,7 @@ class _Composer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final loc = AppLocalizations.of(context)!;
     return SafeArea(
       top: false,
       child: Container(
@@ -1079,7 +1137,7 @@ class _Composer extends StatelessWidget {
                 maxLines: 5,
                 textInputAction: TextInputAction.newline,
                 decoration: InputDecoration(
-                  hintText: 'Ask your coach…',
+                  hintText: loc.aiCoachInputHint,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(20),
                     borderSide: BorderSide.none,
@@ -1093,9 +1151,12 @@ class _Composer extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 6),
-            IconButton.filled(
-              onPressed: enabled ? onSend : null,
-              icon: const Icon(Icons.send_rounded),
+            Tooltip(
+              message: loc.aiCoachSendTooltip,
+              child: IconButton.filled(
+                onPressed: enabled ? onSend : null,
+                icon: const Icon(Icons.send_rounded),
+              ),
             ),
           ],
         ),

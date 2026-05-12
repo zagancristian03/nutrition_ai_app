@@ -1,4 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
+
 import '../models/user_model.dart';
 
 class UserService {
@@ -13,7 +15,7 @@ class UserService {
           .doc(user.uid)
           .set(user.toMap());
     } catch (e) {
-      print('Error creating user document: $e');
+      debugPrint('Error creating user document: $e');
       rethrow;
     }
   }
@@ -28,19 +30,19 @@ class UserService {
           .get();
 
       if (!docSnapshot.exists) {
-        print('User document with uid $uid does not exist');
+        debugPrint('User document with uid $uid does not exist');
         return null;
       }
 
       final data = docSnapshot.data();
       if (data == null) {
-        print('User document with uid $uid has no data');
+        debugPrint('User document with uid $uid has no data');
         return null;
       }
 
       return UserModel.fromMap(data);
     } catch (e) {
-      print('Error getting user document: $e');
+      debugPrint('Error getting user document: $e');
       return null;
     }
   }

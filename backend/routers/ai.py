@@ -22,9 +22,10 @@ Errors:
 from __future__ import annotations
 
 import logging
-from datetime import date
+from datetime import date, datetime
 
 from fastapi import APIRouter, Body, HTTPException, Path, Query
+from zoneinfo import ZoneInfo
 
 from ai import services
 from schemas import (
@@ -49,6 +50,15 @@ log = logging.getLogger("ai.router")
 
 def _bad_gateway(e: Exception) -> HTTPException:
     return HTTPException(status_code=502, detail=f"AI service error: {e}")
+
+
+def _coaching_today(tz_name: str | None) -> date:
+    if not tz_name or not str(tz_name).strip():
+        return date.today()
+    try:
+        return datetime.now(ZoneInfo(str(tz_name).strip())).date()
+    except Exception:
+        return date.today()
 
 
 # --------------------------------------------------------------------------- #
@@ -97,7 +107,9 @@ def post_chat(payload: AiChatRequest) -> dict:
             user_id=payload.user_id,
             message=payload.message.strip(),
             thread_id=payload.thread_id,
-            today=date.today(),
+            today=_coaching_today(payload.timezone),
+            preferred_locale=(payload.preferred_locale or "en").strip() or "en",
+            timezone=payload.timezone,
         )
     except LookupError as e:
         raise HTTPException(status_code=404, detail=str(e)) from e

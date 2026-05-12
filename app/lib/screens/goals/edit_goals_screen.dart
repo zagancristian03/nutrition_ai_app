@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
+import 'package:app/l10n/app_localizations.dart';
+
 import '../../providers/daily_log_provider.dart';
 
 class EditGoalsScreen extends StatefulWidget {
@@ -65,9 +68,11 @@ class _EditGoalsScreenState extends State<EditGoalsScreen> {
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(ok
-            ? 'Goals updated successfully!'
-            : 'Saved locally — check your connection to sync.'),
+        content: Text(
+          ok
+              ? AppLocalizations.of(context)!.goalsUpdatedSnack
+              : AppLocalizations.of(context)!.goalsSavedLocalSnack,
+        ),
         backgroundColor: ok ? Colors.green : Colors.orange,
       ),
     );
@@ -77,9 +82,10 @@ class _EditGoalsScreenState extends State<EditGoalsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Edit Goals'),
+        title: Text(loc.dashboardEditGoalsTooltip),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
@@ -89,40 +95,40 @@ class _EditGoalsScreenState extends State<EditGoalsScreen> {
             TextFormField(
               controller: _calorieController,
               keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                labelText: 'Calorie Goal',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.local_fire_department),
+              decoration: InputDecoration(
+                labelText: loc.goalsEditCalorieLabel,
+                border: const OutlineInputBorder(),
+                prefixIcon: const Icon(Icons.local_fire_department),
               ),
             ),
             const SizedBox(height: 16),
             TextFormField(
               controller: _proteinController,
               keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                labelText: 'Protein Goal (g)',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.fitness_center),
+              decoration: InputDecoration(
+                labelText: loc.foodEditProteinLabel,
+                border: const OutlineInputBorder(),
+                prefixIcon: const Icon(Icons.fitness_center),
               ),
             ),
             const SizedBox(height: 16),
             TextFormField(
               controller: _carbsController,
               keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                labelText: 'Carbs Goal (g)',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.grain),
+              decoration: InputDecoration(
+                labelText: loc.foodEditCarbsLabel,
+                border: const OutlineInputBorder(),
+                prefixIcon: const Icon(Icons.grain),
               ),
             ),
             const SizedBox(height: 16),
             TextFormField(
               controller: _fatController,
               keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                labelText: 'Fat Goal (g)',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.opacity),
+              decoration: InputDecoration(
+                labelText: loc.foodEditFatLabel,
+                border: const OutlineInputBorder(),
+                prefixIcon: const Icon(Icons.opacity),
               ),
             ),
             const SizedBox(height: 32),
@@ -132,7 +138,7 @@ class _EditGoalsScreenState extends State<EditGoalsScreen> {
                 padding: const EdgeInsets.symmetric(vertical: 16),
               ),
               child: Text(
-                _saving ? 'Saving…' : 'Save Goals',
+                _saving ? loc.foodEditSaving : loc.goalsEditSaveButton,
                 style: const TextStyle(fontSize: 16),
               ),
             ),

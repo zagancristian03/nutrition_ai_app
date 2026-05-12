@@ -1,0 +1,781 @@
+{
+  "@@locale": "en",
+  "appTitle": "Nutrition AI",
+  "@appTitle": {
+    "description": "Application title used in task switcher and about"
+  },
+  "settingsScreenTitle": "Settings",
+  "settingsSectionAppearance": "Appearance",
+  "settingsSectionLanguage": "Language",
+  "settingsSectionProfileGoals": "Profile & goals",
+  "settingsSectionPreferences": "Preferences",
+  "settingsSectionAccount": "Account",
+  "settingsSectionHelp": "Help",
+  "settingsSectionAbout": "About",
+  "settingsLanguageTitle": "App language",
+  "settingsLanguageSubtitle": "Controls menus and buttons in the app (not food names from external databases).",
+  "settingsLanguageSystemDefault": "System default",
+  "settingsLanguageEnglish": "English",
+  "settingsLanguageRomanian": "Romanian",
+  "settingsThemeTitle": "Theme",
+  "settingsThemeSubtitle": "Light, dark, or match your device",
+  "settingsThemeLight": "Light",
+  "settingsThemeDark": "Dark",
+  "settingsThemeSystem": "System",
+  "settingsWeightUnitTitle": "Weight unit",
+  "settingsWeightUnitSubtitle": "Used on the Progress and weight log screens",
+  "settingsWeightUnitKg": "Kilograms (kg)",
+  "settingsWeightUnitLb": "Pounds (lb)",
+  "settingsCoachTipsTitle": "Show coach tips",
+  "settingsCoachTipsSubtitle": "Friendly insights on Dashboard and Diary",
+  "settingsConfirmDeleteTitle": "Confirm before deleting",
+  "settingsConfirmDeleteSubtitle": "Ask before removing a logged food",
+  "settingsHapticsTitle": "Haptic feedback",
+  "settingsHapticsSubtitle": "Subtle vibration on actions",
+  "settingsEditProfileTitle": "Edit profile",
+  "settingsEditProfileSubtitle": "Body stats, goal, activity level",
+  "settingsDailyTargetsTitle": "Daily targets",
+  "settingsDailyTargetsSubtitle": "Calorie + macro goals",
+  "settingsEmailTitle": "Email",
+  "settingsEmailNotSignedIn": "Not signed in",
+  "settingsChangePasswordTitle": "Change password",
+  "settingsChangePasswordSubtitleSignIn": "Sign in first",
+  "settingsChangePasswordSubtitle": "Send a reset link to your email",
+  "settingsSnackResetEmailSent": "Reset email sent",
+  "settingsSnackResetFailed": "Failed to send: {detail}",
+  "@settingsSnackResetFailed": {
+    "description": "Password reset error snackbar",
+    "placeholders": {
+      "detail": {
+        "type": "String",
+        "example": "Network error"
+      }
+    }
+  },
+  "settingsSignOutTitle": "Sign out",
+  "settingsSignOutSubtitle": "Return to the login screen",
+  "authSignOutConfirmTitle": "Sign out?",
+  "authSignOutConfirmBody": "You can sign back in any time.",
+  "commonCancel": "Cancel",
+  "commonSignOut": "Sign out",
+  "commonDismiss": "Dismiss",
+  "commonRetry": "Retry",
+  "settingsFeedbackTitle": "Send feedback",
+  "settingsFeedbackSubtitle": "Tell us what you'd like to see next",
+  "settingsFeedbackSnack": "Thanks! Email feedback coming soon.",
+  "settingsRateTitle": "Rate this app",
+  "settingsRateSubtitle": "A quick rating helps a lot",
+  "settingsRateSnack": "Thanks for your support!",
+  "settingsAboutAppTitle": "Nutrition AI",
+  "settingsAboutVersionSubtitle": "Version 1.0.0",
+  "settingsPrivacyTitle": "Privacy",
+  "settingsPrivacySubtitle": "Your foods, goals and weights are stored securely.",
+  "errorNetworkTimeout": "The connection timed out. Check your network and try again.",
+  "errorServerGeneric": "Something went wrong on our side. Please try again.",
+  "errorValidationRequiredField": "A required field is missing. Please check your input.",
+  "errorUnknownWithDetail": "Something went wrong: {detail}",
+  "@errorUnknownWithDetail": {
+    "description": "Fallback when the server returns an error code we do not map yet",
+    "placeholders": {
+      "detail": {
+        "type": "String",
+        "example": "Error 500"
+      }
+    }
+  },
+  "diaryLoadFailedGeneric": "Could not load your diary. Check your connection and try again.",
+  "welcomeUser": "Welcome, {name}",
+  "@welcomeUser": {
+    "description": "Greeting example with placeholder for Phase 0",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Cristian"
+      }
+    }
+  },
+  "diaryTodayTitle": "Today",
+  "diaryRelativeYesterday": "Yesterday",
+  "diaryRelativeTomorrow": "Tomorrow",
+  "diaryDayPreviousTooltip": "Previous day",
+  "diaryDayNextTooltip": "Next day",
+  "diaryLastUpdated": "Last updated {time}",
+  "@diaryLastUpdated": {
+    "description": "Relative or absolute time label for diary refresh",
+    "placeholders": {
+      "time": {
+        "type": "String",
+        "example": "2:30 PM"
+      }
+    }
+  },
+
+  "shellExitTitle": "Exit app?",
+  "shellExitBody": "Are you sure you want to close the app?",
+  "shellExitConfirm": "Exit",
+  "shellNavDashboard": "Dashboard",
+  "shellNavDiary": "Diary",
+  "shellNavAdd": "Add",
+  "shellNavProgress": "Progress",
+  "shellNavMore": "More",
+  "shellAiCoachFabTooltip": "AI Coach",
+
+  "mealBreakfast": "Breakfast",
+  "mealLunch": "Lunch",
+  "mealDinner": "Dinner",
+  "mealSnack": "Snack",
+
+  "dashboardReloadTooltip": "Reload this day",
+  "dashboardEditGoalsTooltip": "Edit goals",
+  "goalsEditCalorieLabel": "Calorie goal",
+  "goalsEditSaveButton": "Save goals",
+  "goalsUpdatedSnack": "Goals updated successfully!",
+  "goalsSavedLocalSnack": "Saved locally — check your connection to sync.",
+  "dashboardCoachTitle": "Coach",
+  "dashboardMacrosTitle": "Macros",
+  "dashboardMacroProtein": "Protein",
+  "dashboardMacroCarbs": "Carbs",
+  "dashboardMacroFats": "Fats",
+  "dashboardCaloriesToday": "Calories (today)",
+  "dashboardCaloriesForDate": "Calories ({date})",
+  "@dashboardCaloriesForDate": {
+    "placeholders": {
+      "date": {
+        "type": "String",
+        "example": "15 Jan"
+      }
+    }
+  },
+
+  "nutritionInsightViewingOtherDay": "You are viewing a past or future day. Use ← → or the calendar to move between days.",
+  "nutritionInsightNoFoodsToday": "No foods logged yet today. Tap Add or pick a meal below to get started.",
+  "nutritionInsightUnderCalories": "You are under your calorie goal so far. Add a balanced meal or snack if you are still hungry.",
+  "nutritionInsightOverCalories": "Calories are above today’s goal. Consider lighter options tomorrow or adjust goals in settings if this is intentional.",
+  "nutritionInsightProteinLowCarbsHigh": "Carbs are on track but protein is low. Lean meat, dairy, legumes, or tofu can help balance this day.",
+  "nutritionInsightProteinHighFatLow": "Protein looks solid. If energy dips later, a small portion of healthy fats (nuts, olive oil) can help.",
+
+  "diaryInsightsTitle": "Insights",
+  "diaryDeleteEntryTitle": "Remove from diary?",
+  "diaryDeleteEntryMessage": "“{foodName}” will be removed from this day.",
+  "@diaryDeleteEntryMessage": {
+    "placeholders": {
+      "foodName": {
+        "type": "String",
+        "example": "Chicken salad"
+      }
+    }
+  },
+  "diaryDeleteEntryConfirm": "Remove",
+  "diaryEmptyStateBody": "Nothing logged for this day yet. Scroll down and tap Add food under any meal.",
+  "diaryDaySummaryTitle": "This day",
+  "diaryKcalFraction": " / {goal} kcal",
+  "@diaryKcalFraction": {
+    "placeholders": {
+      "goal": {
+        "type": "String",
+        "example": "2000"
+      }
+    }
+  },
+  "diaryMacroMiniLine": "{letter} {value} / {goal} g ({percent}%)",
+  "@diaryMacroMiniLine": {
+    "placeholders": {
+      "letter": { "type": "String", "example": "P" },
+      "value": { "type": "String", "example": "120" },
+      "goal": { "type": "String", "example": "150" },
+      "percent": { "type": "String", "example": "80" }
+    }
+  },
+  "diaryMacroLetterProtein": "P",
+  "diaryMacroLetterCarbs": "C",
+  "diaryMacroLetterFat": "F",
+  "diaryMealSectionEmpty": "No foods yet — tap Add food below to search and log.",
+  "diaryMealAddFood": "Add food",
+  "diaryCaloriesUnit": "{n} cal",
+  "@diaryCaloriesUnit": {
+    "placeholders": {
+      "n": { "type": "String", "example": "320" }
+    }
+  },
+
+  "foodAddTitle": "Add food",
+  "foodAddManualTooltip": "Add manually",
+  "foodMyMeals": "My meals",
+  "foodMyRecipes": "My recipes",
+  "foodSearchHint": "Search foods (try: rice, egg, milk)…",
+  "foodRecentTitle": "Recently logged",
+  "foodRecentRefreshTooltip": "Refresh",
+  "foodRecentEmpty": "Foods you log will appear here — newest first — use + to log again and pick a meal.",
+  "foodSearchLoadErrorTitle": "Could not load foods",
+  "foodSearchNoResults": "No results found",
+  "foodSearchNoResultsHint": "If the database is new, import or seed foods, or add a food with +.",
+  "foodLogTargetMealTitle": "Log “{foodName}” to",
+  "@foodLogTargetMealTitle": {
+    "placeholders": {
+      "foodName": { "type": "String", "example": "Oats" }
+    }
+  },
+  "foodLogNoPortionSnack": "No portion saved for this item — tap the row to set amount.",
+  "foodLogAddedSnack": "Added to {meal}",
+  "@foodLogAddedSnack": {
+    "placeholders": {
+      "meal": { "type": "String", "example": "Breakfast" }
+    }
+  },
+  "foodLogFailedSnack": "Could not log — check connection and try again.",
+  "foodLogAgainTooltip": "Log again",
+  "foodPortionGrams": "{grams} g",
+  "@foodPortionGrams": {
+    "placeholders": {
+      "grams": { "type": "String", "example": "100" }
+    }
+  },
+  "foodPortionServings": "{count} × serving",
+  "@foodPortionServings": {
+    "placeholders": {
+      "count": { "type": "String", "example": "1" }
+    }
+  },
+  "foodPortionDash": "—",
+
+  "moreScreenTitle": "More",
+  "moreNoEmail": "No email",
+  "moreAiCoachTitle": "AI Coach",
+  "moreAiCoachSubtitle": "Chat, meal ideas, daily & weekly reviews",
+  "moreSettingsSubtitle": "Theme, profile, goals, account, about",
+
+  "progressTitle": "Progress",
+  "progressRefreshTooltip": "Refresh",
+
+  "commonRemove": "Remove",
+
+  "aiCoachTitle": "AI Coach",
+  "aiCoachThreadTitle": "Chat #{id}",
+  "@aiCoachThreadTitle": {
+    "placeholders": {
+      "id": { "type": "String", "example": "3" }
+    }
+  },
+  "aiCoachNewChatTooltip": "New chat",
+  "aiCoachEditOnboardingTooltip": "Edit onboarding",
+  "aiCoachSnackWaitReply": "Wait for the reply to finish before switching chats.",
+  "aiCoachSnackOpenChatFailed": "Could not open that chat.",
+  "aiCoachOnboardingHeadline": "Meet your nutrition coach",
+  "aiCoachOnboardingBody": "Answer a few quick questions so the coach can tailor advice to your goal, food preferences, and habits.",
+  "aiCoachOnboardingStart": "Start onboarding",
+  "aiCoachInputHint": "Ask your coach…",
+  "aiCoachSendTooltip": "Send",
+  "aiCoachQuick1Label": "How is my day?",
+  "aiCoachQuick1Prompt": "How is today going for my goal?",
+  "aiCoachQuick2Label": "Suggest food",
+  "aiCoachQuick2Prompt": "What should I eat next to stay on track?",
+  "aiCoachQuick3Label": "Review my week",
+  "aiCoachQuick3Prompt": "Give me a quick review of my last 7 days.",
+  "aiCoachQuick4Label": "Craving sweet",
+  "aiCoachQuick4Prompt": "I'm craving something sweet — what's a smart option?",
+  "aiCoachDrawerTitle": "Coach chats",
+  "aiCoachDrawerSubtitle": "Folders keep chats out of the inbox until you expand them.",
+  "aiCoachDrawerNewChat": "New chat",
+  "aiCoachDrawerNewFolderTooltip": "New folder",
+  "aiCoachInboxTitle": "Inbox",
+  "aiCoachInboxSubtitle": "Only chats that are not in a folder. Move one into a folder to remove it from here.",
+  "aiCoachInboxEmptyNoFolders": "No chats yet. Start a new one above.",
+  "aiCoachInboxEmptyWithFolders": "No unfiled chats — open a folder above to see the rest.",
+  "aiCoachFoldersHeading": "Folders",
+  "aiCoachNoChatsYet": "No chats yet.\nTap “New chat” or create a folder.",
+  "aiCoachUnfiled": "Unfiled",
+  "aiCoachDrawerRename": "Rename",
+  "aiCoachDrawerMoveToFolder": "Move to folder…",
+  "aiCoachFolderOptions": "Folder options",
+  "aiCoachNewChatInFolder": "New chat in this folder",
+  "aiCoachRenameChatTitle": "Rename chat",
+  "aiCoachRenameChatNameLabel": "Name",
+  "aiCoachRenameChatNameHint": "e.g. Meal planning",
+  "aiCoachRenameFolderTitle": "Rename folder",
+  "aiCoachNewFolderTitle": "New folder",
+  "aiCoachFolderNameLabel": "Folder name",
+  "aiCoachDeleteFolderTitle": "Delete folder?",
+  "aiCoachDeleteFolderBody": "“{name}” will be removed. Chats inside move to Unfiled.",
+  "@aiCoachDeleteFolderBody": {
+    "placeholders": {
+      "name": { "type": "String", "example": "Planning" }
+    }
+  },
+  "commonDelete": "Delete",
+  "commonCreate": "Create",
+  "commonSave": "Save",
+  "aiCoachSnackRenameChatFailed": "Could not rename chat.",
+  "aiCoachSnackCreateFolderFailed": "Could not create folder.",
+  "aiCoachSnackRenameFolderFailed": "Could not rename folder.",
+  "aiCoachSnackDeleteFolderFailed": "Could not delete folder.",
+  "aiCoachThreadMessages": "{count, plural, =0{No messages} one{1 message} other{{count} messages}}",
+  "@aiCoachThreadMessages": {
+    "description": "Subtitle under a thread in the AI coach drawer",
+    "placeholders": {
+      "count": { "type": "int", "example": "3" }
+    }
+  },
+  "aiCoachTimeJustNow": "just now",
+  "aiCoachTimeMinutesAgo": "{minutes}m ago",
+  "@aiCoachTimeMinutesAgo": { "placeholders": { "minutes": { "type": "String", "example": "5" } } },
+  "aiCoachTimeHoursAgo": "{hours}h ago",
+  "@aiCoachTimeHoursAgo": { "placeholders": { "hours": { "type": "String", "example": "2" } } },
+  "aiCoachTimeDaysAgo": "{days}d ago",
+  "@aiCoachTimeDaysAgo": { "placeholders": { "days": { "type": "String", "example": "3" } } },
+
+  "aiCoachSnackMoveChatFailed": "Could not move chat. Check your connection and try again.",
+  "aiCoachSnackWaitReplyFirst": "Wait for the reply to finish first.",
+  "aiCoachMoveChatSheetTitle": "Move \"{chatTitle}\"",
+  "@aiCoachMoveChatSheetTitle": {
+    "placeholders": {
+      "chatTitle": { "type": "String", "example": "Meal prep" }
+    }
+  },
+  "aiCoachDeleteFolderMenuItem": "Delete folder",
+  "aiCoachFolderEmptyInboxHint": "Move a chat here from the inbox, or start a new one above.",
+  "aiCoachFolderSubtitleThreads": "{count, plural, =0{Empty — tap to open} one{1 chat} other{{count} chats}}",
+  "@aiCoachFolderSubtitleThreads": {
+    "placeholders": {
+      "count": { "type": "int", "example": "2" }
+    }
+  },
+
+  "authLoginTitle": "Log in",
+  "authSignInButton": "Log in",
+  "authRegisterPrompt": "Don't have an account? Register",
+  "authLoginFailedSnack": "Log in failed. Check your email and password.",
+  "authEmailLabel": "Email",
+  "authPasswordLabel": "Password",
+  "authValidationEmailRequired": "Enter your email",
+  "authValidationEmailInvalid": "Enter a valid email",
+  "authValidationPasswordRequired": "Enter your password",
+  "authForgotPassword": "Forgot password?",
+  "authForgotPasswordEnterEmail": "Enter an email address first",
+  "authForgotPasswordSnackSent": "Password reset email sent",
+  "authForgotPasswordSnackFailed": "Could not send reset email — try again later",
+  "authRegisterTitle": "Create account",
+  "authRegisterSubtitle": "Sign up to get started",
+  "authConfirmPasswordLabel": "Confirm password",
+  "authRegisterButton": "Register",
+  "authRegisterFailedSnack": "Registration failed. Try again.",
+  "authValidationPasswordMin6": "Password must be at least 6 characters",
+  "authValidationConfirmRequired": "Confirm your password",
+  "authValidationPasswordsMismatch": "Passwords don't match",
+  "authLoginPrompt": "Already have an account? Log in",
+
+  "progressProfileYourProfile": "Your profile",
+  "progressProfileSubtitleEmpty": "Add a few details to unlock personalised targets.",
+  "progressCommonEdit": "Edit",
+  "progressProfileAgeYears": "{years} yr",
+  "@progressProfileAgeYears": {
+    "placeholders": { "years": { "type": "String", "example": "30" } }
+  },
+  "progressWeightSectionTitle": "Weight",
+  "progressWeightLogButton": "Log",
+  "progressWeightCurrent": "Current",
+  "progressWeightTarget": "Target",
+  "progressWeightChange": "Change",
+  "progressWeightToGo": "To go",
+  "progressWeightOnTarget": "On target",
+  "progressWeightEmpty": "No weight logged yet.\nTap \"Log\" to add your first measurement.",
+  "progressIntakeToday": "Intake · today",
+  "progressIntakeDate": "Intake · {date}",
+  "@progressIntakeDate": {
+    "placeholders": { "date": { "type": "String", "example": "11/5/2026" } }
+  },
+  "progressEstimatedTdee": "Estimated TDEE",
+  "progressBmiStatLabel": "BMI · {category}",
+  "@progressBmiStatLabel": {
+    "placeholders": { "category": { "type": "String", "example": "Healthy" } }
+  },
+  "progressBmiCategoryUnderweight": "Underweight",
+  "progressBmiCategoryHealthy": "Healthy range",
+  "progressBmiCategoryOverweight": "Overweight",
+  "progressBmiCategoryObese": "Obese",
+  "progressHistoryTitle": "History",
+  "progressDeleteWeightTitle": "Delete entry?",
+  "progressDeleteWeightMessage": "Remove the weight log for {date}?",
+  "@progressDeleteWeightMessage": {
+    "placeholders": { "date": { "type": "String", "example": "01/05/2026" } }
+  },
+  "progressWeightLogSheetTitle": "Log weight",
+  "progressWeightFieldLabel": "Weight",
+  "progressWeightSuffixKg": "kg",
+  "progressWeightDateLabel": "Date",
+  "progressWeightNoteLabel": "Note (optional)",
+  "progressWeightSave": "Save",
+  "progressWeightSaving": "Saving…",
+  "progressWeightInvalid": "Enter a valid weight (0–500 kg)",
+  "progressWeightLoggedSnack": "Weight logged",
+  "progressWeightSaveFailedSnack": "Could not save. Try again.",
+  "progressChartTargetLabel": "target",
+  "progressBmiChipPrefix": "BMI {value}",
+  "@progressBmiChipPrefix": {
+    "placeholders": { "value": { "type": "String", "example": "22.4" } }
+  },
+  "mealSnack": "Snack",
+  "mealServingDialogTitle": "Serving size",
+  "mealServingAmountG": "Amount (g)",
+  "mealRecipeDialogAdd": "Add",
+  "mealDialogCancel": "Cancel",
+
+  "createMealTitle": "Create meal",
+  "createMealNameLabel": "Meal name",
+  "createMealFoodItemsHeader": "Food items",
+  "createMealAddFoodButton": "Add food",
+  "createMealEmptyItems": "No items added yet",
+  "createMealTotalNutrition": "Total nutrition",
+  "createMealSaveButton": "Save meal",
+  "createMealSnackNameRequired": "Enter a meal name",
+  "createMealSnackItemsRequired": "Add at least one food",
+  "createMealSnackSaved": "Meal saved",
+  "createMealItemSubtitle": "{grams} g • {cal} cal",
+  "@createMealItemSubtitle": {
+    "placeholders": {
+      "grams": { "type": "String", "example": "100" },
+      "cal": { "type": "String", "example": "120.5" }
+    }
+  },
+
+  "createRecipeTitle": "Create recipe",
+  "recipeNameLabel": "Recipe name",
+  "recipeDescriptionLabel": "Description (optional)",
+  "recipeServingsLabel": "Number of servings",
+  "recipeIngredientsHeader": "Ingredients",
+  "recipeAddIngredient": "Add ingredient",
+  "recipeEmptyIngredients": "No ingredients added yet",
+  "recipeTotalNutritionServings": "Total nutrition ({count} servings)",
+  "@recipeTotalNutritionServings": {
+    "placeholders": { "count": { "type": "String", "example": "4" } }
+  },
+  "recipeTotalCaloriesLine": "Total calories: {n}",
+  "@recipeTotalCaloriesLine": { "placeholders": { "n": { "type": "String", "example": "800" } } },
+  "recipeTotalProteinLine": "Total protein: {n} g",
+  "@recipeTotalProteinLine": { "placeholders": { "n": { "type": "String", "example": "40" } } },
+  "recipeTotalCarbsLine": "Total carbs: {n} g",
+  "@recipeTotalCarbsLine": { "placeholders": { "n": { "type": "String", "example": "80" } } },
+  "recipeTotalFatLine": "Total fat: {n} g",
+  "@recipeTotalFatLine": { "placeholders": { "n": { "type": "String", "example": "20" } } },
+  "recipePerServingHeader": "Per serving",
+  "recipePerServingCalories": "Calories: {n}",
+  "@recipePerServingCalories": { "placeholders": { "n": { "type": "String", "example": "200" } } },
+  "recipePerServingProtein": "Protein: {n} g",
+  "@recipePerServingProtein": { "placeholders": { "n": { "type": "String", "example": "10" } } },
+  "recipePerServingCarbs": "Carbs: {n} g",
+  "@recipePerServingCarbs": { "placeholders": { "n": { "type": "String", "example": "20" } } },
+  "recipePerServingFat": "Fat: {n} g",
+  "@recipePerServingFat": { "placeholders": { "n": { "type": "String", "example": "5" } } },
+  "recipeSaveButton": "Save recipe",
+  "recipeSnackNameRequired": "Enter a recipe name",
+  "recipeSnackIngredientsRequired": "Add at least one ingredient",
+  "recipeSnackServingsInvalid": "Enter a valid number of servings",
+  "recipeSnackSaved": "Recipe saved",
+  "recipeIngredientSubtitle": "{grams} g • {cal} cal",
+  "@recipeIngredientSubtitle": {
+    "placeholders": {
+      "grams": { "type": "String", "example": "50" },
+      "cal": { "type": "String", "example": "80" }
+    }
+  },
+
+  "myMealsScreenTitle": "My meals",
+  "myMealsCreateTooltip": "Create meal",
+  "myMealsEmpty": "No saved meals yet",
+  "myMealsCreateFirst": "Create your first meal",
+  "myMealsCardSubtitle": "{cal} cal • P: {p} g • C: {c} g • F: {f} g",
+  "@myMealsCardSubtitle": {
+    "placeholders": {
+      "cal": { "type": "String", "example": "400" },
+      "p": { "type": "String", "example": "20" },
+      "c": { "type": "String", "example": "50" },
+      "f": { "type": "String", "example": "10" }
+    }
+  },
+  "myMealsAddToDiaryTooltip": "Add to diary",
+  "myMealsDeleteTooltip": "Delete",
+  "myMealsDeleteTitle": "Delete meal?",
+  "myMealsDeleteConfirm": "Delete \"{name}\"?",
+  "@myMealsDeleteConfirm": {
+    "placeholders": { "name": { "type": "String", "example": "Breakfast prep" } }
+  },
+  "myMealsAddedSnack": "{name} added to diary!",
+  "@myMealsAddedSnack": {
+    "placeholders": { "name": { "type": "String", "example": "Lunch box" } }
+  },
+  "myMealsPartialSnack": "Added {added} / {total} items ({failed} failed — foods may be missing).",
+  "@myMealsPartialSnack": {
+    "placeholders": {
+      "added": { "type": "String", "example": "2" },
+      "total": { "type": "String", "example": "3" },
+      "failed": { "type": "String", "example": "1" }
+    }
+  },
+
+  "myRecipesScreenTitle": "My recipes",
+  "myRecipesCreateTooltip": "Create recipe",
+  "myRecipesEmpty": "No saved recipes yet",
+  "myRecipesCreateFirst": "Create your first recipe",
+  "myRecipesCardSubtitle": "{cal} cal/serving • {servings} servings • P: {p} g",
+  "@myRecipesCardSubtitle": {
+    "placeholders": {
+      "cal": { "type": "String", "example": "200" },
+      "servings": { "type": "String", "example": "4" },
+      "p": { "type": "String", "example": "15" }
+    }
+  },
+  "myRecipesAddedSnack": "{name} (1 serving) added to diary!",
+  "@myRecipesAddedSnack": {
+    "placeholders": { "name": { "type": "String", "example": "Chili" } }
+  },
+  "myRecipesPartialSnack": "{added} / {total} ingredients logged ({failed} failed — foods may be missing).",
+  "@myRecipesPartialSnack": {
+    "placeholders": {
+      "added": { "type": "String", "example": "2" },
+      "total": { "type": "String", "example": "3" },
+      "failed": { "type": "String", "example": "1" }
+    }
+  },
+  "myRecipesDeleteTitle": "Delete recipe?",
+  "myRecipesDeleteConfirm": "Delete \"{name}\"?",
+  "@myRecipesDeleteConfirm": {
+    "placeholders": { "name": { "type": "String", "example": "Soup" } }
+  },
+
+  "addMealTitle": "Add meal",
+  "addMealSearchLabel": "Search for food",
+  "addMealSearchHint": "e.g. rice, chicken, apple",
+  "addMealNoResults": "No results",
+  "addMealSearchResultLine": "{cal} cal/100g • P: {p} g • C: {c} g • F: {f} g",
+  "@addMealSearchResultLine": {
+    "placeholders": {
+      "cal": { "type": "String", "example": "120" },
+      "p": { "type": "String", "example": "5" },
+      "c": { "type": "String", "example": "20" },
+      "f": { "type": "String", "example": "2" }
+    }
+  },
+  "addMealMealTypeLabel": "Meal type",
+  "addMealSelectMealType": "Select a meal type",
+  "addMealFoodNameLabel": "Food name",
+  "addMealFoodNameRequired": "Enter a food name",
+  "addMealCaloriesLabel": "Calories",
+  "addMealCaloriesRequired": "Enter calories",
+  "addMealCaloriesInvalid": "Enter a valid number",
+  "addMealProteinLabel": "Protein (g)",
+  "addMealProteinRequired": "Enter protein",
+  "addMealProteinInvalid": "Enter a valid number",
+  "addMealCarbsLabel": "Carbs (g)",
+  "addMealCarbsRequired": "Enter carbs",
+  "addMealCarbsInvalid": "Enter a valid number",
+  "addMealFatsLabel": "Fat (g)",
+  "addMealFatsRequired": "Enter fat",
+  "addMealFatsInvalid": "Enter a valid number",
+  "addMealSubmitButton": "Add meal",
+  "addMealSuccessSnack": "Meal logged locally",
+
+  "foodDetailTitle": "Food details",
+  "foodDetailPer100": "Per 100 g",
+  "foodDetailPortionTitle": "Portion",
+  "foodDetailMealTypeLabel": "Meal type",
+  "foodDetailServingSizeLabel": "Serving size ({unit})",
+  "@foodDetailServingSizeLabel": {
+    "placeholders": { "unit": { "type": "String", "example": "g" } }
+  },
+  "foodDetailServingsLabel": "Servings",
+  "foodDetailTotalsTitle": "Totals",
+  "foodDetailValidationPortions": "Enter a valid serving size and servings",
+  "foodDetailSaveFailedSnack": "Could not save to diary. Check your connection.",
+  "foodDetailAddedSnack": "Added to diary",
+  "foodDetailAddToDiary": "Add to diary",
+  "foodDetailSaving": "Saving…",
+
+  "foodManualTitle": "Add food manually",
+  "foodManualSectionBasics": "Basics",
+  "foodManualSectionPortion": "Portion",
+  "foodManualSectionNutrition": "Nutrition (per serving)",
+  "foodManualFoodNameLabel": "Food name",
+  "foodManualBrandLabel": "Brand (optional)",
+  "foodManualServingSizeG": "Serving size (g)",
+  "foodManualValidationName": "Enter a food name",
+  "foodManualValidationCalories": "Enter calories",
+  "foodManualSaveFailedGeneric": "Could not save food. Try again.",
+  "foodManualSavedAndLoggedSnack": "Food saved and added to diary!",
+  "foodManualSavedLogFailedSnack": "Food saved — diary log failed.",
+  "foodManualAddToDiary": "Add to diary",
+  "foodManualSaving": "Saving…",
+
+  "foodEditTitle": "Edit food entry",
+  "foodEditMealTypeLabel": "Meal type",
+  "foodEditFoodNameLabel": "Food name",
+  "foodEditServingSizeG": "Serving size (g)",
+  "foodEditServingsLabel": "Number of servings",
+  "foodEditCaloriesLabel": "Calories",
+  "foodEditProteinLabel": "Protein (g)",
+  "foodEditCarbsLabel": "Carbs (g)",
+  "foodEditFatLabel": "Fat (g)",
+  "foodEditSaveButton": "Save changes",
+  "foodEditSaving": "Saving…",
+  "foodEditMealTypeRequired": "Select a meal type",
+  "foodEditNameRequired": "Enter a food name",
+  "foodEditCaloriesRequired": "Enter calories",
+  "foodEditUpdatedSnack": "Entry updated",
+  "foodEditSaveFailedSnack": "Could not save changes",
+
+  "aiOnboardingIntro": "Answer what applies. You can combine goals (for example lose weight + gain muscle), and use the text boxes when the options don't cover everything.",
+  "aiOnboardingAppBarTitle": "Coach setup",
+  "aiOnboardingSaveDraft": "Save draft",
+  "aiOnboardingFinishButton": "Finish & start chatting",
+  "aiOnboardingSnackRequiredFields": "Pick at least one goal, approach, and diet pattern to finish.",
+  "aiOnboardingSnackSaveFailed": "Couldn't save. Check your connection and try again.",
+  "aiOnboardingSnackDraftSaved": "Draft saved.",
+  "aiOnboardingSectionGoalsTitle": "Your goals",
+  "aiOnboardingSectionGoalsSubtitle": "Pick one or more",
+  "aiOnboardingNoteMainGoalLabel": "Any other goal or context?",
+  "aiOnboardingNoteMainGoalHint": "e.g. half-marathon in 12 weeks",
+  "aiOnboardingSectionApproachTitle": "How do you want to approach it?",
+  "aiOnboardingSectionTrainingTitle": "Training & activity",
+  "aiOnboardingSectionTrainingSubtitle": "Shapes calorie and protein targets",
+  "aiOnboardingLabelTrainingSessionsPerWeek": "Training sessions per week",
+  "aiOnboardingLabelTrainingTypes": "Types of training (pick all that apply)",
+  "aiOnboardingLabelSessionIntensity": "Typical session intensity",
+  "aiOnboardingLabelJobActivity": "Daytime / job activity",
+  "aiOnboardingLabelDailySteps": "Average daily steps",
+  "aiOnboardingNoteTrainingLabel": "Training notes",
+  "aiOnboardingNoteTrainingHint": "e.g. push/pull/legs split",
+  "aiOnboardingSectionDietTitle": "Diet pattern",
+  "aiOnboardingNoteDietaryLabel": "Dietary notes / restrictions",
+  "aiOnboardingNoteDietaryHint": "e.g. low-FODMAP, halal, fasting schedule",
+  "aiOnboardingLabelAllergies": "Allergies or intolerances",
+  "aiOnboardingHintAllergies": "e.g. peanuts, lactose",
+  "aiOnboardingLabelDisliked": "Disliked foods",
+  "aiOnboardingHintDisliked": "e.g. mushrooms, liver",
+  "aiOnboardingLabelFavorites": "Favorite foods",
+  "aiOnboardingHintFavorites": "e.g. chicken, rice, yogurt",
+  "aiOnboardingLabelCuisines": "Cuisines you enjoy",
+  "aiOnboardingHintCuisines": "e.g. Italian, Japanese",
+  "aiOnboardingLabelEatingOut": "Eating out frequency",
+  "aiOnboardingSectionCookingTitle": "Cooking & budget",
+  "aiOnboardingLabelCookingPreference": "Cooking preference",
+  "aiOnboardingLabelBudget": "Budget sensitivity",
+  "aiOnboardingLabelMealsPerDay": "Meals per day",
+  "aiOnboardingSectionLifestyleTitle": "Lifestyle & recovery",
+  "aiOnboardingSectionLifestyleSubtitle": "Energy, cravings, adherence",
+  "aiOnboardingLabelSleep": "Average sleep",
+  "aiOnboardingLabelStress": "Typical stress level",
+  "aiOnboardingLabelWater": "Water intake",
+  "aiOnboardingLabelAlcohol": "Alcohol frequency",
+  "aiOnboardingSectionStrugglesTitle": "What tends to get in the way?",
+  "aiOnboardingLabelBiggestStruggles": "Biggest struggles (pick any)",
+  "aiOnboardingNoteStruggleLabel": "Anything else that holds you back?",
+  "aiOnboardingNoteStruggleHint": "e.g. shift work, weekends",
+  "aiOnboardingLabelStruggleWhen": "When is it hardest?",
+  "aiOnboardingSectionMotivationTitle": "Motivation & structure",
+  "aiOnboardingLabelMotivation": "Motivation level",
+  "aiOnboardingLabelStructure": "How much structure do you want?",
+  "aiOnboardingSectionCoachToneTitle": "Coach tone",
+
+  "aiOnboardingGoalLoseWeight": "Lose weight",
+  "aiOnboardingGoalGainMuscle": "Gain muscle",
+  "aiOnboardingGoalMaintain": "Maintain weight",
+  "aiOnboardingGoalEatHealthier": "Eat healthier",
+  "aiOnboardingGoalImproveEnergy": "More energy",
+  "aiOnboardingGoalImprovePerformance": "Athletic performance",
+  "aiOnboardingGoalImproveConsistency": "Be consistent",
+  "aiOnboardingApproachAggressive": "Aggressive",
+  "aiOnboardingApproachBalanced": "Balanced",
+  "aiOnboardingApproachFlexible": "Flexible",
+  "aiOnboardingApproachSustainable": "Slow & sustainable",
+  "aiOnboardingTrainingSessions7Plus": "7+",
+  "aiOnboardingTrainingLifting": "Weight lifting",
+  "aiOnboardingTrainingCardio": "Cardio",
+  "aiOnboardingTrainingHiit": "HIIT / intervals",
+  "aiOnboardingTrainingSports": "Team sports",
+  "aiOnboardingTrainingRunning": "Running",
+  "aiOnboardingTrainingCycling": "Cycling",
+  "aiOnboardingTrainingSwimming": "Swimming",
+  "aiOnboardingTrainingYoga": "Yoga / mobility",
+  "aiOnboardingTrainingWalking": "Walking",
+  "aiOnboardingTrainingNone": "None currently",
+  "aiOnboardingIntensityLight": "Light",
+  "aiOnboardingIntensityModerate": "Moderate",
+  "aiOnboardingIntensityHard": "Hard",
+  "aiOnboardingIntensityVeryHard": "Very hard",
+  "aiOnboardingJobDesk": "Mostly at a desk",
+  "aiOnboardingJobMostlySeated": "Seated with some movement",
+  "aiOnboardingJobOnFeet": "On my feet a lot",
+  "aiOnboardingJobPhysicalLabor": "Physical labor",
+  "aiOnboardingStepsUnder5k": "< 5k steps",
+  "aiOnboardingSteps5k7k": "5–7k",
+  "aiOnboardingSteps7k10k": "7–10k",
+  "aiOnboardingSteps10k15k": "10–15k",
+  "aiOnboardingStepsOver15k": "15k+",
+  "aiOnboardingDietOmnivore": "Omnivore",
+  "aiOnboardingDietVegetarian": "Vegetarian",
+  "aiOnboardingDietVegan": "Vegan",
+  "aiOnboardingDietPescatarian": "Pescatarian",
+  "aiOnboardingDietOther": "Other",
+  "aiOnboardingEatingOutRarely": "Rarely",
+  "aiOnboardingEatingOutWeekly": "1–2× / week",
+  "aiOnboardingEatingOutOften": "3–5× / week",
+  "aiOnboardingEatingOutDaily": "Daily",
+  "aiOnboardingCookingNone": "I don't cook",
+  "aiOnboardingCookingSimple": "Simple meals only",
+  "aiOnboardingCookingEnjoys": "I enjoy cooking",
+  "aiOnboardingBudgetLow": "Not a concern",
+  "aiOnboardingBudgetMedium": "Somewhat",
+  "aiOnboardingBudgetHigh": "Very tight",
+  "aiOnboardingSleepUnder5": "< 5 h",
+  "aiOnboardingSleep5to6": "5–6 h",
+  "aiOnboardingSleep6to7": "6–7 h",
+  "aiOnboardingSleep7to8": "7–8 h",
+  "aiOnboardingSleepOver8": "8+ h",
+  "aiOnboardingStressLow": "Low",
+  "aiOnboardingStressMedium": "Medium",
+  "aiOnboardingStressHigh": "High",
+  "aiOnboardingWaterLow": "Low",
+  "aiOnboardingWaterMedium": "Medium",
+  "aiOnboardingWaterHigh": "High",
+  "aiOnboardingAlcoholNone": "None",
+  "aiOnboardingAlcoholOccasional": "Occasional",
+  "aiOnboardingAlcoholWeekly": "1–2× / week",
+  "aiOnboardingAlcoholFrequent": "3+ / week",
+  "aiOnboardingStruggleCravings": "Cravings",
+  "aiOnboardingStruggleConsistency": "Staying consistent",
+  "aiOnboardingStruggleLateNight": "Late-night eating",
+  "aiOnboardingStruggleEmotional": "Emotional eating",
+  "aiOnboardingStruggleBoredom": "Boredom eating",
+  "aiOnboardingStruggleTime": "Lack of time",
+  "aiOnboardingStruggleSocial": "Social / eating out",
+  "aiOnboardingStruggleTravel": "Travel",
+  "aiOnboardingStrugglePortions": "Portion control",
+  "aiOnboardingStrugglePlanning": "Meal planning",
+  "aiOnboardingTimingMorning": "Morning",
+  "aiOnboardingTimingAfternoon": "Afternoon",
+  "aiOnboardingTimingEvening": "Evening",
+  "aiOnboardingTimingNight": "Late night",
+  "aiOnboardingTimingWeekends": "Weekends",
+  "aiOnboardingTimingStress": "When stressed",
+  "aiOnboardingMotivationLow": "Low",
+  "aiOnboardingMotivationMedium": "Medium",
+  "aiOnboardingMotivationHigh": "High",
+  "aiOnboardingStructureLow": "Loose guidance",
+  "aiOnboardingStructureMedium": "Balanced plan",
+  "aiOnboardingStructureHigh": "Detailed plan",
+  "aiOnboardingToneDirect": "Direct",
+  "aiOnboardingToneBalanced": "Balanced",
+  "aiOnboardingToneGentler": "Gentler",
+
+  "createRecipeEnterAmountTitle": "Ingredient amount",
+
+  "nutritionTotalCalories": "Calories: {n}",
+  "@nutritionTotalCalories": { "placeholders": { "n": { "type": "String", "example": "400" } } },
+  "nutritionTotalProtein": "Protein: {n} g",
+  "@nutritionTotalProtein": { "placeholders": { "n": { "type": "String", "example": "20" } } },
+  "nutritionTotalCarbs": "Carbs: {n} g",
+  "@nutritionTotalCarbs": { "placeholders": { "n": { "type": "String", "example": "50" } } },
+  "nutritionTotalFat": "Fat: {n} g",
+  "@nutritionTotalFat": { "placeholders": { "n": { "type": "String", "example": "10" } } },
+
+  "aiCoachErrorReplyFailed": "The coach couldn't reply right now. Check your connection and try again.",
+  "aiCoachErrorNewChatFailed": "Couldn't start a new chat. Check your connection and try again."
+}

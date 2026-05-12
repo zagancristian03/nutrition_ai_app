@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
+import 'package:app/l10n/app_localizations.dart';
+import 'package:app/l10n/bmi_labels.dart';
+
 import '../../models/user_profile.dart';
 import '../../providers/daily_log_provider.dart';
 import '../../providers/user_profile_provider.dart';
@@ -184,7 +187,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     final targets = NutritionMath.recommendedMacros(preview);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Edit Profile')),
+      appBar: AppBar(title: Text(AppLocalizations.of(context)!.settingsEditProfileTitle)),
       body: Form(
         key: _formKey,
         onChanged: () => setState(() {}), // live preview
@@ -477,13 +480,15 @@ class _BmiChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cat = NutritionMath.bmiCategory(bmi);
-    final color = switch (cat) {
-      'Healthy'    => Colors.green,
-      'Overweight' => Colors.orange,
-      'Obese'      => Colors.red,
-      _            => Colors.blueGrey,
-    };
+    final loc = AppLocalizations.of(context)!;
+    final label = bmiCategoryLabel(loc, bmi);
+    final color = bmi < 18.5
+        ? Colors.blueGrey
+        : bmi < 25
+            ? Colors.green
+            : bmi < 30
+                ? Colors.orange
+                : Colors.red;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
@@ -495,10 +500,10 @@ class _BmiChip extends StatelessWidget {
         children: [
           Icon(Icons.insights_outlined, color: color, size: 18),
           const SizedBox(width: 8),
-          Text('BMI ${bmi.toStringAsFixed(1)}',
+          Text(loc.progressBmiChipPrefix(bmi.toStringAsFixed(1)),
               style: const TextStyle(fontWeight: FontWeight.w600)),
           const SizedBox(width: 8),
-          Text('· $cat', style: TextStyle(color: color)),
+          Text('· $label', style: TextStyle(color: color)),
         ],
       ),
     );

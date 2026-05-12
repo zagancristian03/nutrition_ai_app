@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:app/l10n/app_localizations.dart';
+import 'package:app/l10n/meal_labels.dart';
+
 import '../../models/food_item.dart';
 import '../../providers/daily_log_provider.dart';
 
@@ -35,9 +38,7 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> {
   @override
   void initState() {
     super.initState();
-    _selectedMealType = _mealTypes.contains(widget.initialMealType)
-        ? widget.initialMealType!
-        : 'Breakfast';
+    _selectedMealType = _normalizedMealKey(widget.initialMealType);
 
     // Default serving comes from the food row if the catalog knows one.
     final defaultServing = widget.food.servingSizeG ?? 100.0;
@@ -55,6 +56,12 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> {
     _servingsController.addListener(_updateCalculations);
   }
 
+  String _normalizedMealKey(String? m) {
+    if (m == null || m.isEmpty) return 'Breakfast';
+    if (m == 'Snacks') return 'Snack';
+    return _mealTypes.contains(m) ? m : 'Breakfast';
+  }
+
   @override
   void dispose() {
     _servingSizeController.dispose();
@@ -62,10 +69,16 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> {
     super.dispose();
   }
 
+  /// Accepts `1,5`-style decimals (common outside en_US); matches manual entry.
+  static double _parsePortion(String raw) {
+    final cleaned = raw.replaceAll(',', '.').trim();
+    return double.tryParse(cleaned) ?? 0.0;
+  }
+
   void _updateCalculations() {
     setState(() {
-      _servingSize = double.tryParse(_servingSizeController.text) ?? 0.0;
-      _servings = double.tryParse(_servingsController.text) ?? 0.0;
+      _servingSize = _parsePortion(_servingSizeController.text);
+      _servings = _parsePortion(_servingsController.text);
     });
   }
 
@@ -78,10 +91,11 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> {
   bool _saving = false;
 
   Future<void> _handleAddToDiary() async {
+    final loc = AppLocalizations.of(context)!;
     if (_servingSize <= 0 || _servings <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please enter valid serving size and servings'),
+        SnackBar(
+          content: Text(loc.foodDetailValidationPortions),
           backgroundColor: Colors.redAccent,
         ),
       );
@@ -90,20 +104,27 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> {
 
     setState(() => _saving = true);
     final provider = context.read<DailyLogProvider>();
-    final created = await provider.addEntryForFood(
+    final outcome = await provider.addEntryForFood(
       foodId:   widget.food.id,
       mealType: _selectedMealType,
       grams:    _totalGrams,
       servings: _servings,
+      foodDisplayName: widget.food.primaryLabel,
     );
 
     if (!mounted) return;
     setState(() => _saving = false);
 
-    if (created == null) {
+    if (outcome.entry == null) {
+      final detail = outcome.failureMessage?.trim();
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Could not save to diary. Please check your connection.'),
+        SnackBar(
+          content: Text(
+            detail != null && detail.isNotEmpty
+                ? detail
+                : loc.foodDetailSaveFailedSnack,
+            maxLines: 6,
+          ),
           backgroundColor: Colors.redAccent,
         ),
       );
@@ -111,8 +132,8 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> {
     }
 
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Food added to diary!'),
+      SnackBar(
+        content: Text(loc.foodDetailAddedSnack),
         backgroundColor: Colors.green,
       ),
     );
@@ -122,14 +143,15 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
     final food = widget.food;
-    final title = _titleCase(food.name);
+    final title = _titleCase(food.primaryLabel);
     final brand = food.brand?.trim();
 
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
-        title: const Text('Food details'),
+        title: Text(loc.foodDetailTitle),
         elevation: 0,
       ),
       body: SingleChildScrollView(
@@ -139,9 +161,10 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> {
           children: [
             _Header(title: title, brand: brand),
             const SizedBox(height: 16),
-            _Per100gCard(food: food),
+            _Per100gCard(food: food, loc: loc),
             const SizedBox(height: 16),
             _PortionCard(
+              loc: loc,
               mealType: _selectedMealType,
               onMealTypeChanged: (v) => setState(() => _selectedMealType = v),
               mealTypes: _mealTypes,
@@ -151,6 +174,7 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> {
             ),
             const SizedBox(height: 16),
             _TotalsCard(
+              loc: loc,
               totalGrams: _totalGrams,
               totalCalories: _totalCalories,
               totalProtein: _totalProtein,
@@ -176,7 +200,7 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> {
                       )
                     : const Icon(Icons.add),
                 label: Text(
-                  _saving ? 'Saving…' : 'Add to diary',
+                  _saving ? loc.foodDetailSaving : loc.foodDetailAddToDiary,
                   style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                 ),
                 style: FilledButton.styleFrom(
@@ -243,7 +267,8 @@ class _Header extends StatelessWidget {
 // ======================================================================= //
 class _Per100gCard extends StatelessWidget {
   final FoodItem food;
-  const _Per100gCard({required this.food});
+  final AppLocalizations loc;
+  const _Per100gCard({required this.food, required this.loc});
 
   @override
   Widget build(BuildContext context) {
@@ -251,30 +276,30 @@ class _Per100gCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const _CardTitle('Per 100 g'),
+          _CardTitle(loc.foodDetailPer100),
           const SizedBox(height: 12),
           Row(
             children: [
               Expanded(child: _MacroStat(
-                label: 'Calories',
+                label: loc.addMealCaloriesLabel,
                 value: food.caloriesPer100g,
                 suffix: ' kcal',
                 color: Colors.orange,
               )),
               Expanded(child: _MacroStat(
-                label: 'Protein',
+                label: loc.dashboardMacroProtein,
                 value: food.proteinPer100g,
                 suffix: ' g',
                 color: Colors.red,
               )),
               Expanded(child: _MacroStat(
-                label: 'Carbs',
+                label: loc.dashboardMacroCarbs,
                 value: food.carbsPer100g,
                 suffix: ' g',
                 color: Colors.blueAccent,
               )),
               Expanded(child: _MacroStat(
-                label: 'Fat',
+                label: loc.dashboardMacroFats,
                 value: food.fatPer100g,
                 suffix: ' g',
                 color: Colors.green,
@@ -329,6 +354,7 @@ class _MacroStat extends StatelessWidget {
 // Portion / meal selection                                                //
 // ======================================================================= //
 class _PortionCard extends StatelessWidget {
+  final AppLocalizations loc;
   final String mealType;
   final ValueChanged<String> onMealTypeChanged;
   final List<String> mealTypes;
@@ -337,6 +363,7 @@ class _PortionCard extends StatelessWidget {
   final String unit;
 
   const _PortionCard({
+    required this.loc,
     required this.mealType,
     required this.onMealTypeChanged,
     required this.mealTypes,
@@ -351,18 +378,22 @@ class _PortionCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const _CardTitle('Portion'),
+          _CardTitle(loc.foodDetailPortionTitle),
           const SizedBox(height: 12),
           DropdownButtonFormField<String>(
-            value: mealType,
-            decoration: const InputDecoration(
-              labelText: 'Meal type',
-              prefixIcon: Icon(Icons.restaurant),
-              border: OutlineInputBorder(),
+            key: ValueKey(mealType),
+            initialValue: mealType,
+            decoration: InputDecoration(
+              labelText: loc.foodDetailMealTypeLabel,
+              prefixIcon: const Icon(Icons.restaurant),
+              border: const OutlineInputBorder(),
               isDense: true,
             ),
             items: mealTypes
-                .map((t) => DropdownMenuItem(value: t, child: Text(t)))
+                .map((t) => DropdownMenuItem(
+                      value: t,
+                      child: Text(mealTypeLabel(loc, t)),
+                    ))
                 .toList(),
             onChanged: (v) {
               if (v != null) onMealTypeChanged(v);
@@ -379,7 +410,7 @@ class _PortionCard extends StatelessWidget {
                     FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
                   ],
                   decoration: InputDecoration(
-                    labelText: 'Serving size ($unit)',
+                    labelText: loc.foodDetailServingSizeLabel(unit),
                     prefixIcon: const Icon(Icons.scale),
                     border: const OutlineInputBorder(),
                     isDense: true,
@@ -394,10 +425,10 @@ class _PortionCard extends StatelessWidget {
                   inputFormatters: [
                     FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
                   ],
-                  decoration: const InputDecoration(
-                    labelText: 'Servings',
-                    prefixIcon: Icon(Icons.numbers),
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: loc.foodDetailServingsLabel,
+                    prefixIcon: const Icon(Icons.numbers),
+                    border: const OutlineInputBorder(),
                     isDense: true,
                   ),
                 ),
@@ -414,6 +445,7 @@ class _PortionCard extends StatelessWidget {
 // Totals card                                                             //
 // ======================================================================= //
 class _TotalsCard extends StatelessWidget {
+  final AppLocalizations loc;
   final double totalGrams;
   final double totalCalories;
   final double totalProtein;
@@ -422,6 +454,7 @@ class _TotalsCard extends StatelessWidget {
   final String unit;
 
   const _TotalsCard({
+    required this.loc,
     required this.totalGrams,
     required this.totalCalories,
     required this.totalProtein,
@@ -439,7 +472,7 @@ class _TotalsCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const _CardTitle('Totals'),
+              _CardTitle(loc.foodDetailTotalsTitle),
               Text(
                 '${totalGrams.toStringAsFixed(totalGrams == totalGrams.roundToDouble() ? 0 : 1)} $unit',
                 style: TextStyle(color: Colors.grey.shade700, fontSize: 13),
@@ -447,13 +480,13 @@ class _TotalsCard extends StatelessWidget {
             ],
           ),
           const Divider(height: 24),
-          _totalRow('Calories', totalCalories, ' kcal', Colors.orange),
+          _totalRow(loc.addMealCaloriesLabel, totalCalories, ' kcal', Colors.orange),
           const SizedBox(height: 8),
-          _totalRow('Protein',  totalProtein,  ' g',    Colors.red),
+          _totalRow(loc.dashboardMacroProtein,  totalProtein,  ' g',    Colors.red),
           const SizedBox(height: 8),
-          _totalRow('Carbs',    totalCarbs,    ' g',    Colors.blueAccent),
+          _totalRow(loc.dashboardMacroCarbs,    totalCarbs,    ' g',    Colors.blueAccent),
           const SizedBox(height: 8),
-          _totalRow('Fat',      totalFat,      ' g',    Colors.green),
+          _totalRow(loc.dashboardMacroFats,      totalFat,      ' g',    Colors.green),
         ],
       ),
     );

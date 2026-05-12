@@ -76,6 +76,34 @@ class ProfileApiService {
     return null;
   }
 
+  /// PUT locale/timezone fields (always sends [UserProfile.toLocaleSettingsJson]).
+  Future<UserProfile?> putLocaleSettings(UserProfile profile) async {
+    final uri = Uri.parse('$_baseUrl/user-profile/${profile.userId}');
+    try {
+      final response = await http
+          .put(
+            uri,
+            headers: {'Content-Type': 'application/json'},
+            body: json.encode(profile.toLocaleSettingsJson()),
+          )
+          .timeout(_timeout);
+
+      if (response.statusCode == 200) {
+        final decoded = json.decode(response.body);
+        if (decoded is Map<String, dynamic>) {
+          return UserProfile.fromJson(decoded);
+        }
+      }
+      debugPrint(
+        '[ProfileApiService] putLocaleSettings HTTP ${response.statusCode} '
+        'body=${response.body}',
+      );
+    } catch (e) {
+      debugPrint('[ProfileApiService] putLocaleSettings error: $e');
+    }
+    return null;
+  }
+
   // ----------------------------------------------------------------------- //
   // Weight logs                                                             //
   // ----------------------------------------------------------------------- //

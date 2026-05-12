@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:app/l10n/app_localizations.dart';
+
 import '../../providers/saved_items_provider.dart';
 import '../../models/saved_recipe.dart';
 import '../../models/saved_recipe.dart' as saved_recipe;
@@ -35,28 +37,30 @@ class _CreateRecipeScreenState extends State<CreateRecipeScreen> {
       ),
     );
 
-    if (result != null) {
-      // Show dialog to enter serving size
-      final servingSize = await showDialog<double>(
-        context: context,
-        builder: (context) => _ServingSizeDialog(),
-      );
+    if (!mounted) return;
+    if (result == null) return;
 
-      if (servingSize != null && servingSize > 0) {
-        setState(() {
-          _items.add(
-            saved_recipe.SavedRecipeItem(
-              foodId: result.id,
-              foodName: result.name,
-              servingSize: servingSize,
-              caloriesPer100g: result.caloriesPer100g,
-              proteinPer100g: result.proteinPer100g,
-              carbsPer100g: result.carbsPer100g,
-              fatPer100g: result.fatPer100g,
-            ),
-          );
-        });
-      }
+    // Show dialog to enter serving size
+    final servingSize = await showDialog<double>(
+      context: context,
+      builder: (context) => _ServingSizeDialog(),
+    );
+
+    if (!mounted) return;
+    if (servingSize != null && servingSize > 0) {
+      setState(() {
+        _items.add(
+          saved_recipe.SavedRecipeItem(
+            foodId: result.id,
+            foodName: result.primaryLabel,
+            servingSize: servingSize,
+            caloriesPer100g: result.caloriesPer100g,
+            proteinPer100g: result.proteinPer100g,
+            carbsPer100g: result.carbsPer100g,
+            fatPer100g: result.fatPer100g,
+          ),
+        );
+      });
     }
   }
 
@@ -67,10 +71,11 @@ class _CreateRecipeScreenState extends State<CreateRecipeScreen> {
   }
 
   void _saveRecipe() {
+    final loc = AppLocalizations.of(context)!;
     if (_nameController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please enter a recipe name'),
+        SnackBar(
+          content: Text(loc.recipeSnackNameRequired),
           backgroundColor: Colors.red,
         ),
       );
@@ -79,8 +84,8 @@ class _CreateRecipeScreenState extends State<CreateRecipeScreen> {
 
     if (_items.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please add at least one ingredient'),
+        SnackBar(
+          content: Text(loc.recipeSnackIngredientsRequired),
           backgroundColor: Colors.red,
         ),
       );
@@ -90,8 +95,8 @@ class _CreateRecipeScreenState extends State<CreateRecipeScreen> {
     final servings = int.tryParse(_servingsController.text) ?? 1;
     if (servings <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please enter a valid number of servings'),
+        SnackBar(
+          content: Text(loc.recipeSnackServingsInvalid),
           backgroundColor: Colors.red,
         ),
       );
@@ -112,8 +117,8 @@ class _CreateRecipeScreenState extends State<CreateRecipeScreen> {
     provider.addRecipe(recipe);
 
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Recipe saved successfully!'),
+      SnackBar(
+        content: Text(loc.recipeSnackSaved),
         backgroundColor: Colors.green,
       ),
     );
@@ -123,6 +128,7 @@ class _CreateRecipeScreenState extends State<CreateRecipeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
     double totalCalories = 0;
     double totalProtein = 0;
     double totalCarbs = 0;
@@ -139,7 +145,7 @@ class _CreateRecipeScreenState extends State<CreateRecipeScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Create Recipe'),
+        title: Text(loc.createRecipeTitle),
       ),
       body: Column(
         children: [
@@ -151,19 +157,19 @@ class _CreateRecipeScreenState extends State<CreateRecipeScreen> {
                 children: [
                   TextFormField(
                     controller: _nameController,
-                    decoration: const InputDecoration(
-                      labelText: 'Recipe Name',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.book),
+                    decoration: InputDecoration(
+                      labelText: loc.recipeNameLabel,
+                      border: const OutlineInputBorder(),
+                      prefixIcon: const Icon(Icons.book),
                     ),
                   ),
                   const SizedBox(height: 16),
                   TextFormField(
                     controller: _descriptionController,
-                    decoration: const InputDecoration(
-                      labelText: 'Description (optional)',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.description),
+                    decoration: InputDecoration(
+                      labelText: loc.recipeDescriptionLabel,
+                      border: const OutlineInputBorder(),
+                      prefixIcon: const Icon(Icons.description),
                     ),
                     maxLines: 2,
                   ),
@@ -171,10 +177,10 @@ class _CreateRecipeScreenState extends State<CreateRecipeScreen> {
                   TextFormField(
                     controller: _servingsController,
                     keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(
-                      labelText: 'Number of Servings',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.people),
+                    decoration: InputDecoration(
+                      labelText: loc.recipeServingsLabel,
+                      border: const OutlineInputBorder(),
+                      prefixIcon: const Icon(Icons.people),
                     ),
                   ),
                   const SizedBox(height: 24),
@@ -182,22 +188,22 @@ class _CreateRecipeScreenState extends State<CreateRecipeScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'Ingredients',
+                        loc.recipeIngredientsHeader,
                         style: Theme.of(context).textTheme.titleLarge,
                       ),
                       ElevatedButton.icon(
                         onPressed: _addFoodItem,
                         icon: const Icon(Icons.add),
-                        label: const Text('Add Ingredient'),
+                        label: Text(loc.recipeAddIngredient),
                       ),
                     ],
                   ),
                   const SizedBox(height: 16),
                   if (_items.isEmpty)
-                    const Center(
+                    Center(
                       child: Padding(
-                        padding: EdgeInsets.all(32.0),
-                        child: Text('No ingredients added yet'),
+                        padding: const EdgeInsets.all(32.0),
+                        child: Text(loc.recipeEmptyIngredients),
                       ),
                     )
                   else
@@ -209,8 +215,10 @@ class _CreateRecipeScreenState extends State<CreateRecipeScreen> {
                         child: ListTile(
                           title: Text(item.foodName),
                           subtitle: Text(
-                            '${item.servingSize}g • '
-                            '${item.totalCalories.toStringAsFixed(1)} cal',
+                            loc.recipeIngredientSubtitle(
+                              item.servingSize.toString(),
+                              item.totalCalories.toStringAsFixed(1),
+                            ),
                           ),
                           trailing: IconButton(
                             icon: const Icon(Icons.delete),
@@ -228,23 +236,39 @@ class _CreateRecipeScreenState extends State<CreateRecipeScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Total Nutrition (${servings} servings)',
+                              loc.recipeTotalNutritionServings('$servings'),
                               style: Theme.of(context).textTheme.titleMedium,
                             ),
                             const SizedBox(height: 8),
-                            Text('Total Calories: ${totalCalories.toStringAsFixed(1)}'),
-                            Text('Total Protein: ${totalProtein.toStringAsFixed(1)}g'),
-                            Text('Total Carbs: ${totalCarbs.toStringAsFixed(1)}g'),
-                            Text('Total Fat: ${totalFat.toStringAsFixed(1)}g'),
+                            Text(loc.recipeTotalCaloriesLine(
+                              totalCalories.toStringAsFixed(1),
+                            )),
+                            Text(loc.recipeTotalProteinLine(
+                              totalProtein.toStringAsFixed(1),
+                            )),
+                            Text(loc.recipeTotalCarbsLine(
+                              totalCarbs.toStringAsFixed(1),
+                            )),
+                            Text(loc.recipeTotalFatLine(
+                              totalFat.toStringAsFixed(1),
+                            )),
                             const Divider(),
                             Text(
-                              'Per Serving',
+                              loc.recipePerServingHeader,
                               style: Theme.of(context).textTheme.titleSmall,
                             ),
-                            Text('Calories: ${(totalCalories / servings).toStringAsFixed(1)}'),
-                            Text('Protein: ${(totalProtein / servings).toStringAsFixed(1)}g'),
-                            Text('Carbs: ${(totalCarbs / servings).toStringAsFixed(1)}g'),
-                            Text('Fat: ${(totalFat / servings).toStringAsFixed(1)}g'),
+                            Text(loc.recipePerServingCalories(
+                              (totalCalories / servings).toStringAsFixed(1),
+                            )),
+                            Text(loc.recipePerServingProtein(
+                              (totalProtein / servings).toStringAsFixed(1),
+                            )),
+                            Text(loc.recipePerServingCarbs(
+                              (totalCarbs / servings).toStringAsFixed(1),
+                            )),
+                            Text(loc.recipePerServingFat(
+                              (totalFat / servings).toStringAsFixed(1),
+                            )),
                           ],
                         ),
                       ),
@@ -261,7 +285,7 @@ class _CreateRecipeScreenState extends State<CreateRecipeScreen> {
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 16),
               ),
-              child: const Text('Save Recipe'),
+              child: Text(loc.recipeSaveButton),
             ),
           ),
         ],
@@ -286,20 +310,21 @@ class _ServingSizeDialogState extends State<_ServingSizeDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
     return AlertDialog(
-      title: const Text('Enter Amount'),
+      title: Text(loc.createRecipeEnterAmountTitle),
       content: TextField(
         controller: _controller,
         keyboardType: TextInputType.number,
-        decoration: const InputDecoration(
-          labelText: 'Amount (g)',
-          border: OutlineInputBorder(),
+        decoration: InputDecoration(
+          labelText: loc.mealServingAmountG,
+          border: const OutlineInputBorder(),
         ),
       ),
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
+          child: Text(loc.commonCancel),
         ),
         TextButton(
           onPressed: () {
@@ -308,7 +333,7 @@ class _ServingSizeDialogState extends State<_ServingSizeDialog> {
               Navigator.pop(context, size);
             }
           },
-          child: const Text('Add'),
+          child: Text(loc.mealRecipeDialogAdd),
         ),
       ],
     );

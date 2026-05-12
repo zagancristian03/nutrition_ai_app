@@ -1,11 +1,15 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:app/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 
+import '../../providers/locale_controller.dart';
+import '../../models/user_profile.dart';
 import '../../providers/preferences_provider.dart';
 import '../../providers/theme_mode_provider.dart';
 import '../../services/auth_service.dart';
+import '../../services/profile_api_service.dart';
 import '../goals/edit_goals_screen.dart';
 import '../profile/edit_profile_screen.dart';
 
@@ -24,36 +28,46 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final cs = Theme.of(context).colorScheme;
     final user = FirebaseAuth.instance.currentUser;
     final prefs = context.watch<PreferencesProvider>();
+    final loc = AppLocalizations.of(context)!;
+    final localeCtrl = context.watch<LocaleController>();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Settings')),
+      appBar: AppBar(title: Text(loc.settingsScreenTitle)),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
         children: [
-          _SectionLabel('Appearance'),
-          const _AppearanceCard(),
+          _SectionLabel(loc.settingsSectionAppearance),
+          _AppearanceCard(loc: loc),
           const SizedBox(height: 18),
 
-          _SectionLabel('Profile & goals'),
+          _SectionLabel(loc.settingsSectionLanguage),
+          _LanguageCard(
+            loc: loc,
+            localeCtrl: localeCtrl,
+            userId: user?.uid,
+          ),
+          const SizedBox(height: 18),
+
+          _SectionLabel(loc.settingsSectionProfileGoals),
           _Tile(
             icon: Icons.person_outline,
-            title: 'Edit profile',
-            subtitle: 'Body stats, goal, activity level',
+            title: loc.settingsEditProfileTitle,
+            subtitle: loc.settingsEditProfileSubtitle,
             onTap: () => Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => const EditProfileScreen()),
             ),
           ),
           _Tile(
             icon: Icons.flag_outlined,
-            title: 'Daily targets',
-            subtitle: 'Calorie + macro goals',
+            title: loc.settingsDailyTargetsTitle,
+            subtitle: loc.settingsDailyTargetsSubtitle,
             onTap: () => Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => const EditGoalsScreen()),
             ),
           ),
           const SizedBox(height: 18),
 
-          _SectionLabel('Preferences'),
+          _SectionLabel(loc.settingsSectionPreferences),
           Card(
             elevation: 0,
             shape: RoundedRectangleBorder(
@@ -77,10 +91,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text('Weight unit',
-                                style: TextStyle(fontWeight: FontWeight.w600)),
+                            Text(loc.settingsWeightUnitTitle,
+                                style: const TextStyle(fontWeight: FontWeight.w600)),
                             Text(
-                              'Used on the Progress and weight log screens',
+                              loc.settingsWeightUnitSubtitle,
                               style: TextStyle(color: cs.onSurfaceVariant),
                             ),
                           ],
@@ -91,9 +105,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   const SizedBox(height: 10),
                   SegmentedButton<String>(
                     showSelectedIcon: false,
-                    segments: const [
-                      ButtonSegment<String>(value: 'kg', label: Text('Kilograms (kg)')),
-                      ButtonSegment<String>(value: 'lb', label: Text('Pounds (lb)')),
+                    segments: [
+                      ButtonSegment<String>(value: 'kg', label: Text(loc.settingsWeightUnitKg)),
+                      ButtonSegment<String>(value: 'lb', label: Text(loc.settingsWeightUnitLb)),
                     ],
                     selected: {prefs.weightUnit},
                     onSelectionChanged: (s) =>
@@ -105,24 +119,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           _SwitchTile(
             icon: Icons.auto_awesome,
-            title: 'Show coach tips',
-            subtitle: 'Friendly insights on Dashboard and Diary',
+            title: loc.settingsCoachTipsTitle,
+            subtitle: loc.settingsCoachTipsSubtitle,
             value: prefs.showCoachTips,
             onChanged: (v) =>
                 context.read<PreferencesProvider>().setShowCoachTips(v),
           ),
           _SwitchTile(
             icon: Icons.delete_sweep_outlined,
-            title: 'Confirm before deleting',
-            subtitle: 'Ask before removing a logged food',
+            title: loc.settingsConfirmDeleteTitle,
+            subtitle: loc.settingsConfirmDeleteSubtitle,
             value: prefs.confirmDelete,
             onChanged: (v) =>
                 context.read<PreferencesProvider>().setConfirmDelete(v),
           ),
           _SwitchTile(
             icon: Icons.vibration,
-            title: 'Haptic feedback',
-            subtitle: 'Subtle vibration on actions',
+            title: loc.settingsHapticsTitle,
+            subtitle: loc.settingsHapticsSubtitle,
             value: prefs.haptics,
             onChanged: (v) {
               context.read<PreferencesProvider>().setHaptics(v);
@@ -131,18 +145,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           const SizedBox(height: 18),
 
-          _SectionLabel('Account'),
+          _SectionLabel(loc.settingsSectionAccount),
           _Tile(
             icon: Icons.email_outlined,
-            title: 'Email',
-            subtitle: user?.email ?? 'Not signed in',
+            title: loc.settingsEmailTitle,
+            subtitle: user?.email ?? loc.settingsEmailNotSignedIn,
           ),
           _Tile(
             icon: Icons.lock_reset,
-            title: 'Change password',
+            title: loc.settingsChangePasswordTitle,
             subtitle: user?.email == null
-                ? 'Sign in first'
-                : 'Send a reset link to your email',
+                ? loc.settingsChangePasswordSubtitleSignIn
+                : loc.settingsChangePasswordSubtitle,
             onTap: user?.email == null
                 ? null
                 : () async {
@@ -151,31 +165,35 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       await FirebaseAuth.instance
                           .sendPasswordResetEmail(email: user!.email!);
                       messenger.showSnackBar(
-                        const SnackBar(content: Text('Reset email sent')),
+                        SnackBar(content: Text(loc.settingsSnackResetEmailSent)),
                       );
                     } catch (e) {
                       messenger.showSnackBar(
-                        SnackBar(content: Text('Failed to send: $e')),
+                        SnackBar(
+                          content: Text(
+                            loc.settingsSnackResetFailed(e.toString()),
+                          ),
+                        ),
                       );
                     }
                   },
           ),
           _Tile(
             icon: Icons.logout,
-            title: 'Sign out',
-            subtitle: 'Return to the login screen',
+            title: loc.settingsSignOutTitle,
+            subtitle: loc.settingsSignOutSubtitle,
             iconColor: cs.error,
             onTap: () async {
               final navigator = Navigator.of(context, rootNavigator: true);
               final ok = await showDialog<bool>(
                 context: context,
                 builder: (ctx) => AlertDialog(
-                  title: const Text('Sign out?'),
-                  content: const Text('You can sign back in any time.'),
+                  title: Text(loc.authSignOutConfirmTitle),
+                  content: Text(loc.authSignOutConfirmBody),
                   actions: [
                     TextButton(
                       onPressed: () => Navigator.of(ctx).pop(false),
-                      child: const Text('Cancel'),
+                      child: Text(loc.commonCancel),
                     ),
                     FilledButton(
                       style: FilledButton.styleFrom(
@@ -183,17 +201,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         foregroundColor: cs.onError,
                       ),
                       onPressed: () => Navigator.of(ctx).pop(true),
-                      child: const Text('Sign out'),
+                      child: Text(loc.commonSignOut),
                     ),
                   ],
                 ),
               );
               if (ok != true) return;
               await AuthService().logout();
-              // Keep [AuthGate] as the bottom route — it listens to Firebase and
-              // swaps between LoginScreen vs MainShell. Replacing the stack with a
-              // bare LoginScreen removed that listener so sign-in succeeded in
-              // Firebase while the UI never left the login page.
               if (navigator.mounted) {
                 navigator.popUntil((route) => route.isFirst);
               }
@@ -201,39 +215,39 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           const SizedBox(height: 18),
 
-          _SectionLabel('Help'),
+          _SectionLabel(loc.settingsSectionHelp),
           _Tile(
             icon: Icons.help_outline,
-            title: 'Send feedback',
-            subtitle: 'Tell us what you’d like to see next',
+            title: loc.settingsFeedbackTitle,
+            subtitle: loc.settingsFeedbackSubtitle,
             onTap: () {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Thanks! Email feedback coming soon.')),
+                SnackBar(content: Text(loc.settingsFeedbackSnack)),
               );
             },
           ),
           _Tile(
             icon: Icons.star_outline,
-            title: 'Rate this app',
-            subtitle: 'A quick rating helps a lot',
+            title: loc.settingsRateTitle,
+            subtitle: loc.settingsRateSubtitle,
             onTap: () {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Thanks for your support!')),
+                SnackBar(content: Text(loc.settingsRateSnack)),
               );
             },
           ),
           const SizedBox(height: 18),
 
-          _SectionLabel('About'),
+          _SectionLabel(loc.settingsSectionAbout),
           _Tile(
             icon: Icons.info_outline,
-            title: 'Nutrition AI',
-            subtitle: 'Version 1.0.0',
+            title: loc.settingsAboutAppTitle,
+            subtitle: loc.settingsAboutVersionSubtitle,
           ),
           _Tile(
             icon: Icons.policy_outlined,
-            title: 'Privacy',
-            subtitle: 'Your foods, goals and weights are stored securely.',
+            title: loc.settingsPrivacyTitle,
+            subtitle: loc.settingsPrivacySubtitle,
           ),
         ],
       ),
@@ -303,8 +317,119 @@ class _SectionLabel extends StatelessWidget {
   }
 }
 
+class _LanguageCard extends StatelessWidget {
+  const _LanguageCard({
+    required this.loc,
+    required this.localeCtrl,
+    required this.userId,
+  });
+
+  final AppLocalizations loc;
+  final LocaleController localeCtrl;
+  final String? userId;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final api = ProfileApiService();
+
+    Future<void> pick(Future<void> Function() apply) async {
+      await apply();
+      if (!context.mounted) return;
+      await context.read<LocaleController>().commitLanguageSelection(api, userId);
+    }
+
+    void onLanguageChanged(int? v) {
+      if (v == null) return;
+      if (v == 0) {
+        pick(() => localeCtrl.setSystemDefault());
+        return;
+      }
+      final idx = v - 1;
+      if (idx >= 0 && idx < kSupportedManualLanguageTags.length) {
+        pick(() => localeCtrl.setManualLanguage(kSupportedManualLanguageTags[idx]));
+      }
+    }
+
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: cs.outlineVariant),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              loc.settingsLanguageTitle,
+              style: Theme.of(context)
+                  .textTheme
+                  .titleSmall
+                  ?.copyWith(fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              loc.settingsLanguageSubtitle,
+              style: Theme.of(context)
+                  .textTheme
+                  .bodySmall
+                  ?.copyWith(color: cs.onSurfaceVariant),
+            ),
+            const SizedBox(height: 12),
+            RadioGroup<int>(
+              groupValue: _languageGroupValue(localeCtrl),
+              onChanged: onLanguageChanged,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  RadioListTile<int>(
+                    value: 0,
+                    title: Text(loc.settingsLanguageSystemDefault),
+                    dense: true,
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                  for (var i = 0; i < kSupportedManualLanguageTags.length; i++)
+                    RadioListTile<int>(
+                      value: i + 1,
+                      title: Text(_manualLabel(loc, kSupportedManualLanguageTags[i])),
+                      dense: true,
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  static String _manualLabel(AppLocalizations loc, String tag) {
+    switch (tag) {
+      case 'ro':
+        return loc.settingsLanguageRomanian;
+      case 'en':
+      default:
+        return loc.settingsLanguageEnglish;
+    }
+  }
+
+  static int _languageGroupValue(LocaleController lc) {
+    if (lc.mode == UserLocaleMode.system) return 0;
+    final i = kSupportedManualLanguageTags.indexOf(
+      (lc.preferredLocaleWire ?? '').trim(),
+    );
+    if (i < 0) return 1;
+    return i + 1;
+  }
+}
+
 class _AppearanceCard extends StatelessWidget {
-  const _AppearanceCard();
+  const _AppearanceCard({required this.loc});
+
+  final AppLocalizations loc;
 
   @override
   Widget build(BuildContext context) {
@@ -323,7 +448,7 @@ class _AppearanceCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Theme',
+              loc.settingsThemeTitle,
               style: Theme.of(context)
                   .textTheme
                   .titleSmall
@@ -331,7 +456,7 @@ class _AppearanceCard extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              'Light, dark, or match your device',
+              loc.settingsThemeSubtitle,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: cs.onSurfaceVariant,
                   ),
@@ -339,21 +464,21 @@ class _AppearanceCard extends StatelessWidget {
             const SizedBox(height: 12),
             SegmentedButton<ThemeMode>(
               showSelectedIcon: false,
-              segments: const [
+              segments: [
                 ButtonSegment<ThemeMode>(
                   value: ThemeMode.light,
-                  icon: Icon(Icons.light_mode_outlined, size: 18),
-                  label: Text('Light'),
+                  icon: const Icon(Icons.light_mode_outlined, size: 18),
+                  label: Text(loc.settingsThemeLight),
                 ),
                 ButtonSegment<ThemeMode>(
                   value: ThemeMode.dark,
-                  icon: Icon(Icons.dark_mode_outlined, size: 18),
-                  label: Text('Dark'),
+                  icon: const Icon(Icons.dark_mode_outlined, size: 18),
+                  label: Text(loc.settingsThemeDark),
                 ),
                 ButtonSegment<ThemeMode>(
                   value: ThemeMode.system,
-                  icon: Icon(Icons.brightness_auto_outlined, size: 18),
-                  label: Text('System'),
+                  icon: const Icon(Icons.brightness_auto_outlined, size: 18),
+                  label: Text(loc.settingsThemeSystem),
                 ),
               ],
               selected: {themeProv.themeMode},

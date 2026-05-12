@@ -1,8 +1,10 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 
 import '../models/daily_log.dart';
 import '../models/food_entry.dart';
 import '../services/diary_api_service.dart';
+import 'locale_controller.dart';
 
 /// State for the user's diary (entries) + targets (goals).
 ///
@@ -10,9 +12,14 @@ import '../services/diary_api_service.dart';
 /// everything survives an app restart. Entries and goals are cached per
 /// (userId, date) so switching between tabs is instant.
 class DailyLogProvider extends ChangeNotifier {
-  DailyLogProvider({DiaryApiService? api}) : _api = api ?? DiaryApiService();
+  DailyLogProvider({
+    DiaryApiService? api,
+    required LocaleController locale,
+  })  : _api = api ?? DiaryApiService(),
+        _locale = locale;
 
   final DiaryApiService _api;
+  final LocaleController _locale;
 
   /// Firebase UID of the signed-in user. `null` means no user is signed in
   /// yet; all write operations are no-ops in that state.
@@ -30,9 +37,8 @@ class DailyLogProvider extends ChangeNotifier {
 
   bool _loading = false;
 
-  /// Set when [listFoodLogs] fails so the UI can show a banner instead of
-  /// looking like an empty diary.
-  String? _diaryLoadError;
+  /// Machine-readable code; map with [localizedApiMessage] / diary helpers.
+  String? _diaryLoadErrorCode;
 
   // ----------------------------------------------------------------------- //
   // Public state                                                            //
@@ -40,7 +46,7 @@ class DailyLogProvider extends ChangeNotifier {
 
   String? get userId => _userId;
   bool    get isLoading => _loading;
-  String? get diaryLoadError => _diaryLoadError;
+  String? get diaryLoadErrorCode => _diaryLoadErrorCode;
   DateTime get selectedDate => _selectedDate;
   DateTime get date => _selectedDate; // backward compat
 
@@ -72,6 +78,20 @@ class DailyLogProvider extends ChangeNotifier {
   // Auth + date switching                                                   //
   // ----------------------------------------------------------------------- //
 
+  /// [AuthGate] assigns [_userId] in a post-frame callback. The first paint of
+  /// [MainShell] can happen in the same frame, so a very fast tap on
+  /// "Add to diary" may run before [_userId] is set even though
+  /// `FirebaseAuth.instance.currentUser` is already non-null. Resolve from
+  /// Firebase in that gap so writes are not silently dropped.
+  Future<String?> _resolvedUserId() async {
+    final cached = _userId;
+    if (cached != null) return cached;
+    final live = FirebaseAuth.instance.currentUser?.uid;
+    if (live == null) return null;
+    await setUser(live);
+    return _userId;
+  }
+
   /// Called by `AuthGate` (or equivalent) whenever the Firebase auth state
   /// changes. Pass `null` to clear all local state on sign-out.
   Future<void> setUser(String? userId) async {
@@ -85,12 +105,12 @@ class DailyLogProvider extends ChangeNotifier {
       _proteinGoal = 150;
       _carbsGoal   = 250;
       _fatGoal     = 65;
-      _diaryLoadError = null;
+      _diaryLoadErrorCode = null;
       notifyListeners();
       return;
     }
 
-    _diaryLoadError = null;
+    _diaryLoadErrorCode = null;
     notifyListeners();
     await _loadGoals();
     await _loadEntriesFor(_selectedDate);
@@ -116,15 +136,15 @@ class DailyLogProvider extends ChangeNotifier {
   /// Force a reload of the currently-selected day from the backend.
   Future<void> refresh() async {
     if (_userId == null) return;
-    _diaryLoadError = null;
+    _diaryLoadErrorCode = null;
     _logsByDate.remove(_dateKey(_selectedDate));
     await _loadEntriesFor(_selectedDate);
   }
 
-  /// Clears [diaryLoadError] without fetching (e.g. user dismissed a banner).
+  /// Clears [diaryLoadErrorCode] without fetching (e.g. user dismissed a banner).
   void clearDiaryLoadError() {
-    if (_diaryLoadError == null) return;
-    _diaryLoadError = null;
+    if (_diaryLoadErrorCode == null) return;
+    _diaryLoadErrorCode = null;
     notifyListeners();
   }
 
@@ -133,41 +153,54 @@ class DailyLogProvider extends ChangeNotifier {
   // ----------------------------------------------------------------------- //
 
   /// Create an entry from a food catalog row (POST /food-logs).
-  /// Returns the persisted entry (with server-assigned logId) on success,
-  /// or `null` on failure (an error snackbar is the caller's responsibility).
-  Future<FoodEntry?> addEntryForFood({
+  /// On success, updates local cache and returns [FoodLogCreateOutcome.ok].
+  /// On failure, returns [FoodLogCreateOutcome.failure] with a short message
+  /// for a SnackBar (HTTP detail, DB error, or network hint).
+  Future<FoodLogCreateOutcome> addEntryForFood({
     required String foodId,
     required String mealType,
     double? grams,
     double? servings,
+    /// Diary snapshot label (e.g. localized title from search). When null,
+    /// server falls back to `foods.name`.
+    String? foodDisplayName,
   }) async {
-    final uid = _userId;
-    if (uid == null) return null;
+    final uid = await _resolvedUserId();
+    if (uid == null) {
+      return FoodLogCreateOutcome.failure('Not signed in.');
+    }
 
     final gSend = (grams != null && grams > 0) ? grams : null;
     final sSend = (servings != null && servings > 0) ? servings : null;
-    if (gSend == null && sSend == null) return null;
+    if (gSend == null && sSend == null) {
+      return FoodLogCreateOutcome.failure(
+        'Specify a positive portion (serving size and servings).',
+      );
+    }
 
-    final created = await _api.createFoodLog(
-      userId:     uid,
-      foodId:     foodId,
-      loggedDate: _selectedDate,
-      mealType:   mealType,
-      grams:      gSend,
-      servings:   sSend,
+    final outcome = await _api.createFoodLog(
+      userId:           uid,
+      foodId:           foodId,
+      loggedDate:       _selectedDate,
+      mealType:         mealType,
+      grams:            gSend,
+      servings:         sSend,
+      consumedAt:       DateTime.now().toUtc(),
+      diaryTimezone:    _locale.timezoneIana,
+      foodDisplayName:  foodDisplayName,
     );
 
-    if (created == null) return null;
-
-    final log = _getOrCreateLog(_selectedDate);
-    log.entries.add(created);
-    notifyListeners();
-    return created;
+    if (outcome.entry != null) {
+      final log = _getOrCreateLog(_selectedDate);
+      log.entries.add(outcome.entry!);
+      notifyListeners();
+    }
+    return outcome;
   }
 
   /// Persist a user-edited entry.
   Future<bool> updateEntry(FoodEntry oldEntry, FoodEntry newEntry) async {
-    final uid = _userId;
+    final uid = await _resolvedUserId();
     final logId = oldEntry.logId;
     if (uid == null || logId == null) {
       // Local-only fallback (e.g. sync failed earlier).
@@ -196,7 +229,7 @@ class DailyLogProvider extends ChangeNotifier {
 
   /// Delete an entry (backend + local).
   Future<bool> removeEntry(FoodEntry entry) async {
-    final uid = _userId;
+    final uid = await _resolvedUserId();
     final logId = entry.logId;
     if (uid == null || logId == null) {
       _removeLocal(entry);
@@ -225,7 +258,7 @@ class DailyLogProvider extends ChangeNotifier {
     double? carbsGoal,
     double? fatGoal,
   }) async {
-    final uid = _userId;
+    final uid = await _resolvedUserId();
     final next = {
       'calorie_goal': calorieGoal ?? _calorieGoal,
       'protein_goal': proteinGoal ?? _proteinGoal,
@@ -283,13 +316,12 @@ class DailyLogProvider extends ChangeNotifier {
     if (uid == null) return;
 
     _loading = true;
-    _diaryLoadError = null;
+    _diaryLoadErrorCode = null;
     notifyListeners();
     try {
       final rows = await _api.listFoodLogs(userId: uid, date: d);
       if (rows == null) {
-        _diaryLoadError =
-            'Could not load your diary. Check your connection and try again.';
+        _diaryLoadErrorCode = 'DIARY_LOAD_FAILED';
         _loading = false;
         notifyListeners();
         return;

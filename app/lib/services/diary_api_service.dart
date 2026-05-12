@@ -1,9 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
+import '../config/constants.dart';
 import '../models/food_entry.dart';
 import 'food_api_service.dart';
 
@@ -77,6 +79,26 @@ class DiaryApiService {
   static String _prettifyMeal(String m) =>
       _serverMealToClient[m.toLowerCase()] ??
       (m.isEmpty ? m : m[0].toUpperCase() + m.substring(1).toLowerCase());
+
+  static String _extractHttpErrorMessage(int status, String body) {
+    try {
+      final decoded = json.decode(body);
+      if (decoded is Map<String, dynamic>) {
+        final d = decoded['detail'];
+        if (d is String && d.isNotEmpty) return 'HTTP $status: $d';
+        if (d is List && d.isNotEmpty) {
+          final first = d.first;
+          if (first is Map && first['msg'] is String) {
+            return 'HTTP $status: ${first['msg']}';
+          }
+        }
+      }
+    } catch (_) {
+      // use fallback below
+    }
+    final clip = body.length > 280 ? '${body.substring(0, 280)}…' : body;
+    return 'HTTP $status${clip.isNotEmpty ? ': $clip' : ''}';
+  }
 
   // ----------------------------------------------------------------------- //
   // Food logs                                                               //
@@ -160,13 +182,16 @@ class DiaryApiService {
   }
 
   /// POST /food-logs — create a new diary entry and return the persisted row.
-  Future<FoodEntry?> createFoodLog({
+  Future<FoodLogCreateOutcome> createFoodLog({
     required String userId,
     required String foodId,
     required DateTime loggedDate,
     required String mealType,
     double? grams,
     double? servings,
+    DateTime? consumedAt,
+    String? diaryTimezone,
+    String? foodDisplayName,
   }) async {
     final uri = Uri.parse('$_baseUrl/food-logs');
     final body = <String, dynamic>{
@@ -176,9 +201,15 @@ class DiaryApiService {
       'meal_type':   _normaliseMeal(mealType),
       if (grams    != null) 'grams':    grams,
       if (servings != null) 'servings': servings,
+      if (consumedAt != null) 'consumed_at': consumedAt.toUtc().toIso8601String(),
+      if (diaryTimezone != null && diaryTimezone.trim().isNotEmpty)
+        'diary_timezone': diaryTimezone.trim(),
+      if (foodDisplayName != null && foodDisplayName.trim().isNotEmpty)
+        'food_display_name': foodDisplayName.trim(),
     };
 
     try {
+      debugPrint('[DiaryApiService] createFoodLog POST $uri');
       final response = await http
           .post(
             uri,
@@ -188,19 +219,49 @@ class DiaryApiService {
           .timeout(_timeout);
 
       if (response.statusCode == 201) {
-        final decoded = json.decode(response.body);
-        if (decoded is Map<String, dynamic>) return _entryFromLogJson(decoded);
-        return null;
+        try {
+          final decoded = json.decode(response.body);
+          if (decoded is Map<String, dynamic>) {
+            return FoodLogCreateOutcome.ok(_entryFromLogJson(decoded));
+          }
+          debugPrint(
+            '[DiaryApiService] createFoodLog: expected JSON object, got: '
+            '${response.body}',
+          );
+          return FoodLogCreateOutcome.failure(
+            'Server returned an unexpected response (not a JSON object).',
+          );
+        } catch (e, st) {
+          debugPrint('[DiaryApiService] createFoodLog parse error: $e\n$st');
+          return FoodLogCreateOutcome.failure('Could not read server response: $e');
+        }
       }
 
       debugPrint(
         '[DiaryApiService] createFoodLog HTTP ${response.statusCode} '
         'body=${response.body}',
       );
-      return null;
+      return FoodLogCreateOutcome.failure(
+        _extractHttpErrorMessage(response.statusCode, response.body),
+      );
+    } on SocketException catch (e, st) {
+      debugPrint('[DiaryApiService] createFoodLog SocketException: $e\n$st');
+      return FoodLogCreateOutcome.failure(
+        'No route to API at $_baseUrl (${e.message}). '
+        'If the phone is on **this PC’s Mobile Hotspot**, try host '
+        '$kBackendLanHostWindowsMobileHotspot in lib/config/constants.dart '
+        '(not your home Wi‑Fi IP). Run the backend with '
+        '`uvicorn main:app --host 0.0.0.0 --port 8000`.',
+      );
+    } on TimeoutException catch (e, st) {
+      debugPrint('[DiaryApiService] createFoodLog TimeoutException: $e\n$st');
+      return FoodLogCreateOutcome.failure(
+        'Timed out reaching $_baseUrl. Check firewall (TCP 8000) and that '
+        'uvicorn uses --host 0.0.0.0.',
+      );
     } catch (e, st) {
       debugPrint('[DiaryApiService] createFoodLog error: $e\n$st');
-      return null;
+      return FoodLogCreateOutcome.failure(e.toString());
     }
   }
 
@@ -365,6 +426,22 @@ class DiaryApiService {
     }
     return null;
   }
+}
+
+/// Result of [DiaryApiService.createFoodLog].
+class FoodLogCreateOutcome {
+  final FoodEntry? entry;
+  final String? failureMessage;
+
+  const FoodLogCreateOutcome._({this.entry, this.failureMessage});
+
+  factory FoodLogCreateOutcome.ok(FoodEntry entry) =>
+      FoodLogCreateOutcome._(entry: entry);
+
+  factory FoodLogCreateOutcome.failure(String message) =>
+      FoodLogCreateOutcome._(failureMessage: message);
+
+  bool get isSuccess => entry != null;
 }
 
 

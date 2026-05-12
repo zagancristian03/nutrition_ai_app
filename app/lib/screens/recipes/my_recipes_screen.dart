@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:app/l10n/app_localizations.dart';
+
 import '../../providers/saved_items_provider.dart';
 import '../../models/saved_recipe.dart';
 import '../../providers/daily_log_provider.dart';
@@ -10,9 +12,10 @@ class MyRecipesScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('My Recipes'),
+        title: Text(loc.myRecipesScreenTitle),
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
@@ -24,7 +27,7 @@ class MyRecipesScreen extends StatelessWidget {
                 ),
               );
             },
-            tooltip: 'Create Recipe',
+            tooltip: loc.myRecipesCreateTooltip,
           ),
         ],
       ),
@@ -42,7 +45,7 @@ class MyRecipesScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'No saved recipes yet',
+                    loc.myRecipesEmpty,
                     style: TextStyle(
                       color: Colors.grey[600],
                       fontSize: 16,
@@ -59,7 +62,7 @@ class MyRecipesScreen extends StatelessWidget {
                       );
                     },
                     icon: const Icon(Icons.add),
-                    label: const Text('Create Your First Recipe'),
+                    label: Text(loc.myRecipesCreateFirst),
                   ),
                 ],
               ),
@@ -76,9 +79,11 @@ class MyRecipesScreen extends StatelessWidget {
                 child: ListTile(
                   title: Text(recipe.name),
                   subtitle: Text(
-                    '${recipe.caloriesPerServing.toInt()} cal/serving • '
-                    '${recipe.servings} servings • '
-                    'P: ${recipe.proteinPerServing.toStringAsFixed(1)}g',
+                    loc.myRecipesCardSubtitle(
+                      '${recipe.caloriesPerServing.toInt()}',
+                      '${recipe.servings}',
+                      recipe.proteinPerServing.toStringAsFixed(1),
+                    ),
                   ),
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -86,12 +91,12 @@ class MyRecipesScreen extends StatelessWidget {
                       IconButton(
                         icon: const Icon(Icons.add_circle),
                         onPressed: () => _addRecipeToDiary(context, recipe),
-                        tooltip: 'Add to Diary',
+                        tooltip: loc.myMealsAddToDiaryTooltip,
                       ),
                       IconButton(
                         icon: const Icon(Icons.delete),
                         onPressed: () => _deleteRecipe(context, provider, recipe),
-                        tooltip: 'Delete',
+                        tooltip: loc.myMealsDeleteTooltip,
                       ),
                     ],
                   ),
@@ -105,36 +110,49 @@ class MyRecipesScreen extends StatelessWidget {
   }
 
   Future<void> _addRecipeToDiary(BuildContext context, SavedRecipe recipe) async {
+    final loc = AppLocalizations.of(context)!;
     final dailyProvider = Provider.of<DailyLogProvider>(context, listen: false);
 
     int added = 0;
     int failed = 0;
+    String? lastFailure;
 
     // Add each item in the recipe as a separate entry (per serving).
     for (final item in recipe.items) {
       final gramsPerServing = item.servingSize / recipe.servings;
-      final entry = await dailyProvider.addEntryForFood(
+      final outcome = await dailyProvider.addEntryForFood(
         foodId:   item.foodId,
         mealType: 'Dinner',
         grams:    gramsPerServing,
         servings: 1.0,
+        foodDisplayName:
+            item.foodName.trim().isNotEmpty ? item.foodName.trim() : null,
       );
-      if (entry != null) {
+      if (outcome.entry != null) {
         added++;
       } else {
         failed++;
+        lastFailure ??= outcome.failureMessage;
       }
     }
 
     if (!context.mounted) return;
 
     final ok = failed == 0 && added > 0;
+    var text = ok
+        ? loc.myRecipesAddedSnack(recipe.name)
+        : loc.myRecipesPartialSnack(
+            '$added',
+            '${recipe.items.length}',
+            '$failed',
+          );
+    final err = lastFailure?.trim();
+    if (!ok && err != null && err.isNotEmpty) {
+      text = '$text\n$err';
+    }
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(ok
-            ? '${recipe.name} (1 serving) added to diary!'
-            : 'Added $added / ${recipe.items.length} items '
-              '(${failed} failed — those foods may no longer exist).'),
+        content: Text(text, maxLines: 8),
         backgroundColor: ok ? Colors.green : Colors.orange,
       ),
     );
@@ -145,22 +163,23 @@ class MyRecipesScreen extends StatelessWidget {
     SavedItemsProvider provider,
     SavedRecipe recipe,
   ) {
+    final loc = AppLocalizations.of(context)!;
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Recipe'),
-        content: Text('Are you sure you want to delete "${recipe.name}"?'),
+      builder: (dialogContext) => AlertDialog(
+        title: Text(loc.myRecipesDeleteTitle),
+        content: Text(loc.myRecipesDeleteConfirm(recipe.name)),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            onPressed: () => Navigator.pop(dialogContext),
+            child: Text(loc.commonCancel),
           ),
           TextButton(
             onPressed: () {
               provider.removeRecipe(recipe);
-              Navigator.pop(context);
+              Navigator.pop(dialogContext);
             },
-            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+            child: Text(loc.commonDelete, style: const TextStyle(color: Colors.red)),
           ),
         ],
       ),

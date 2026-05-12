@@ -11,6 +11,9 @@
 --   4. Creates the unique source constraint + GIN trigram index.
 --   5. Creates `food_logs` (diary) with a snapshot of macros at log time.
 --   6. Prints counts so you can verify everything actually landed.
+--
+-- Also run `database/schema/012_food_aliases.sql` for multilingual curated search
+-- (after seed foods exist). See `docs/food_search_i18n.md`.
 -- =============================================================================
 
 -- -----------------------------------------------------------------------------

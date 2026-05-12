@@ -1,4 +1,7 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:app/l10n/app_localizations.dart';
+
 import '../../services/auth_service.dart';
 import '../../widgets/custom_button.dart';
 import 'register_screen.dart';
@@ -24,23 +27,41 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
+  Future<void> _forgotPassword(AppLocalizations loc) async {
+    final email = _emailController.text.trim();
+    if (email.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(loc.authForgotPasswordEnterEmail)),
+      );
+      return;
+    }
+    try {
+      await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(loc.authForgotPasswordSnackSent)),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(loc.authForgotPasswordSnackFailed)),
+      );
+    }
+  }
+
   Future<void> _handleLogin() async {
+    final loc = AppLocalizations.of(context)!;
     if (_formKey.currentState!.validate()) {
-      setState(() {
-        _isLoading = true;
-      });
+      setState(() => _isLoading = true);
 
       final user = await _authService.login(
         _emailController.text.trim(),
         _passwordController.text,
       );
 
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted) setState(() => _isLoading = false);
 
       if (user != null) {
-        // AuthGate will automatically route to HomeScreen
         if (mounted) {
           Navigator.of(context).popUntil((route) => route.isFirst);
         }
@@ -48,7 +69,7 @@ class _LoginScreenState extends State<LoginScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: const Text('Login failed. Please check your credentials.'),
+              content: Text(loc.authLoginFailedSnack),
               backgroundColor: Theme.of(context).colorScheme.error,
             ),
           );
@@ -59,6 +80,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
+
     return Scaffold(
       body: SafeArea(
         child: Padding(
@@ -68,7 +91,7 @@ class _LoginScreenState extends State<LoginScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                'Login',
+                loc.authLoginTitle,
                 style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
@@ -79,31 +102,53 @@ class _LoginScreenState extends State<LoginScreen> {
                 key: _formKey,
                 child: Column(
                   children: [
-                    TextField(
+                    TextFormField(
                       controller: _emailController,
                       keyboardType: TextInputType.emailAddress,
-                      decoration: const InputDecoration(
-                        labelText: 'Email',
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.email_outlined),
+                      decoration: InputDecoration(
+                        labelText: loc.authEmailLabel,
+                        border: const OutlineInputBorder(),
+                        prefixIcon: const Icon(Icons.email_outlined),
                       ),
+                      validator: (v) {
+                        if (v == null || v.trim().isEmpty) {
+                          return loc.authValidationEmailRequired;
+                        }
+                        if (!v.contains('@') || !v.contains('.')) {
+                          return loc.authValidationEmailInvalid;
+                        }
+                        return null;
+                      },
                     ),
                     const SizedBox(height: 16),
-                    TextField(
+                    TextFormField(
                       controller: _passwordController,
                       obscureText: true,
-                      decoration: const InputDecoration(
-                        labelText: 'Password',
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.lock_outlined),
+                      decoration: InputDecoration(
+                        labelText: loc.authPasswordLabel,
+                        border: const OutlineInputBorder(),
+                        prefixIcon: const Icon(Icons.lock_outlined),
+                      ),
+                      validator: (v) {
+                        if (v == null || v.isEmpty) {
+                          return loc.authValidationPasswordRequired;
+                        }
+                        return null;
+                      },
+                    ),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton(
+                        onPressed: () => _forgotPassword(loc),
+                        child: Text(loc.authForgotPassword),
                       ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 32),
+              const SizedBox(height: 16),
               CustomButton(
-                label: 'Login',
+                label: loc.authSignInButton,
                 onPressed: _isLoading ? null : _handleLogin,
               ),
               const SizedBox(height: 24),
@@ -116,7 +161,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   );
                 },
-                child: const Text("Don't have an account? Register"),
+                child: Text(loc.authRegisterPrompt),
               ),
             ],
           ),

@@ -197,6 +197,8 @@ def chat_reply(
     message: str,
     thread_id: int | None,
     today: date,
+    preferred_locale: str,
+    timezone: str | None = None,
 ) -> dict[str, Any]:
     """Run one chat turn and persist both sides."""
     # 1. Ensure a thread.
@@ -216,6 +218,16 @@ def chat_reply(
     # 3. Build the context block + message history.
     coach_ctx = ctx.build_coaching_context(user_id, today)
     system_prompt = ctx.compose_system_prompt(COACH_SYSTEM_PROMPT, coach_ctx)
+    loc = (preferred_locale or "en").strip() or "en"
+    tz_note = (timezone or "").strip()
+    system_prompt += (
+        "\n\n[LANGUAGE — user-facing output]\n"
+        f"User-facing responses must be written in {loc}. "
+        "If the user explicitly asks to respond in another language, "
+        "follow that request only for that response."
+    )
+    if tz_note:
+        system_prompt += f"\n\n[USER_TIMEZONE]\nThe user's IANA timezone is: {tz_note}"
 
     thread_summary = (thread.get("summary") or "").strip()
     if thread_summary:

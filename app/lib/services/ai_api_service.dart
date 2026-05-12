@@ -91,12 +91,17 @@ class AiApiService {
     required String userId,
     required String message,
     int? threadId,
+    String preferredLocale = 'en',
+    String? timezone,
   }) async {
     final uri = Uri.parse('$_baseUrl/ai/chat');
     final body = <String, dynamic>{
       'user_id': userId,
       'message': message,
+      'preferred_locale': preferredLocale,
       if (threadId != null) 'thread_id': threadId,
+      if (timezone != null && timezone.trim().isNotEmpty)
+        'timezone': timezone.trim(),
     };
     try {
       final r = await http

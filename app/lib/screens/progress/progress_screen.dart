@@ -1,6 +1,8 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:app/l10n/app_localizations.dart';
+import 'package:app/l10n/bmi_labels.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
@@ -19,6 +21,7 @@ class ProgressScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
     final profileProv = context.watch<UserProfileProvider>();
     final diaryProv   = context.watch<DailyLogProvider>();
 
@@ -27,10 +30,10 @@ class ProgressScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Progress'),
+        title: Text(loc.progressTitle),
         actions: [
           IconButton(
-            tooltip: 'Refresh',
+            tooltip: loc.progressRefreshTooltip,
             onPressed: profileProv.isLoading ? null : () => profileProv.refresh(),
             icon: const Icon(Icons.refresh),
           ),
@@ -89,6 +92,7 @@ class _ProfileSummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
     final cs = Theme.of(context).colorScheme;
     final name    = profile?.displayName?.trim();
     final hasData = profile?.sex != null || profile?.currentWeightKg != null;
@@ -115,7 +119,9 @@ class _ProfileSummaryCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    (name == null || name.isEmpty) ? 'Your profile' : name,
+                    (name == null || name.isEmpty)
+                        ? loc.progressProfileYourProfile
+                        : name,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.w700,
                         ),
@@ -123,8 +129,8 @@ class _ProfileSummaryCard extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(
                     hasData
-                        ? _profileSubtitle(profile!)
-                        : 'Tell us a bit about yourself to unlock personalised targets.',
+                        ? _profileSubtitle(context, profile!)
+                        : loc.progressProfileSubtitleEmpty,
                     style: TextStyle(
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
                       fontSize: 13,
@@ -139,7 +145,7 @@ class _ProfileSummaryCard extends StatelessWidget {
                 MaterialPageRoute(builder: (_) => const EditProfileScreen()),
               ),
               icon: const Icon(Icons.edit_outlined, size: 18),
-              label: const Text('Edit'),
+              label: Text(loc.progressCommonEdit),
             ),
           ],
         ),
@@ -147,10 +153,13 @@ class _ProfileSummaryCard extends StatelessWidget {
     );
   }
 
-  static String _profileSubtitle(UserProfile p) {
+  static String _profileSubtitle(BuildContext context, UserProfile p) {
+    final loc = AppLocalizations.of(context)!;
     final parts = <String>[];
     if (p.sex != null)         parts.add(p.sex!.label);
-    if (p.ageYears != null)    parts.add('${p.ageYears} yr');
+    if (p.ageYears != null) {
+      parts.add(loc.progressProfileAgeYears('${p.ageYears}'));
+    }
     if (p.heightCm != null)    parts.add('${p.heightCm!.round()} cm');
     if (p.currentWeightKg != null) {
       parts.add('${p.currentWeightKg!.toStringAsFixed(1)} kg');
@@ -177,6 +186,7 @@ class _WeightCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
     final latest = weights.isNotEmpty
         ? weights.last.weightKg
         : profile?.currentWeightKg;
@@ -192,31 +202,33 @@ class _WeightCard extends StatelessWidget {
 
     return _SectionCard(
       icon: Icons.monitor_weight_outlined,
-      title: 'Weight',
+      title: loc.progressWeightSectionTitle,
       trailing: FilledButton.icon(
         onPressed: onAddWeight,
         icon: const Icon(Icons.add, size: 18),
-        label: const Text('Log'),
+        label: Text(loc.progressWeightLogButton),
       ),
       children: [
         Row(
           children: [
             Expanded(child: _StatBlock(
-              label: 'Current',
+              label: loc.progressWeightCurrent,
               value: latest == null ? '—' : '${latest.toStringAsFixed(1)} kg',
               color: Theme.of(context).colorScheme.primary,
             )),
             const SizedBox(width: 8),
             Expanded(child: _StatBlock(
-              label: 'Target',
+              label: loc.progressWeightTarget,
               value: target == null ? '—' : '${target.toStringAsFixed(1)} kg',
               color: Theme.of(context).colorScheme.tertiary,
             )),
             const SizedBox(width: 8),
             Expanded(child: _StatBlock(
               label: toGo == null
-                  ? 'Change'
-                  : (toGo.abs() < 0.05 ? 'On target' : 'To go'),
+                  ? loc.progressWeightChange
+                  : (toGo.abs() < 0.05
+                      ? loc.progressWeightOnTarget
+                      : loc.progressWeightToGo),
               value: _deltaLabel(delta: delta, toGo: toGo),
               color: _deltaColor(toGo: toGo, delta: delta),
             )),
@@ -236,7 +248,7 @@ class _WeightCard extends StatelessWidget {
             ),
             padding: const EdgeInsets.all(16),
             child: Text(
-              'No weight logged yet.\nTap "Log" to add your first measurement.',
+              loc.progressWeightEmpty,
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -249,6 +261,7 @@ class _WeightCard extends StatelessWidget {
             child: _WeightChart(
               entries: weights,
               targetKg: target,
+              targetLineLabel: loc.progressChartTargetLabel,
             ),
           ),
         if (weights.isNotEmpty) ...[
@@ -305,21 +318,24 @@ class _TodayCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
     final tdee = profile != null ? NutritionMath.tdee(profile!) : null;
     final bmi  = profile != null ? NutritionMath.bmi(profile!)  : null;
     final now = DateTime.now();
     final day = DateTime(selectedDate.year, selectedDate.month, selectedDate.day);
     final today = DateTime(now.year, now.month, now.day);
+    final dateStr =
+        '${selectedDate.day}/${selectedDate.month}/${selectedDate.year}';
     final title = day == today
-        ? 'Intake · today'
-        : 'Intake · ${selectedDate.day}/${selectedDate.month}/${selectedDate.year}';
+        ? loc.progressIntakeToday
+        : loc.progressIntakeDate(dateStr);
 
     return _SectionCard(
       icon: Icons.today_outlined,
       title: title,
       children: [
         _ProgressRow(
-          label: 'Calories',
+          label: loc.addMealCaloriesLabel,
           value: consumedCalories,
           goal:  calorieGoal,
           unit:  'kcal',
@@ -327,7 +343,7 @@ class _TodayCard extends StatelessWidget {
         ),
         const SizedBox(height: 10),
         _ProgressRow(
-          label: 'Protein',
+          label: loc.dashboardMacroProtein,
           value: consumedProtein,
           goal:  proteinGoal,
           unit:  'g',
@@ -335,7 +351,7 @@ class _TodayCard extends StatelessWidget {
         ),
         const SizedBox(height: 10),
         _ProgressRow(
-          label: 'Carbs',
+          label: loc.dashboardMacroCarbs,
           value: consumedCarbs,
           goal:  carbsGoal,
           unit:  'g',
@@ -343,7 +359,7 @@ class _TodayCard extends StatelessWidget {
         ),
         const SizedBox(height: 10),
         _ProgressRow(
-          label: 'Fat',
+          label: loc.dashboardMacroFats,
           value: consumedFat,
           goal:  fatGoal,
           unit:  'g',
@@ -357,7 +373,7 @@ class _TodayCard extends StatelessWidget {
             children: [
               if (tdee != null) Expanded(
                 child: _MiniStat(
-                  label: 'Estimated TDEE',
+                  label: loc.progressEstimatedTdee,
                   value: '${tdee.round()} kcal',
                   icon:  Icons.bolt,
                   color: Colors.blueGrey,
@@ -365,7 +381,9 @@ class _TodayCard extends StatelessWidget {
               ),
               if (bmi != null) Expanded(
                 child: _MiniStat(
-                  label: 'BMI · ${NutritionMath.bmiCategory(bmi)}',
+                  label: loc.progressBmiStatLabel(
+                    bmiCategoryLabel(loc, bmi),
+                  ),
                   value: bmi.toStringAsFixed(1),
                   icon:  Icons.insights_outlined,
                   color: Colors.indigo,
@@ -475,11 +493,12 @@ class _LogWeightSheetState extends State<_LogWeightSheet> {
   }
 
   Future<void> _save() async {
+    final loc = AppLocalizations.of(context)!;
     final raw = _weightCtrl.text.trim().replaceAll(',', '.');
     final kg = double.tryParse(raw);
     if (kg == null || kg <= 0 || kg > 500) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Enter a valid weight (0–500 kg)')),
+        SnackBar(content: Text(loc.progressWeightInvalid)),
       );
       return;
     }
@@ -495,7 +514,11 @@ class _LogWeightSheetState extends State<_LogWeightSheet> {
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(saved != null ? 'Weight logged' : 'Could not save. Try again.'),
+        content: Text(
+          saved != null
+              ? loc.progressWeightLoggedSnack
+              : loc.progressWeightSaveFailedSnack,
+        ),
         backgroundColor: saved != null ? Colors.green : Colors.red,
       ),
     );
@@ -504,6 +527,7 @@ class _LogWeightSheetState extends State<_LogWeightSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
     final insets = MediaQuery.of(context).viewInsets.bottom;
     return Padding(
       padding: EdgeInsets.fromLTRB(16, 8, 16, 16 + insets),
@@ -511,7 +535,7 @@ class _LogWeightSheetState extends State<_LogWeightSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text('Log weight',
+          Text(loc.progressWeightLogSheetTitle,
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.w700,
                   )),
@@ -523,11 +547,11 @@ class _LogWeightSheetState extends State<_LogWeightSheet> {
             inputFormatters: [
               FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
             ],
-            decoration: const InputDecoration(
-              labelText: 'Weight',
-              suffixText: 'kg',
-              border: OutlineInputBorder(),
-              prefixIcon: Icon(Icons.monitor_weight_outlined),
+            decoration: InputDecoration(
+              labelText: loc.progressWeightFieldLabel,
+              suffixText: loc.progressWeightSuffixKg,
+              border: const OutlineInputBorder(),
+              prefixIcon: const Icon(Icons.monitor_weight_outlined),
             ),
           ),
           const SizedBox(height: 10),
@@ -535,11 +559,11 @@ class _LogWeightSheetState extends State<_LogWeightSheet> {
             onTap: _pickDate,
             borderRadius: BorderRadius.circular(8),
             child: InputDecorator(
-              decoration: const InputDecoration(
-                labelText: 'Date',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.calendar_today_outlined),
-                suffixIcon: Icon(Icons.arrow_drop_down),
+              decoration: InputDecoration(
+                labelText: loc.progressWeightDateLabel,
+                border: const OutlineInputBorder(),
+                prefixIcon: const Icon(Icons.calendar_today_outlined),
+                suffixIcon: const Icon(Icons.arrow_drop_down),
               ),
               child: Text(
                 '${_date.day.toString().padLeft(2, '0')}/'
@@ -551,10 +575,10 @@ class _LogWeightSheetState extends State<_LogWeightSheet> {
           const SizedBox(height: 10),
           TextField(
             controller: _noteCtrl,
-            decoration: const InputDecoration(
-              labelText: 'Note (optional)',
-              border: OutlineInputBorder(),
-              prefixIcon: Icon(Icons.edit_note),
+            decoration: InputDecoration(
+              labelText: loc.progressWeightNoteLabel,
+              border: const OutlineInputBorder(),
+              prefixIcon: const Icon(Icons.edit_note),
             ),
           ),
           const SizedBox(height: 14),
@@ -566,7 +590,7 @@ class _LogWeightSheetState extends State<_LogWeightSheet> {
                     child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                   )
                 : const Icon(Icons.check),
-            label: Text(_saving ? 'Saving…' : 'Save'),
+            label: Text(_saving ? loc.progressWeightSaving : loc.progressWeightSave),
             style: FilledButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 14),
             ),
@@ -584,8 +608,13 @@ class _LogWeightSheetState extends State<_LogWeightSheet> {
 class _WeightChart extends StatelessWidget {
   final List<WeightEntry> entries;
   final double? targetKg;
+  final String targetLineLabel;
 
-  const _WeightChart({required this.entries, required this.targetKg});
+  const _WeightChart({
+    required this.entries,
+    required this.targetKg,
+    required this.targetLineLabel,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -593,6 +622,7 @@ class _WeightChart extends StatelessWidget {
       painter: _WeightChartPainter(
         entries: entries,
         targetKg: targetKg,
+        targetLineLabel: targetLineLabel,
         lineColor: Theme.of(context).colorScheme.primary,
       ),
     );
@@ -602,11 +632,13 @@ class _WeightChart extends StatelessWidget {
 class _WeightChartPainter extends CustomPainter {
   final List<WeightEntry> entries;
   final double? targetKg;
+  final String targetLineLabel;
   final Color lineColor;
 
   _WeightChartPainter({
     required this.entries,
     required this.targetKg,
+    required this.targetLineLabel,
     required this.lineColor,
   });
 
@@ -678,13 +710,16 @@ class _WeightChartPainter extends CustomPainter {
         canvas.drawLine(Offset(x, y), Offset(math.min(x + dash, padLeft + chartW), y), tp);
         x += dash + gap;
       }
-      _drawText(
-        canvas,
-        'target',
-        Offset(padLeft + chartW - 32, y - 12),
-        const TextStyle(fontSize: 10, color: Colors.deepPurple,
-            fontWeight: FontWeight.w600),
+      final targetStyle = const TextStyle(
+        fontSize: 10,
+        color: Colors.deepPurple,
+        fontWeight: FontWeight.w600,
       );
+      final targetTp = TextPainter(
+        text: TextSpan(text: targetLineLabel, style: targetStyle),
+        textDirection: TextDirection.ltr,
+      )..layout(maxWidth: chartW);
+      targetTp.paint(canvas, Offset(padLeft + chartW - targetTp.width, y - 12));
     }
 
     // X-axis start/end labels.
@@ -761,6 +796,7 @@ class _WeightChartPainter extends CustomPainter {
   bool shouldRepaint(covariant _WeightChartPainter old) =>
       old.entries != entries ||
       old.targetKg != targetKg ||
+      old.targetLineLabel != targetLineLabel ||
       old.lineColor != lineColor;
 }
 
@@ -774,13 +810,14 @@ class _HistoryList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
     // Show newest first, max 10 rows.
     final recent = [...weights.reversed].take(10).toList();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         const SizedBox(height: 4),
-        Text('History',
+        Text(loc.progressHistoryTitle,
             style: Theme.of(context).textTheme.labelLarge?.copyWith(
                   color: Colors.grey[700],
                   fontWeight: FontWeight.w600,
@@ -798,6 +835,11 @@ class _HistoryRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
+    final dateStr =
+        '${entry.loggedOn.day.toString().padLeft(2, '0')}/'
+        '${entry.loggedOn.month.toString().padLeft(2, '0')}/'
+        '${entry.loggedOn.year}';
     return Dismissible(
       key: ValueKey('weight-${entry.id ?? entry.loggedOn.toIso8601String()}'),
       direction: DismissDirection.endToStart,
@@ -810,20 +852,17 @@ class _HistoryRow extends StatelessWidget {
       confirmDismiss: (_) async {
         return await showDialog<bool>(
               context: context,
-              builder: (_) => AlertDialog(
-                title: const Text('Delete entry?'),
-                content: Text(
-                  'Remove the weight log for '
-                  '${entry.loggedOn.day}/${entry.loggedOn.month}/${entry.loggedOn.year}?',
-                ),
+              builder: (ctx) => AlertDialog(
+                title: Text(loc.progressDeleteWeightTitle),
+                content: Text(loc.progressDeleteWeightMessage(dateStr)),
                 actions: [
                   TextButton(
-                    onPressed: () => Navigator.pop(context, false),
-                    child: const Text('Cancel'),
+                    onPressed: () => Navigator.pop(ctx, false),
+                    child: Text(loc.commonCancel),
                   ),
                   FilledButton(
-                    onPressed: () => Navigator.pop(context, true),
-                    child: const Text('Delete'),
+                    onPressed: () => Navigator.pop(ctx, true),
+                    child: Text(loc.commonDelete),
                   ),
                 ],
               ),

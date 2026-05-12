@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:app/l10n/app_localizations.dart';
+
 import '../../providers/saved_items_provider.dart';
 import '../../models/saved_meal.dart';
 import '../../providers/daily_log_provider.dart';
@@ -10,9 +12,10 @@ class MyMealsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('My Meals'),
+        title: Text(loc.myMealsScreenTitle),
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
@@ -24,7 +27,7 @@ class MyMealsScreen extends StatelessWidget {
                 ),
               );
             },
-            tooltip: 'Create Meal',
+            tooltip: loc.myMealsCreateTooltip,
           ),
         ],
       ),
@@ -42,7 +45,7 @@ class MyMealsScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'No saved meals yet',
+                    loc.myMealsEmpty,
                     style: TextStyle(
                       color: Colors.grey[600],
                       fontSize: 16,
@@ -59,7 +62,7 @@ class MyMealsScreen extends StatelessWidget {
                       );
                     },
                     icon: const Icon(Icons.add),
-                    label: const Text('Create Your First Meal'),
+                    label: Text(loc.myMealsCreateFirst),
                   ),
                 ],
               ),
@@ -76,10 +79,12 @@ class MyMealsScreen extends StatelessWidget {
                 child: ListTile(
                   title: Text(meal.name),
                   subtitle: Text(
-                    '${meal.totalCalories.toInt()} cal • '
-                    'P: ${meal.totalProtein.toStringAsFixed(1)}g • '
-                    'C: ${meal.totalCarbs.toStringAsFixed(1)}g • '
-                    'F: ${meal.totalFat.toStringAsFixed(1)}g',
+                    loc.myMealsCardSubtitle(
+                      '${meal.totalCalories.toInt()}',
+                      meal.totalProtein.toStringAsFixed(1),
+                      meal.totalCarbs.toStringAsFixed(1),
+                      meal.totalFat.toStringAsFixed(1),
+                    ),
                   ),
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -87,12 +92,12 @@ class MyMealsScreen extends StatelessWidget {
                       IconButton(
                         icon: const Icon(Icons.add_circle),
                         onPressed: () => _addMealToDiary(context, meal),
-                        tooltip: 'Add to Diary',
+                        tooltip: loc.myMealsAddToDiaryTooltip,
                       ),
                       IconButton(
                         icon: const Icon(Icons.delete),
                         onPressed: () => _deleteMeal(context, provider, meal),
-                        tooltip: 'Delete',
+                        tooltip: loc.myMealsDeleteTooltip,
                       ),
                     ],
                   ),
@@ -106,34 +111,47 @@ class MyMealsScreen extends StatelessWidget {
   }
 
   Future<void> _addMealToDiary(BuildContext context, SavedMeal meal) async {
+    final loc = AppLocalizations.of(context)!;
     final dailyProvider = Provider.of<DailyLogProvider>(context, listen: false);
 
     int added = 0;
     int failed = 0;
+    String? lastFailure;
 
     for (final item in meal.items) {
-      final entry = await dailyProvider.addEntryForFood(
+      final outcome = await dailyProvider.addEntryForFood(
         foodId:   item.foodId,
         mealType: 'Lunch',
         grams:    item.servingSize,
         servings: 1.0,
+        foodDisplayName:
+            item.foodName.trim().isNotEmpty ? item.foodName.trim() : null,
       );
-      if (entry != null) {
+      if (outcome.entry != null) {
         added++;
       } else {
         failed++;
+        lastFailure ??= outcome.failureMessage;
       }
     }
 
     if (!context.mounted) return;
 
     final ok = failed == 0 && added > 0;
+    var text = ok
+        ? loc.myMealsAddedSnack(meal.name)
+        : loc.myMealsPartialSnack(
+            '$added',
+            '${meal.items.length}',
+            '$failed',
+          );
+    final err = lastFailure?.trim();
+    if (!ok && err != null && err.isNotEmpty) {
+      text = '$text\n$err';
+    }
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(ok
-            ? '${meal.name} added to diary!'
-            : 'Added $added / ${meal.items.length} items '
-              '(${failed} failed — those foods may no longer exist).'),
+        content: Text(text, maxLines: 8),
         backgroundColor: ok ? Colors.green : Colors.orange,
       ),
     );
@@ -144,22 +162,23 @@ class MyMealsScreen extends StatelessWidget {
     SavedItemsProvider provider,
     SavedMeal meal,
   ) {
+    final loc = AppLocalizations.of(context)!;
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Meal'),
-        content: Text('Are you sure you want to delete "${meal.name}"?'),
+      builder: (dialogContext) => AlertDialog(
+        title: Text(loc.myMealsDeleteTitle),
+        content: Text(loc.myMealsDeleteConfirm(meal.name)),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            onPressed: () => Navigator.pop(dialogContext),
+            child: Text(loc.commonCancel),
           ),
           TextButton(
             onPressed: () {
               provider.removeMeal(meal);
-              Navigator.pop(context);
+              Navigator.pop(dialogContext);
             },
-            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+            child: Text(loc.commonDelete, style: const TextStyle(color: Colors.red)),
           ),
         ],
       ),

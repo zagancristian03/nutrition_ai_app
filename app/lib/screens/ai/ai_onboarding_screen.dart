@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:app/l10n/ai_onboarding_options.dart';
+import 'package:app/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 
 import '../../providers/ai_provider.dart';
@@ -121,11 +123,10 @@ class _AiOnboardingScreenState extends State<AiOnboardingScreen> {
       _dietaryPattern != null;
 
   Future<void> _save({required bool markCompleted}) async {
+    final loc = AppLocalizations.of(context)!;
     if (markCompleted && !_requiredFilled) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text(
-          'Pick at least one goal, an approach, and a diet pattern to finish.',
-        )),
+        SnackBar(content: Text(loc.aiOnboardingSnackRequiredFields)),
       );
       return;
     }
@@ -191,9 +192,7 @@ class _AiOnboardingScreenState extends State<AiOnboardingScreen> {
 
     if (!ok) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text(
-          "Couldn't save. Check your connection and try again.",
-        )),
+        SnackBar(content: Text(loc.aiOnboardingSnackSaveFailed)),
       );
       return;
     }
@@ -202,7 +201,7 @@ class _AiOnboardingScreenState extends State<AiOnboardingScreen> {
       Navigator.of(context).pop(true);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Draft saved.')),
+        SnackBar(content: Text(loc.aiOnboardingSnackDraftSaved)),
       );
     }
   }
@@ -213,15 +212,16 @@ class _AiOnboardingScreenState extends State<AiOnboardingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
     final cs = Theme.of(context).colorScheme;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Coach setup'),
+        title: Text(loc.aiOnboardingAppBarTitle),
         actions: [
           TextButton(
             onPressed: _saving ? null : () => _save(markCompleted: false),
-            child: const Text('Save draft'),
+            child: Text(loc.aiOnboardingSaveDraft),
           ),
         ],
       ),
@@ -231,67 +231,46 @@ class _AiOnboardingScreenState extends State<AiOnboardingScreen> {
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 110),
           children: [
             Text(
-              'Answer what applies. You can combine goals (e.g. lose weight + '
-              'gain muscle for body recomposition), and every section has a '
-              'free-text box for anything the options don\'t cover.',
+              loc.aiOnboardingIntro,
               style: TextStyle(color: cs.onSurfaceVariant),
             ),
             const SizedBox(height: 16),
 
             // ---------------------------------------------------- GOALS
-            _Section(title: 'Your goals', subtitle: 'Pick one or more'),
+            _Section(
+              title: loc.aiOnboardingSectionGoalsTitle,
+              subtitle: loc.aiOnboardingSectionGoalsSubtitle,
+            ),
             _MultiChipGroup(
               values: _mainGoals,
-              options: const [
-                _Opt('lose_weight',          'Lose weight'),
-                _Opt('gain_muscle',          'Gain muscle'),
-                _Opt('maintain',             'Maintain weight'),
-                _Opt('eat_healthier',        'Eat healthier'),
-                _Opt('improve_energy',       'More energy'),
-                _Opt('improve_performance',  'Athletic performance'),
-                _Opt('improve_consistency',  'Be consistent'),
-              ],
+              options: aiOnboardingMainGoals(loc),
               onChanged: () => setState(() {}),
             ),
             const SizedBox(height: 8),
             _NoteField(
-              label: 'Any other goal or context?',
-              hint: 'e.g. prep for a half-marathon in 12 weeks',
+              label: loc.aiOnboardingNoteMainGoalLabel,
+              hint: loc.aiOnboardingNoteMainGoalHint,
               controller: _mainGoalNoteCtrl,
             ),
 
             const _Spacer(),
-            _Section(title: 'How do you want to approach it?'),
+            _Section(title: loc.aiOnboardingSectionApproachTitle),
             _SingleChipGroup(
               value: _approachStyle,
-              options: const [
-                _Opt('aggressive',   'Aggressive'),
-                _Opt('balanced',     'Balanced'),
-                _Opt('flexible',     'Flexible'),
-                _Opt('sustainable',  'Slow & sustainable'),
-              ],
+              options: aiOnboardingApproach(loc),
               onChanged: (v) => setState(() => _approachStyle = v),
             ),
 
             // ------------------------------------------------- TRAINING
             const _Spacer(),
             _Section(
-              title: 'Training & activity',
-              subtitle: 'Shapes calorie + protein targets',
+              title: loc.aiOnboardingSectionTrainingTitle,
+              subtitle: loc.aiOnboardingSectionTrainingSubtitle,
             ),
             _SingleChipGroup(
-              label: 'Training sessions per week',
+              label: loc.aiOnboardingLabelTrainingSessionsPerWeek,
               value: _trainingFrequencyPerWeek?.toString(),
-              options: const [
-                _Opt('0', '0'),
-                _Opt('1', '1'),
-                _Opt('2', '2'),
-                _Opt('3', '3'),
-                _Opt('4', '4'),
-                _Opt('5', '5'),
-                _Opt('6', '6'),
-                _Opt('7', '7+'),
-              ],
+              options: aiOnboardingTrainingSessions(loc),
               onChanged: (v) => setState(
                 () => _trainingFrequencyPerWeek =
                     v == null ? null : int.tryParse(v),
@@ -299,157 +278,105 @@ class _AiOnboardingScreenState extends State<AiOnboardingScreen> {
             ),
             const SizedBox(height: 10),
             _MultiChipGroup(
-              label: 'Types of training (pick all that apply)',
+              label: loc.aiOnboardingLabelTrainingTypes,
               values: _trainingTypes,
-              options: const [
-                _Opt('lifting',          'Weight lifting'),
-                _Opt('cardio',           'Cardio'),
-                _Opt('hiit',             'HIIT / intervals'),
-                _Opt('sports',           'Team sports'),
-                _Opt('running',          'Running'),
-                _Opt('cycling',          'Cycling'),
-                _Opt('swimming',         'Swimming'),
-                _Opt('yoga_flexibility', 'Yoga / mobility'),
-                _Opt('walking',          'Walking'),
-                _Opt('none',             'None currently'),
-              ],
+              options: aiOnboardingTrainingTypes(loc),
               onChanged: () => setState(() {}),
             ),
             const SizedBox(height: 10),
             _SingleChipGroup(
-              label: 'Typical session intensity',
+              label: loc.aiOnboardingLabelSessionIntensity,
               value: _trainingIntensity,
-              options: const [
-                _Opt('light',      'Light'),
-                _Opt('moderate',   'Moderate'),
-                _Opt('hard',       'Hard'),
-                _Opt('very_hard',  'Very hard'),
-              ],
+              options: aiOnboardingIntensity(loc),
               onChanged: (v) => setState(() => _trainingIntensity = v),
             ),
             const SizedBox(height: 10),
             _SingleChipGroup(
-              label: 'Daytime / job activity',
+              label: loc.aiOnboardingLabelJobActivity,
               value: _jobActivity,
-              options: const [
-                _Opt('desk',           'Mostly at a desk'),
-                _Opt('mostly_seated',  'Seated with some movement'),
-                _Opt('on_feet',        'On my feet a lot'),
-                _Opt('physical_labor', 'Physical labor'),
-              ],
+              options: aiOnboardingJobActivity(loc),
               onChanged: (v) => setState(() => _jobActivity = v),
             ),
             const SizedBox(height: 10),
             _SingleChipGroup(
-              label: 'Average daily steps',
+              label: loc.aiOnboardingLabelDailySteps,
               value: _stepsPerDayBand,
-              options: const [
-                _Opt('under_5k',  '< 5k'),
-                _Opt('5k_7k',     '5-7k'),
-                _Opt('7k_10k',    '7-10k'),
-                _Opt('10k_15k',   '10-15k'),
-                _Opt('over_15k',  '15k+'),
-              ],
+              options: aiOnboardingSteps(loc),
               onChanged: (v) => setState(() => _stepsPerDayBand = v),
             ),
             const SizedBox(height: 8),
             _NoteField(
-              label: 'Training notes',
-              hint: 'e.g. push/pull/legs split, long runs on Sunday',
+              label: loc.aiOnboardingNoteTrainingLabel,
+              hint: loc.aiOnboardingNoteTrainingHint,
               controller: _trainingNotesCtrl,
             ),
 
             // -------------------------------------------------- DIET
             const _Spacer(),
-            _Section(title: 'Diet pattern'),
+            _Section(title: loc.aiOnboardingSectionDietTitle),
             _SingleChipGroup(
               value: _dietaryPattern,
-              options: const [
-                _Opt('omnivore',     'Omnivore'),
-                _Opt('vegetarian',   'Vegetarian'),
-                _Opt('vegan',        'Vegan'),
-                _Opt('pescatarian',  'Pescatarian'),
-                _Opt('other',        'Other'),
-              ],
+              options: aiOnboardingDietPattern(loc),
               onChanged: (v) => setState(() => _dietaryPattern = v),
             ),
             const SizedBox(height: 8),
             _NoteField(
-              label: 'Dietary notes / restrictions',
-              hint: 'e.g. low-FODMAP, halal, keto, diabetic, fasting schedule',
+              label: loc.aiOnboardingNoteDietaryLabel,
+              hint: loc.aiOnboardingNoteDietaryHint,
               controller: _dietaryPatternNoteCtrl,
             ),
             const SizedBox(height: 10),
             _NoteField(
-              label: 'Allergies or intolerances',
-              hint: 'e.g. peanuts, lactose, gluten',
+              label: loc.aiOnboardingLabelAllergies,
+              hint: loc.aiOnboardingHintAllergies,
               controller: _allergiesCtrl,
             ),
             const SizedBox(height: 10),
             _NoteField(
-              label: 'Disliked foods',
-              hint: 'e.g. mushrooms, liver, coriander',
+              label: loc.aiOnboardingLabelDisliked,
+              hint: loc.aiOnboardingHintDisliked,
               controller: _dislikedCtrl,
             ),
             const SizedBox(height: 10),
             _NoteField(
-              label: 'Favorite foods',
-              hint: 'e.g. chicken, rice, Greek yogurt, apples',
+              label: loc.aiOnboardingLabelFavorites,
+              hint: loc.aiOnboardingHintFavorites,
               controller: _favoritesCtrl,
             ),
             const SizedBox(height: 10),
             _NoteField(
-              label: 'Cuisines you enjoy',
-              hint: 'e.g. Italian, Japanese, Mexican, Lebanese',
+              label: loc.aiOnboardingLabelCuisines,
+              hint: loc.aiOnboardingHintCuisines,
               controller: _cuisinesCtrl,
             ),
             const SizedBox(height: 10),
             _SingleChipGroup(
-              label: 'Eating out frequency',
+              label: loc.aiOnboardingLabelEatingOut,
               value: _eatingOutFrequency,
-              options: const [
-                _Opt('rarely',  'Rarely'),
-                _Opt('weekly',  '1-2x / week'),
-                _Opt('often',   '3-5x / week'),
-                _Opt('daily',   'Daily'),
-              ],
+              options: aiOnboardingEatingOut(loc),
               onChanged: (v) => setState(() => _eatingOutFrequency = v),
             ),
 
             const _Spacer(),
-            _Section(title: 'Cooking & budget'),
+            _Section(title: loc.aiOnboardingSectionCookingTitle),
             _SingleChipGroup(
-              label: 'Cooking preference',
+              label: loc.aiOnboardingLabelCookingPreference,
               value: _cookingPreference,
-              options: const [
-                _Opt('none',    "I don't cook"),
-                _Opt('simple',  'Simple meals only'),
-                _Opt('enjoys',  'I enjoy cooking'),
-              ],
+              options: aiOnboardingCooking(loc),
               onChanged: (v) => setState(() => _cookingPreference = v),
             ),
             const SizedBox(height: 8),
             _SingleChipGroup(
-              label: 'Budget sensitivity',
+              label: loc.aiOnboardingLabelBudget,
               value: _budgetSensitivity,
-              options: const [
-                _Opt('low',     'Not a concern'),
-                _Opt('medium',  'Somewhat'),
-                _Opt('high',    'Very tight'),
-              ],
+              options: aiOnboardingBudget(loc),
               onChanged: (v) => setState(() => _budgetSensitivity = v),
             ),
             const SizedBox(height: 8),
             _SingleChipGroup(
-              label: 'Meals per day',
+              label: loc.aiOnboardingLabelMealsPerDay,
               value: _mealFrequency?.toString(),
-              options: const [
-                _Opt('2', '2'),
-                _Opt('3', '3'),
-                _Opt('4', '4'),
-                _Opt('5', '5'),
-                _Opt('6', '6'),
-              ],
+              options: aiOnboardingMealsPerDay(loc),
               onChanged: (v) => setState(
                 () => _mealFrequency = v == null ? null : int.tryParse(v),
               ),
@@ -458,131 +385,82 @@ class _AiOnboardingScreenState extends State<AiOnboardingScreen> {
             // -------------------------------------------------- LIFESTYLE
             const _Spacer(),
             _Section(
-              title: 'Lifestyle & recovery',
-              subtitle: 'Affects energy, cravings, adherence',
+              title: loc.aiOnboardingSectionLifestyleTitle,
+              subtitle: loc.aiOnboardingSectionLifestyleSubtitle,
             ),
             _SingleChipGroup(
-              label: 'Average sleep',
+              label: loc.aiOnboardingLabelSleep,
               value: _sleepHoursBand,
-              options: const [
-                _Opt('under_5',  '< 5 h'),
-                _Opt('5_6',      '5-6 h'),
-                _Opt('6_7',      '6-7 h'),
-                _Opt('7_8',      '7-8 h'),
-                _Opt('over_8',   '8+ h'),
-              ],
+              options: aiOnboardingSleep(loc),
               onChanged: (v) => setState(() => _sleepHoursBand = v),
             ),
             const SizedBox(height: 8),
             _SingleChipGroup(
-              label: 'Typical stress level',
+              label: loc.aiOnboardingLabelStress,
               value: _stressLevel,
-              options: const [
-                _Opt('low',     'Low'),
-                _Opt('medium',  'Medium'),
-                _Opt('high',    'High'),
-              ],
+              options: aiOnboardingStress(loc),
               onChanged: (v) => setState(() => _stressLevel = v),
             ),
             const SizedBox(height: 8),
             _SingleChipGroup(
-              label: 'Water intake',
+              label: loc.aiOnboardingLabelWater,
               value: _waterIntake,
-              options: const [
-                _Opt('low',     'Low'),
-                _Opt('medium',  'Medium'),
-                _Opt('high',    'High'),
-              ],
+              options: aiOnboardingWater(loc),
               onChanged: (v) => setState(() => _waterIntake = v),
             ),
             const SizedBox(height: 8),
             _SingleChipGroup(
-              label: 'Alcohol frequency',
+              label: loc.aiOnboardingLabelAlcohol,
               value: _alcoholFrequency,
-              options: const [
-                _Opt('none',        'None'),
-                _Opt('occasional',  'Occasional'),
-                _Opt('weekly',      '1-2x / week'),
-                _Opt('frequent',    '3+ / week'),
-              ],
+              options: aiOnboardingAlcohol(loc),
               onChanged: (v) => setState(() => _alcoholFrequency = v),
             ),
 
             // -------------------------------------------------- STRUGGLES
             const _Spacer(),
-            _Section(title: 'What tends to get in the way?'),
+            _Section(title: loc.aiOnboardingSectionStrugglesTitle),
             _MultiChipGroup(
-              label: 'Biggest struggles (pick any that apply)',
+              label: loc.aiOnboardingLabelBiggestStruggles,
               values: _biggestStruggles,
-              options: const [
-                _Opt('cravings',      'Cravings'),
-                _Opt('consistency',   'Staying consistent'),
-                _Opt('late_night',    'Late-night eating'),
-                _Opt('emotional',     'Emotional eating'),
-                _Opt('boredom',       'Boredom eating'),
-                _Opt('time',          'Lack of time'),
-                _Opt('social',        'Social / eating out'),
-                _Opt('travel',        'Travel'),
-                _Opt('portion_size',  'Portion control'),
-                _Opt('planning',      'Meal planning'),
-              ],
+              options: aiOnboardingStruggles(loc),
               onChanged: () => setState(() {}),
             ),
             const SizedBox(height: 8),
             _NoteField(
-              label: 'Anything else about what holds you back?',
-              hint: 'e.g. shift work, kids\' leftovers, weekend events',
+              label: loc.aiOnboardingNoteStruggleLabel,
+              hint: loc.aiOnboardingNoteStruggleHint,
               controller: _biggestStruggleNoteCtrl,
             ),
             const SizedBox(height: 10),
             _SingleChipGroup(
-              label: 'When does it hit hardest?',
+              label: loc.aiOnboardingLabelStruggleWhen,
               value: _struggleTiming,
-              options: const [
-                _Opt('morning',    'Morning'),
-                _Opt('afternoon',  'Afternoon'),
-                _Opt('evening',    'Evening'),
-                _Opt('night',      'Late night'),
-                _Opt('weekends',   'Weekends'),
-                _Opt('stress',     'When stressed'),
-              ],
+              options: aiOnboardingStruggleTiming(loc),
               onChanged: (v) => setState(() => _struggleTiming = v),
             ),
 
             const _Spacer(),
-            _Section(title: 'Motivation & structure'),
+            _Section(title: loc.aiOnboardingSectionMotivationTitle),
             _SingleChipGroup(
-              label: 'Motivation level',
+              label: loc.aiOnboardingLabelMotivation,
               value: _motivationLevel,
-              options: const [
-                _Opt('low',     'Low'),
-                _Opt('medium',  'Medium'),
-                _Opt('high',    'High'),
-              ],
+              options: aiOnboardingMotivation(loc),
               onChanged: (v) => setState(() => _motivationLevel = v),
             ),
             const SizedBox(height: 8),
             _SingleChipGroup(
-              label: 'How much structure do you want?',
+              label: loc.aiOnboardingLabelStructure,
               value: _structurePreference,
-              options: const [
-                _Opt('low',     'Loose guidance'),
-                _Opt('medium',  'Balanced plan'),
-                _Opt('high',    'Detailed plan'),
-              ],
+              options: aiOnboardingStructure(loc),
               onChanged: (v) => setState(() => _structurePreference = v),
             ),
 
             const _Spacer(),
-            _Section(title: 'Coach tone'),
+            _Section(title: loc.aiOnboardingSectionCoachToneTitle),
             _SingleChipGroup(
               value: _coachTone,
               allowNull: false,
-              options: const [
-                _Opt('direct',    'Direct'),
-                _Opt('balanced',  'Balanced'),
-                _Opt('gentler',   'Gentler'),
-              ],
+              options: aiOnboardingCoachTone(loc),
               onChanged: (v) => setState(() => _coachTone = v ?? 'balanced'),
             ),
 
@@ -599,7 +477,7 @@ class _AiOnboardingScreenState extends State<AiOnboardingScreen> {
                         width: 20, height: 20,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : const Text('Finish & start chatting'),
+                    : Text(loc.aiOnboardingFinishButton),
               ),
             ),
           ],
@@ -613,12 +491,6 @@ class _AiOnboardingScreenState extends State<AiOnboardingScreen> {
 // --------------------------------------------------------------------------- //
 // Small helpers                                                               //
 // --------------------------------------------------------------------------- //
-
-class _Opt {
-  final String value;
-  final String label;
-  const _Opt(this.value, this.label);
-}
 
 class _Spacer extends StatelessWidget {
   const _Spacer();
@@ -662,7 +534,7 @@ class _Section extends StatelessWidget {
 class _SingleChipGroup extends StatelessWidget {
   final String? label;
   final String? value;
-  final List<_Opt> options;
+  final List<AiOnboardingChip> options;
   final ValueChanged<String?> onChanged;
   final bool allowNull;
 
@@ -706,7 +578,7 @@ class _SingleChipGroup extends StatelessWidget {
 class _MultiChipGroup extends StatelessWidget {
   final String? label;
   final Set<String> values;
-  final List<_Opt> options;
+  final List<AiOnboardingChip> options;
   final VoidCallback onChanged;
 
   const _MultiChipGroup({

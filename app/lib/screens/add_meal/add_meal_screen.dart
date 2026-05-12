@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:app/l10n/app_localizations.dart';
+import 'package:app/l10n/meal_labels.dart';
+import 'package:provider/provider.dart';
+
 import '../../models/food_item.dart';
+import '../../providers/locale_controller.dart';
 import '../../services/food_api_service.dart';
 
 class AddMealScreen extends StatefulWidget {
@@ -34,13 +39,19 @@ class _AddMealScreenState extends State<AddMealScreen> {
     'Breakfast',
     'Lunch',
     'Dinner',
-    'Snacks',
+    'Snack',
   ];
+
+  String _normalizeMealKey(String? m) {
+    if (m == null || m.isEmpty) return _mealTypes[0];
+    if (m == 'Snacks') return 'Snack';
+    return _mealTypes.contains(m) ? m : _mealTypes[0];
+  }
 
   @override
   void initState() {
     super.initState();
-    _selectedMealType = widget.initialMealType ?? _mealTypes[0];
+    _selectedMealType = _normalizeMealKey(widget.initialMealType);
   }
 
   @override
@@ -68,7 +79,14 @@ class _AddMealScreenState extends State<AddMealScreen> {
       _showSearchResults = true;
     });
 
-    final outcome = await _foodApiService.searchFoodWithOutcome(query);
+    final lc = context.read<LocaleController>();
+    final localeTag = lc.preferredLocaleForAi(
+      WidgetsBinding.instance.platformDispatcher.locale,
+    );
+    final outcome = await _foodApiService.searchFoodWithOutcome(
+      query,
+      locale: localeTag,
+    );
 
     if (!mounted) return;
 
@@ -89,7 +107,7 @@ class _AddMealScreenState extends State<AddMealScreen> {
 
   void _selectFood(FoodItem food) {
     setState(() {
-      _foodNameController.text = food.name;
+      _foodNameController.text = food.primaryLabel;
       _caloriesController.text = food.caloriesPer100g.toInt().toString();
       _proteinController.text = food.proteinPer100g.toStringAsFixed(1);
       _carbsController.text = food.carbsPer100g.toStringAsFixed(1);
@@ -101,6 +119,7 @@ class _AddMealScreenState extends State<AddMealScreen> {
   }
 
   void _handleSubmit() {
+    final loc = AppLocalizations.of(context)!;
     if (_formKey.currentState!.validate()) {
       final mealData = {
         'foodName': _foodNameController.text.trim(),
@@ -111,13 +130,12 @@ class _AddMealScreenState extends State<AddMealScreen> {
         'mealType': _selectedMealType,
       };
 
-      // Print to console as placeholder
-      print('Meal data: $mealData');
+      debugPrint('[AddMealScreen] meal data: $mealData');
 
       // Show success message
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Meal added successfully!'),
+        SnackBar(
+          content: Text(loc.addMealSuccessSnack),
           backgroundColor: Colors.green,
         ),
       );
@@ -129,9 +147,10 @@ class _AddMealScreenState extends State<AddMealScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Add Meal'),
+        title: Text(loc.addMealTitle),
       ),
       body: Column(
         children: [
@@ -145,8 +164,8 @@ class _AddMealScreenState extends State<AddMealScreen> {
                 TextField(
                   controller: _searchController,
                   decoration: InputDecoration(
-                    labelText: 'Search for food',
-                    hintText: 'e.g., rice, chicken, apple',
+                    labelText: loc.addMealSearchLabel,
+                    hintText: loc.addMealSearchHint,
                     border: const OutlineInputBorder(),
                     prefixIcon: const Icon(Icons.search),
                     suffixIcon: _searchController.text.isNotEmpty
@@ -192,7 +211,7 @@ class _AddMealScreenState extends State<AddMealScreen> {
                           ),
                           const SizedBox(height: 16),
                           Text(
-                            'No results found',
+                            loc.addMealNoResults,
                             style: TextStyle(
                               color: Colors.grey[600],
                               fontSize: 16,
@@ -207,12 +226,14 @@ class _AddMealScreenState extends State<AddMealScreen> {
                         final food = _searchResults[index];
                         return ListTile(
                           leading: const Icon(Icons.restaurant),
-                          title: Text(food.name),
+                          title: Text(food.primaryLabel),
                           subtitle: Text(
-                            '${food.caloriesPer100g.toInt()} cal/100g • '
-                            'P: ${food.proteinPer100g.toStringAsFixed(1)}g • '
-                            'C: ${food.carbsPer100g.toStringAsFixed(1)}g • '
-                            'F: ${food.fatPer100g.toStringAsFixed(1)}g',
+                            loc.addMealSearchResultLine(
+                              food.caloriesPer100g.toInt().toString(),
+                              food.proteinPer100g.toStringAsFixed(1),
+                              food.carbsPer100g.toStringAsFixed(1),
+                              food.fatPer100g.toStringAsFixed(1),
+                            ),
                           ),
                           onTap: () => _selectFood(food),
                         );
@@ -230,16 +251,17 @@ class _AddMealScreenState extends State<AddMealScreen> {
                   children: [
                     // Meal type dropdown
                     DropdownButtonFormField<String>(
-                      value: _selectedMealType,
-                      decoration: const InputDecoration(
-                        labelText: 'Meal Type',
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.restaurant),
+                      key: ValueKey(_selectedMealType ?? ''),
+                      initialValue: _selectedMealType,
+                      decoration: InputDecoration(
+                        labelText: loc.addMealMealTypeLabel,
+                        border: const OutlineInputBorder(),
+                        prefixIcon: const Icon(Icons.restaurant),
                       ),
                       items: _mealTypes.map((type) {
                         return DropdownMenuItem(
                           value: type,
-                          child: Text(type),
+                          child: Text(mealTypeLabel(loc, type)),
                         );
                       }).toList(),
                       onChanged: (value) {
@@ -249,7 +271,7 @@ class _AddMealScreenState extends State<AddMealScreen> {
                       },
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return 'Please select a meal type';
+                          return loc.addMealSelectMealType;
                         }
                         return null;
                       },
@@ -258,14 +280,14 @@ class _AddMealScreenState extends State<AddMealScreen> {
                     // Food name
                     TextFormField(
                       controller: _foodNameController,
-                      decoration: const InputDecoration(
-                        labelText: 'Food Name',
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.fastfood),
+                      decoration: InputDecoration(
+                        labelText: loc.addMealFoodNameLabel,
+                        border: const OutlineInputBorder(),
+                        prefixIcon: const Icon(Icons.fastfood),
                       ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return 'Please enter a food name';
+                          return loc.addMealFoodNameRequired;
                         }
                         return null;
                       },
@@ -275,17 +297,17 @@ class _AddMealScreenState extends State<AddMealScreen> {
                     TextFormField(
                       controller: _caloriesController,
                       keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(
-                        labelText: 'Calories',
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.local_fire_department),
+                      decoration: InputDecoration(
+                        labelText: loc.addMealCaloriesLabel,
+                        border: const OutlineInputBorder(),
+                        prefixIcon: const Icon(Icons.local_fire_department),
                       ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return 'Please enter calories';
+                          return loc.addMealCaloriesRequired;
                         }
                         if (int.tryParse(value) == null) {
-                          return 'Please enter a valid number';
+                          return loc.addMealCaloriesInvalid;
                         }
                         return null;
                       },
@@ -295,17 +317,17 @@ class _AddMealScreenState extends State<AddMealScreen> {
                     TextFormField(
                       controller: _proteinController,
                       keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(
-                        labelText: 'Protein (g)',
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.fitness_center),
+                      decoration: InputDecoration(
+                        labelText: loc.addMealProteinLabel,
+                        border: const OutlineInputBorder(),
+                        prefixIcon: const Icon(Icons.fitness_center),
                       ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return 'Please enter protein amount';
+                          return loc.addMealProteinRequired;
                         }
                         if (double.tryParse(value) == null) {
-                          return 'Please enter a valid number';
+                          return loc.addMealProteinInvalid;
                         }
                         return null;
                       },
@@ -315,17 +337,17 @@ class _AddMealScreenState extends State<AddMealScreen> {
                     TextFormField(
                       controller: _carbsController,
                       keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(
-                        labelText: 'Carbs (g)',
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.grain),
+                      decoration: InputDecoration(
+                        labelText: loc.addMealCarbsLabel,
+                        border: const OutlineInputBorder(),
+                        prefixIcon: const Icon(Icons.grain),
                       ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return 'Please enter carbs amount';
+                          return loc.addMealCarbsRequired;
                         }
                         if (double.tryParse(value) == null) {
-                          return 'Please enter a valid number';
+                          return loc.addMealCarbsInvalid;
                         }
                         return null;
                       },
@@ -335,17 +357,17 @@ class _AddMealScreenState extends State<AddMealScreen> {
                     TextFormField(
                       controller: _fatsController,
                       keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(
-                        labelText: 'Fats (g)',
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.opacity),
+                      decoration: InputDecoration(
+                        labelText: loc.addMealFatsLabel,
+                        border: const OutlineInputBorder(),
+                        prefixIcon: const Icon(Icons.opacity),
                       ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return 'Please enter fats amount';
+                          return loc.addMealFatsRequired;
                         }
                         if (double.tryParse(value) == null) {
-                          return 'Please enter a valid number';
+                          return loc.addMealFatsInvalid;
                         }
                         return null;
                       },
@@ -357,9 +379,9 @@ class _AddMealScreenState extends State<AddMealScreen> {
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 16),
                       ),
-                      child: const Text(
-                        'Add Meal',
-                        style: TextStyle(fontSize: 16),
+                      child: Text(
+                        loc.addMealSubmitButton,
+                        style: const TextStyle(fontSize: 16),
                       ),
                     ),
                   ],

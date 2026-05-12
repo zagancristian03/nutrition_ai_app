@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:app/l10n/app_localizations.dart';
+
 import '../../providers/saved_items_provider.dart';
 import '../../models/saved_meal.dart';
 import '../../models/saved_meal.dart' as saved_meal;
@@ -31,28 +33,30 @@ class _CreateMealScreenState extends State<CreateMealScreen> {
       ),
     );
 
-    if (result != null) {
-      // Show dialog to enter serving size
-      final servingSize = await showDialog<double>(
-        context: context,
-        builder: (context) => _ServingSizeDialog(),
-      );
+    if (!mounted) return;
+    if (result == null) return;
 
-      if (servingSize != null && servingSize > 0) {
-        setState(() {
-          _items.add(
-            saved_meal.SavedMealItem(
-              foodId: result.id,
-              foodName: result.name,
-              servingSize: servingSize,
-              caloriesPer100g: result.caloriesPer100g,
-              proteinPer100g: result.proteinPer100g,
-              carbsPer100g: result.carbsPer100g,
-              fatPer100g: result.fatPer100g,
-            ),
-          );
-        });
-      }
+    // Show dialog to enter serving size
+    final servingSize = await showDialog<double>(
+      context: context,
+      builder: (context) => _ServingSizeDialog(),
+    );
+
+    if (!mounted) return;
+    if (servingSize != null && servingSize > 0) {
+      setState(() {
+        _items.add(
+          saved_meal.SavedMealItem(
+            foodId: result.id,
+            foodName: result.primaryLabel,
+            servingSize: servingSize,
+            caloriesPer100g: result.caloriesPer100g,
+            proteinPer100g: result.proteinPer100g,
+            carbsPer100g: result.carbsPer100g,
+            fatPer100g: result.fatPer100g,
+          ),
+        );
+      });
     }
   }
 
@@ -63,10 +67,11 @@ class _CreateMealScreenState extends State<CreateMealScreen> {
   }
 
   void _saveMeal() {
+    final loc = AppLocalizations.of(context)!;
     if (_nameController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please enter a meal name'),
+        SnackBar(
+          content: Text(loc.createMealSnackNameRequired),
           backgroundColor: Colors.red,
         ),
       );
@@ -75,8 +80,8 @@ class _CreateMealScreenState extends State<CreateMealScreen> {
 
     if (_items.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please add at least one food item'),
+        SnackBar(
+          content: Text(loc.createMealSnackItemsRequired),
           backgroundColor: Colors.red,
         ),
       );
@@ -93,8 +98,8 @@ class _CreateMealScreenState extends State<CreateMealScreen> {
     provider.addMeal(meal);
 
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Meal saved successfully!'),
+      SnackBar(
+        content: Text(loc.createMealSnackSaved),
         backgroundColor: Colors.green,
       ),
     );
@@ -104,6 +109,7 @@ class _CreateMealScreenState extends State<CreateMealScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
     double totalCalories = 0;
     double totalProtein = 0;
     double totalCarbs = 0;
@@ -118,7 +124,7 @@ class _CreateMealScreenState extends State<CreateMealScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Create Meal'),
+        title: Text(loc.createMealTitle),
       ),
       body: Column(
         children: [
@@ -130,10 +136,10 @@ class _CreateMealScreenState extends State<CreateMealScreen> {
                 children: [
                   TextFormField(
                     controller: _nameController,
-                    decoration: const InputDecoration(
-                      labelText: 'Meal Name',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.restaurant_menu),
+                    decoration: InputDecoration(
+                      labelText: loc.createMealNameLabel,
+                      border: const OutlineInputBorder(),
+                      prefixIcon: const Icon(Icons.restaurant_menu),
                     ),
                   ),
                   const SizedBox(height: 24),
@@ -141,22 +147,22 @@ class _CreateMealScreenState extends State<CreateMealScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'Food Items',
+                        loc.createMealFoodItemsHeader,
                         style: Theme.of(context).textTheme.titleLarge,
                       ),
                       ElevatedButton.icon(
                         onPressed: _addFoodItem,
                         icon: const Icon(Icons.add),
-                        label: const Text('Add Food'),
+                        label: Text(loc.createMealAddFoodButton),
                       ),
                     ],
                   ),
                   const SizedBox(height: 16),
                   if (_items.isEmpty)
-                    const Center(
+                    Center(
                       child: Padding(
-                        padding: EdgeInsets.all(32.0),
-                        child: Text('No items added yet'),
+                        padding: const EdgeInsets.all(32.0),
+                        child: Text(loc.createMealEmptyItems),
                       ),
                     )
                   else
@@ -168,8 +174,10 @@ class _CreateMealScreenState extends State<CreateMealScreen> {
                         child: ListTile(
                           title: Text(item.foodName),
                           subtitle: Text(
-                            '${item.servingSize}g • '
-                            '${item.totalCalories.toStringAsFixed(1)} cal',
+                            loc.createMealItemSubtitle(
+                              item.servingSize.toString(),
+                              item.totalCalories.toStringAsFixed(1),
+                            ),
                           ),
                           trailing: IconButton(
                             icon: const Icon(Icons.delete),
@@ -187,14 +195,22 @@ class _CreateMealScreenState extends State<CreateMealScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Total Nutrition',
+                              loc.createMealTotalNutrition,
                               style: Theme.of(context).textTheme.titleMedium,
                             ),
                             const SizedBox(height: 8),
-                            Text('Calories: ${totalCalories.toStringAsFixed(1)}'),
-                            Text('Protein: ${totalProtein.toStringAsFixed(1)}g'),
-                            Text('Carbs: ${totalCarbs.toStringAsFixed(1)}g'),
-                            Text('Fat: ${totalFat.toStringAsFixed(1)}g'),
+                            Text(loc.nutritionTotalCalories(
+                              totalCalories.toStringAsFixed(1),
+                            )),
+                            Text(loc.nutritionTotalProtein(
+                              totalProtein.toStringAsFixed(1),
+                            )),
+                            Text(loc.nutritionTotalCarbs(
+                              totalCarbs.toStringAsFixed(1),
+                            )),
+                            Text(loc.nutritionTotalFat(
+                              totalFat.toStringAsFixed(1),
+                            )),
                           ],
                         ),
                       ),
@@ -211,7 +227,7 @@ class _CreateMealScreenState extends State<CreateMealScreen> {
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 16),
               ),
-              child: const Text('Save Meal'),
+              child: Text(loc.createMealSaveButton),
             ),
           ),
         ],
@@ -236,20 +252,21 @@ class _ServingSizeDialogState extends State<_ServingSizeDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
     return AlertDialog(
-      title: const Text('Enter Serving Size'),
+      title: Text(loc.mealServingDialogTitle),
       content: TextField(
         controller: _controller,
         keyboardType: TextInputType.number,
-        decoration: const InputDecoration(
-          labelText: 'Serving Size (g)',
-          border: OutlineInputBorder(),
+        decoration: InputDecoration(
+          labelText: loc.mealServingAmountG,
+          border: const OutlineInputBorder(),
         ),
       ),
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
+          child: Text(loc.commonCancel),
         ),
         TextButton(
           onPressed: () {
@@ -258,7 +275,7 @@ class _ServingSizeDialogState extends State<_ServingSizeDialog> {
               Navigator.pop(context, size);
             }
           },
-          child: const Text('Add'),
+          child: Text(loc.mealRecipeDialogAdd),
         ),
       ],
     );

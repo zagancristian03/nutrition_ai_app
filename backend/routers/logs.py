@@ -9,7 +9,8 @@ actually ate, even if the food is later renamed or removed from the catalog.
 from __future__ import annotations
 
 import logging
-from datetime import date
+from datetime import date, datetime, timezone
+from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, HTTPException, Query, Response
 from psycopg2.extras import RealDictCursor
@@ -39,8 +40,27 @@ _LOG_COLUMNS = """
     protein::float8             AS protein,
     carbs::float8               AS carbs,
     fat::float8                 AS fat,
-    created_at
+    created_at,
+    consumed_at,
+    diary_timezone
 """
+
+
+def _diary_date_from_consumed(consumed_at: datetime, tz_name: str | None) -> date:
+    """Calendar day for the diary row in the user's zone.
+
+    On Windows, ``ZoneInfo`` needs the ``tzdata`` package; without it, even
+    ``ZoneInfo("UTC")`` can raise. Fall back to :func:`datetime.timezone.utc`.
+    """
+    name = (tz_name or "UTC").strip() or "UTC"
+    try:
+        tz = ZoneInfo(name)
+    except Exception:
+        tz = timezone.utc
+    aware = consumed_at
+    if aware.tzinfo is None:
+        aware = aware.replace(tzinfo=timezone.utc)
+    return aware.astimezone(tz).date()
 
 
 def _snapshot_macros(
@@ -137,21 +157,41 @@ def create_food_log(payload: FoodLogCreate) -> dict:
                     servings=payload.servings,
                 )
 
+                logged_date = payload.logged_date
+                consumed_at: datetime | None = payload.consumed_at
+                diary_tz = payload.diary_timezone
+                if consumed_at is not None:
+                    logged_date = _diary_date_from_consumed(consumed_at, diary_tz)
+                    if consumed_at.tzinfo is None:
+                        consumed_at = consumed_at.replace(tzinfo=timezone.utc)
+                elif logged_date is None:
+                    raise HTTPException(
+                        status_code=400,
+                        detail="logged_date or consumed_at required",
+                    )
+                else:
+                    consumed_at = datetime.now(timezone.utc)
+
+                snapshot_name = (payload.food_display_name or "").strip()
+                if not snapshot_name:
+                    snapshot_name = food["name"] or ""
+
                 cur.execute(
                     f"""
                     INSERT INTO food_logs (
                         user_id, food_id, food_name, logged_date, meal_type,
                         grams, servings,
-                        calories, protein, carbs, fat
+                        calories, protein, carbs, fat,
+                        consumed_at, diary_timezone
                     )
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                     RETURNING {_LOG_COLUMNS}
                     """,
                     (
                         payload.user_id,
                         str(payload.food_id),
-                        food["name"] or "",
-                        payload.logged_date,
+                        snapshot_name,
+                        logged_date,
                         payload.meal_type,
                         grams,
                         payload.servings,
@@ -159,6 +199,8 @@ def create_food_log(payload: FoodLogCreate) -> dict:
                         round(protein, 3),
                         round(carbs,   3),
                         round(fat,     3),
+                        consumed_at,
+                        diary_tz,
                     ),
                 )
                 row = cur.fetchone()
@@ -196,7 +238,9 @@ _RECENT_FOODS_SQL = f"""
             protein::float8             AS protein,
             carbs::float8               AS carbs,
             fat::float8                 AS fat,
-            created_at
+            created_at,
+            consumed_at,
+            diary_timezone
         FROM food_logs
         WHERE user_id = %s
         ORDER BY food_id, created_at DESC

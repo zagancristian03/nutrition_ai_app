@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:app/l10n/app_localizations.dart';
+
 import '../../services/auth_service.dart';
 import '../../widgets/custom_button.dart';
 
@@ -28,30 +30,26 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   Future<void> _handleRegister() async {
+    final loc = AppLocalizations.of(context)!;
     if (_formKey.currentState!.validate()) {
-      setState(() {
-        _isLoading = true;
-      });
+      setState(() => _isLoading = true);
 
       final user = await _authService.register(
         _emailController.text.trim(),
         _passwordController.text,
       );
 
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted) setState(() => _isLoading = false);
 
       if (user != null) {
-        // AuthGate will automatically route to HomeScreen
         if (mounted) {
           Navigator.of(context).popUntil((route) => route.isFirst);
         }
       } else {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Registration failed. Please try again.'),
+            SnackBar(
+              content: Text(loc.authRegisterFailedSnack),
               backgroundColor: Colors.red,
             ),
           );
@@ -62,6 +60,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
+
     return Scaffold(
       body: SafeArea(
         child: SingleChildScrollView(
@@ -74,7 +74,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               children: [
                 SizedBox(height: MediaQuery.of(context).size.height * 0.1),
                 Text(
-                  'Create Account',
+                  loc.authRegisterTitle,
                   style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
@@ -82,7 +82,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Sign up to get started',
+                  loc.authRegisterSubtitle,
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                         color: Colors.grey[600],
                       ),
@@ -92,17 +92,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 TextFormField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
-                  decoration: const InputDecoration(
-                    labelText: 'Email',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.email_outlined),
+                  decoration: InputDecoration(
+                    labelText: loc.authEmailLabel,
+                    border: const OutlineInputBorder(),
+                    prefixIcon: const Icon(Icons.email_outlined),
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Please enter your email';
+                      return loc.authValidationEmailRequired;
                     }
                     if (!value.contains('@') || !value.contains('.')) {
-                      return 'Please enter a valid email';
+                      return loc.authValidationEmailInvalid;
                     }
                     return null;
                   },
@@ -112,7 +112,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   controller: _passwordController,
                   obscureText: _obscurePassword,
                   decoration: InputDecoration(
-                    labelText: 'Password',
+                    labelText: loc.authPasswordLabel,
                     border: const OutlineInputBorder(),
                     prefixIcon: const Icon(Icons.lock_outlined),
                     suffixIcon: IconButton(
@@ -122,18 +122,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             : Icons.visibility_off_outlined,
                       ),
                       onPressed: () {
-                        setState(() {
-                          _obscurePassword = !_obscurePassword;
-                        });
+                        setState(() => _obscurePassword = !_obscurePassword);
                       },
                     ),
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Please enter your password';
+                      return loc.authValidationPasswordRequired;
                     }
                     if (value.length < 6) {
-                      return 'Password must be at least 6 characters';
+                      return loc.authValidationPasswordMin6;
                     }
                     return null;
                   },
@@ -143,7 +141,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   controller: _confirmPasswordController,
                   obscureText: _obscureConfirmPassword,
                   decoration: InputDecoration(
-                    labelText: 'Confirm Password',
+                    labelText: loc.authConfirmPasswordLabel,
                     border: const OutlineInputBorder(),
                     prefixIcon: const Icon(Icons.lock_outlined),
                     suffixIcon: IconButton(
@@ -153,33 +151,32 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             : Icons.visibility_off_outlined,
                       ),
                       onPressed: () {
-                        setState(() {
-                          _obscureConfirmPassword = !_obscureConfirmPassword;
-                        });
+                        setState(
+                          () =>
+                              _obscureConfirmPassword = !_obscureConfirmPassword,
+                        );
                       },
                     ),
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Please confirm your password';
+                      return loc.authValidationConfirmRequired;
                     }
                     if (value != _passwordController.text) {
-                      return 'Passwords do not match';
+                      return loc.authValidationPasswordsMismatch;
                     }
                     return null;
                   },
                 ),
                 const SizedBox(height: 32),
                 CustomButton(
-                  label: 'Register',
+                  label: loc.authRegisterButton,
                   onPressed: _isLoading ? null : _handleRegister,
                 ),
                 const SizedBox(height: 24),
                 TextButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                  child: const Text('Already have an account? Login'),
+                  onPressed: () => Navigator.pop(context),
+                  child: Text(loc.authLoginPrompt),
                 ),
               ],
             ),
@@ -189,4 +186,3 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 }
-

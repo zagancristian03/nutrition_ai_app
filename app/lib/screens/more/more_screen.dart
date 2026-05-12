@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:app/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 
 import '../../providers/user_profile_provider.dart';
@@ -11,8 +12,9 @@ class MoreScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
     final user    = FirebaseAuth.instance.currentUser;
-    final email   = user?.email ?? 'No email';
+    final email   = user?.email ?? loc.moreNoEmail;
     final profile = context.watch<UserProfileProvider>().profile;
 
     final name = (profile?.displayName?.trim().isNotEmpty ?? false)
@@ -22,7 +24,7 @@ class MoreScreen extends StatelessWidget {
             : _emailHandle(email);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('More')),
+      appBar: AppBar(title: Text(loc.moreScreenTitle)),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
         children: [
@@ -35,16 +37,16 @@ class MoreScreen extends StatelessWidget {
 
           _ActionTile(
             icon: Icons.auto_awesome,
-            title: 'AI Coach',
-            subtitle: 'Chat, meal ideas, daily & weekly reviews',
+            title: loc.moreAiCoachTitle,
+            subtitle: loc.moreAiCoachSubtitle,
             onTap: () => Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => const AiCoachScreen()),
             ),
           ),
           _ActionTile(
             icon: Icons.settings_outlined,
-            title: 'Settings',
-            subtitle: 'Theme, profile, goals, account, about',
+            title: loc.settingsScreenTitle,
+            subtitle: loc.moreSettingsSubtitle,
             onTap: () => Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => const SettingsScreen()),
             ),

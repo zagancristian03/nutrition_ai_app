@@ -12,6 +12,8 @@ MealType = Literal["breakfast", "lunch", "dinner", "snack"]
 Sex            = Literal["male", "female", "other"]
 GoalType       = Literal["lose", "maintain", "gain"]
 ActivityLevel  = Literal["sedentary", "light", "moderate", "active", "very_active"]
+LocaleMode     = Literal["system", "manual"]
+MeasurementSystem = Literal["metric", "imperial"]
 
 
 # =============================================================================
@@ -56,10 +58,26 @@ class FoodCreate(BaseModel):
 class FoodLogCreate(BaseModel):
     user_id: str = Field(..., min_length=1, max_length=128)
     food_id: UUID
-    logged_date: date
+    logged_date: date | None = None
     meal_type: MealType
     grams: float | None = Field(default=None, ge=0, le=10_000)
     servings: float | None = Field(default=None, ge=0, le=100)
+    consumed_at: datetime | None = None
+    diary_timezone: str | None = Field(default=None, max_length=128)
+    food_display_name: str | None = Field(
+        default=None,
+        max_length=256,
+        description=(
+            "Optional label to store in the diary snapshot (what the user saw). "
+            "When omitted, the server uses `foods.name`."
+        ),
+    )
+
+    @model_validator(mode="after")
+    def _logged_or_consumed(self) -> "FoodLogCreate":
+        if self.consumed_at is None and self.logged_date is None:
+            raise ValueError("Either `logged_date` or `consumed_at` must be provided")
+        return self
 
     @model_validator(mode="after")
     def _portion_present(self) -> "FoodLogCreate":
@@ -105,6 +123,8 @@ class FoodLogOut(BaseModel):
     carbs: float
     fat: float
     created_at: datetime
+    consumed_at: datetime | None = None
+    diary_timezone: str | None = None
 
 
 # =============================================================================
@@ -152,6 +172,12 @@ class UserProfile(BaseModel):
     weekly_rate_kg:    float         | None = None
     updated_at:        datetime      | None = None
 
+    locale_mode:        LocaleMode = "system"
+    preferred_locale:  str | None = None
+    timezone:          str | None = None
+    locale_updated_at: datetime     | None = None
+    measurement_system: MeasurementSystem | None = None
+
 
 class UserProfileUpdate(BaseModel):
     """Upsert payload. user_id comes from URL."""
@@ -165,6 +191,11 @@ class UserProfileUpdate(BaseModel):
     goal_type:         GoalType      | None = None
     activity_level:    ActivityLevel | None = None
     weekly_rate_kg:    float         | None = Field(default=None, ge=0, le=2)
+
+    locale_mode:         LocaleMode | None = None
+    preferred_locale:    str | None = Field(default=None, max_length=32)
+    timezone:            str | None = Field(default=None, max_length=128)
+    measurement_system:  MeasurementSystem | None = None
 
 
 # =============================================================================
@@ -310,6 +341,8 @@ class AiChatRequest(BaseModel):
     user_id:   str  = Field(..., min_length=1, max_length=128)
     message:   str  = Field(..., min_length=1, max_length=4000)
     thread_id: int  | None = None
+    preferred_locale: str = Field(default="en", max_length=32)
+    timezone: str | None = Field(default=None, max_length=128)
 
 
 class AiChatResponse(BaseModel):

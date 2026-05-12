@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:app/l10n/app_localizations.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
+import '../../l10n/api_error_mapper.dart';
 import '../../providers/daily_log_provider.dart';
 import '../../providers/preferences_provider.dart';
 import '../../services/ai_service.dart';
@@ -32,10 +35,16 @@ class DashboardScreen extends StatelessWidget {
             selectedDate.month == now.month &&
             selectedDate.day == now.day;
 
-        final cs = Theme.of(context).colorScheme;
+        final loc = AppLocalizations.of(context)!;
         final showCoachTips = context.watch<PreferencesProvider>().showCoachTips;
+        final cs = Theme.of(context).colorScheme;
+
+        final dateLabel = DateFormat.MMMd(
+          Localizations.localeOf(context).toString(),
+        ).format(selectedDate);
 
         final insights = NutritionInsights.build(
+          loc: loc,
           selectedDate: selectedDate,
           isLoading: provider.isLoading,
           entryCount: provider.entries.length,
@@ -58,7 +67,7 @@ class DashboardScreen extends StatelessWidget {
             actions: [
               IconButton(
                 icon: const Icon(Icons.refresh),
-                tooltip: 'Reload this day',
+                tooltip: loc.dashboardReloadTooltip,
                 onPressed: provider.isLoading ? null : () => provider.refresh(),
               ),
               IconButton(
@@ -71,7 +80,7 @@ class DashboardScreen extends StatelessWidget {
                     ),
                   );
                 },
-                tooltip: 'Edit Goals',
+                tooltip: loc.dashboardEditGoalsTooltip,
               ),
             ],
           ),
@@ -80,7 +89,7 @@ class DashboardScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (provider.diaryLoadError != null)
+                if (provider.diaryLoadErrorCode != null)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 12),
                     child: Material(
@@ -100,7 +109,10 @@ class DashboardScreen extends StatelessWidget {
                             const SizedBox(width: 10),
                             Expanded(
                               child: Text(
-                                provider.diaryLoadError!,
+                                localizedApiMessage(
+                                  context,
+                                  provider.diaryLoadErrorCode!,
+                                ),
                                 style: TextStyle(
                                   color: Theme.of(context).colorScheme.onErrorContainer,
                                 ),
@@ -108,7 +120,7 @@ class DashboardScreen extends StatelessWidget {
                             ),
                             TextButton(
                               onPressed: () => provider.refresh(),
-                              child: const Text('Retry'),
+                              child: Text(loc.commonRetry),
                             ),
                           ],
                         ),
@@ -133,7 +145,7 @@ class DashboardScreen extends StatelessWidget {
                               ),
                               const SizedBox(width: 8),
                               Text(
-                                'Coach',
+                                loc.dashboardCoachTitle,
                                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                                       fontWeight: FontWeight.bold,
                                     ),
@@ -176,14 +188,16 @@ class DashboardScreen extends StatelessWidget {
                     );
                   },
                   child: StatCard(
-                    label: isToday ? 'Calories (today)' : 'Calories (${_shortDate(selectedDate)})',
+                    label: isToday
+                        ? loc.dashboardCaloriesToday
+                        : loc.dashboardCaloriesForDate(dateLabel),
                     value: '$consumedCalories / $goalCalories',
                     color: cs.primary,
                   ),
                 ),
                 const SizedBox(height: 24),
                 Text(
-                  'Macros',
+                  loc.dashboardMacrosTitle,
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
@@ -193,19 +207,19 @@ class DashboardScreen extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
                     MacroRing(
-                      label: 'Protein',
+                      label: loc.dashboardMacroProtein,
                       consumed: proteinConsumed,
                       goal: proteinGoal,
                       color: cs.error,
                     ),
                     MacroRing(
-                      label: 'Carbs',
+                      label: loc.dashboardMacroCarbs,
                       consumed: carbsConsumed,
                       goal: carbsGoal,
                       color: cs.tertiary,
                     ),
                     MacroRing(
-                      label: 'Fats',
+                      label: loc.dashboardMacroFats,
                       consumed: fatsConsumed,
                       goal: fatsGoal,
                       color: cs.secondary,
@@ -218,13 +232,5 @@ class DashboardScreen extends StatelessWidget {
         );
       },
     );
-  }
-
-  static String _shortDate(DateTime date) {
-    const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
-    ];
-    return '${date.day} ${months[date.month - 1]}';
   }
 }

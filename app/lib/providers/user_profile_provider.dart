@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import '../models/user_profile.dart';
 import '../models/weight_entry.dart';
 import '../services/profile_api_service.dart';
+import 'locale_controller.dart';
 
 /// State holder for the user's profile + weight history.
 ///
@@ -10,10 +11,14 @@ import '../services/profile_api_service.dart';
 /// by `AuthGate` whenever Firebase auth state changes so we load / clear
 /// data for the right account.
 class UserProfileProvider extends ChangeNotifier {
-  UserProfileProvider({ProfileApiService? api})
-      : _api = api ?? ProfileApiService();
+  UserProfileProvider({
+    ProfileApiService? api,
+    required LocaleController locale,
+  })  : _api = api ?? ProfileApiService(),
+        _locale = locale;
 
   final ProfileApiService _api;
+  final LocaleController _locale;
 
   String? _userId;
   UserProfile? _profile;
@@ -176,7 +181,9 @@ class UserProfileProvider extends ChangeNotifier {
     _loadingProfile = true;
     notifyListeners();
     try {
-      _profile = await _api.getProfile(uid);
+      var next = await _api.getProfile(uid);
+      next = await _locale.syncWithRemoteProfile(next, _api);
+      _profile = next;
     } finally {
       _loadingProfile = false;
       notifyListeners();

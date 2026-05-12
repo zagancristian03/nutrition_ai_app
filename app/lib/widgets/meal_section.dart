@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:app/l10n/app_localizations.dart';
 
 class MealSection extends StatelessWidget {
   final String mealName;
@@ -20,6 +21,7 @@ class MealSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
     final cs = Theme.of(context).colorScheme;
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
@@ -38,7 +40,7 @@ class MealSection extends StatelessWidget {
                       ),
                 ),
                 Text(
-                  '$totalCalories cal',
+                  loc.diaryCaloriesUnit('$totalCalories'),
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         color: cs.onSurfaceVariant,
                       ),
@@ -59,7 +61,7 @@ class MealSection extends StatelessWidget {
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
-                        'No foods yet — tap Add food below to search and log.',
+                        loc.diaryMealSectionEmpty,
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                               color: cs.onSurfaceVariant,
                             ),
@@ -92,7 +94,7 @@ class MealSection extends StatelessWidget {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Text(
-                              '${food['calories'] ?? 0} cal',
+                              loc.diaryCaloriesUnit('${food['calories'] ?? 0}'),
                               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                     color: cs.onSurfaceVariant,
                                   ),
@@ -120,7 +122,7 @@ class MealSection extends StatelessWidget {
               child: OutlinedButton.icon(
                 onPressed: onAddFood,
                 icon: const Icon(Icons.add),
-                label: const Text('Add food'),
+                label: Text(loc.diaryMealAddFood),
               ),
             ),
           ],

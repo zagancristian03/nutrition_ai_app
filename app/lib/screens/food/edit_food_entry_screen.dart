@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:app/l10n/app_localizations.dart';
+import 'package:app/l10n/meal_labels.dart';
+
 import '../../models/food_entry.dart';
 import '../../providers/daily_log_provider.dart';
 
@@ -37,7 +40,7 @@ class _EditFoodEntryScreenState extends State<EditFoodEntryScreen> {
   @override
   void initState() {
     super.initState();
-    _selectedMealType = widget.entry.mealType;
+    _selectedMealType = _normalizeMealKey(widget.entry.mealType);
     _foodNameController = TextEditingController(text: widget.entry.foodName);
     _servingSizeController =
         TextEditingController(text: widget.entry.servingSize.toString());
@@ -51,6 +54,12 @@ class _EditFoodEntryScreenState extends State<EditFoodEntryScreen> {
         TextEditingController(text: widget.entry.totalCarbs.toStringAsFixed(1));
     _fatController =
         TextEditingController(text: widget.entry.totalFat.toStringAsFixed(1));
+  }
+
+  static String _normalizeMealKey(String mealType) {
+    if (mealType == 'Snacks') return 'Snack';
+    const allowed = ['Breakfast', 'Lunch', 'Dinner', 'Snack'];
+    return allowed.contains(mealType) ? mealType : 'Breakfast';
   }
 
   @override
@@ -88,9 +97,12 @@ class _EditFoodEntryScreenState extends State<EditFoodEntryScreen> {
     if (!mounted) return;
     setState(() => _saving = false);
 
+    final loc = AppLocalizations.of(context)!;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(ok ? 'Food entry updated!' : 'Could not save changes.'),
+        content: Text(
+          ok ? loc.foodEditUpdatedSnack : loc.foodEditSaveFailedSnack,
+        ),
         backgroundColor: ok ? Colors.green : Colors.redAccent,
       ),
     );
@@ -99,9 +111,10 @@ class _EditFoodEntryScreenState extends State<EditFoodEntryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Edit Food Entry'),
+        title: Text(loc.foodEditTitle),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
@@ -111,16 +124,17 @@ class _EditFoodEntryScreenState extends State<EditFoodEntryScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               DropdownButtonFormField<String>(
-                value: _selectedMealType,
-                decoration: const InputDecoration(
-                  labelText: 'Meal Type',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.restaurant),
+                key: ValueKey(_selectedMealType ?? ''),
+                initialValue: _selectedMealType,
+                decoration: InputDecoration(
+                  labelText: loc.foodEditMealTypeLabel,
+                  border: const OutlineInputBorder(),
+                  prefixIcon: const Icon(Icons.restaurant),
                 ),
                 items: _mealTypes.map((type) {
                   return DropdownMenuItem(
                     value: type,
-                    child: Text(type),
+                    child: Text(mealTypeLabel(loc, type)),
                   );
                 }).toList(),
                 onChanged: (value) {
@@ -130,7 +144,7 @@ class _EditFoodEntryScreenState extends State<EditFoodEntryScreen> {
                 },
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please select a meal type';
+                    return loc.foodEditMealTypeRequired;
                   }
                   return null;
                 },
@@ -138,14 +152,14 @@ class _EditFoodEntryScreenState extends State<EditFoodEntryScreen> {
               const SizedBox(height: 16),
               TextFormField(
                 controller: _foodNameController,
-                decoration: const InputDecoration(
-                  labelText: 'Food Name',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.fastfood),
+                decoration: InputDecoration(
+                  labelText: loc.foodEditFoodNameLabel,
+                  border: const OutlineInputBorder(),
+                  prefixIcon: const Icon(Icons.fastfood),
                 ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please enter a food name';
+                    return loc.foodEditNameRequired;
                   }
                   return null;
                 },
@@ -154,34 +168,34 @@ class _EditFoodEntryScreenState extends State<EditFoodEntryScreen> {
               TextFormField(
                 controller: _servingSizeController,
                 keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'Serving Size (g)',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.scale),
+                decoration: InputDecoration(
+                  labelText: loc.foodEditServingSizeG,
+                  border: const OutlineInputBorder(),
+                  prefixIcon: const Icon(Icons.scale),
                 ),
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _servingsController,
                 keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'Number of Servings',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.numbers),
+                decoration: InputDecoration(
+                  labelText: loc.foodEditServingsLabel,
+                  border: const OutlineInputBorder(),
+                  prefixIcon: const Icon(Icons.numbers),
                 ),
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _caloriesController,
                 keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'Calories',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.local_fire_department),
+                decoration: InputDecoration(
+                  labelText: loc.foodEditCaloriesLabel,
+                  border: const OutlineInputBorder(),
+                  prefixIcon: const Icon(Icons.local_fire_department),
                 ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please enter calories';
+                    return loc.foodEditCaloriesRequired;
                   }
                   return null;
                 },
@@ -190,30 +204,30 @@ class _EditFoodEntryScreenState extends State<EditFoodEntryScreen> {
               TextFormField(
                 controller: _proteinController,
                 keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'Protein (g)',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.fitness_center),
+                decoration: InputDecoration(
+                  labelText: loc.foodEditProteinLabel,
+                  border: const OutlineInputBorder(),
+                  prefixIcon: const Icon(Icons.fitness_center),
                 ),
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _carbsController,
                 keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'Carbs (g)',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.grain),
+                decoration: InputDecoration(
+                  labelText: loc.foodEditCarbsLabel,
+                  border: const OutlineInputBorder(),
+                  prefixIcon: const Icon(Icons.grain),
                 ),
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _fatController,
                 keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'Fat (g)',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.opacity),
+                decoration: InputDecoration(
+                  labelText: loc.foodEditFatLabel,
+                  border: const OutlineInputBorder(),
+                  prefixIcon: const Icon(Icons.opacity),
                 ),
               ),
               const SizedBox(height: 32),
@@ -223,7 +237,7 @@ class _EditFoodEntryScreenState extends State<EditFoodEntryScreen> {
                   padding: const EdgeInsets.symmetric(vertical: 16),
                 ),
                 child: Text(
-                  _saving ? 'Saving…' : 'Save Changes',
+                  _saving ? loc.foodEditSaving : loc.foodEditSaveButton,
                   style: const TextStyle(fontSize: 16),
                 ),
               ),

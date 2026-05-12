@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+
+import 'package:app/l10n/app_localizations.dart';
 
 /// Previous / next day + tappable title (opens calendar). Used on Dashboard and Diary.
 class DiaryDayControls extends StatelessWidget {
@@ -19,6 +22,7 @@ class DiaryDayControls extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
     final today = _stripTime(DateTime.now());
     final current = _stripTime(selectedDate);
     final first = firstDate != null ? _stripTime(firstDate!) : DateTime(2020, 1, 1);
@@ -29,7 +33,7 @@ class DiaryDayControls extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         IconButton(
-          tooltip: 'Previous day',
+          tooltip: loc.diaryDayPreviousTooltip,
           onPressed: canGoBack
               ? () => onDateChanged(current.subtract(const Duration(days: 1)))
               : null,
@@ -57,7 +61,7 @@ class DiaryDayControls extends StatelessWidget {
                 children: [
                   Flexible(
                     child: Text(
-                      _formatTitle(current, today),
+                      _formatTitle(context, current, today),
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.w600,
                           ),
@@ -77,7 +81,7 @@ class DiaryDayControls extends StatelessWidget {
           ),
         ),
         IconButton(
-          tooltip: 'Next day',
+          tooltip: loc.diaryDayNextTooltip,
           onPressed: canGoForward
               ? () => onDateChanged(current.add(const Duration(days: 1)))
               : null,
@@ -89,15 +93,13 @@ class DiaryDayControls extends StatelessWidget {
     );
   }
 
-  static String _formatTitle(DateTime day, DateTime today) {
-    if (day == today) return 'Today';
+  static String _formatTitle(BuildContext context, DateTime day, DateTime today) {
+    final loc = AppLocalizations.of(context)!;
+    final locale = Localizations.localeOf(context).toString();
+    if (day == today) return loc.diaryTodayTitle;
     final y = day.difference(today).inDays;
-    if (y == -1) return 'Yesterday';
-    if (y == 1) return 'Tomorrow';
-    const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
-    ];
-    return '${day.day} ${months[day.month - 1]} ${day.year}';
+    if (y == -1) return loc.diaryRelativeYesterday;
+    if (y == 1) return loc.diaryRelativeTomorrow;
+    return DateFormat.yMMMd(locale).format(day);
   }
 }

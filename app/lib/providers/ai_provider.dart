@@ -1,6 +1,7 @@
-import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 
 import '../services/ai_api_service.dart';
+import 'locale_controller.dart';
 
 /// State for the AI coaching layer.
 ///
@@ -10,9 +11,14 @@ import '../services/ai_api_service.dart';
 ///     [threadId] is the active conversation. Threads can be renamed and
 ///     grouped into [folders].
 class AiProvider extends ChangeNotifier {
-  AiProvider({AiApiService? api}) : _api = api ?? AiApiService();
+  AiProvider({
+    AiApiService? api,
+    required LocaleController locale,
+  })  : _api = api ?? AiApiService(),
+        _locale = locale;
 
   final AiApiService _api;
+  final LocaleController _locale;
 
   String? _userId;
 
@@ -23,7 +29,7 @@ class AiProvider extends ChangeNotifier {
   final List<AiChatMessage> _messages = [];
   bool _historyLoading = false;
   bool _sending = false;
-  String? _lastError;
+  String? _lastErrorCode;
 
   List<AiChatThreadSummary> _threads = [];
   bool _threadsLoading = false;
@@ -46,7 +52,7 @@ class AiProvider extends ChangeNotifier {
   List<AiChatMessage> get messages => List.unmodifiable(_messages);
   bool get historyLoading => _historyLoading;
   bool get sending => _sending;
-  String? get lastError => _lastError;
+  String? get lastErrorCode => _lastErrorCode;
 
   List<AiChatThreadSummary> get threads => List.unmodifiable(_threads);
   bool get threadsLoading => _threadsLoading;
@@ -56,16 +62,6 @@ class AiProvider extends ChangeNotifier {
 
   /// Non-null briefly after a successful move into a folder (for drawer UX).
   int? get pendingExpandFolderId => _pendingExpandFolderId;
-
-  /// Title of the active thread for the app bar (falls back to generic label).
-  String get activeThreadTitle {
-    final id = _threadId;
-    if (id == null) return 'AI Coach';
-    for (final t in _threads) {
-      if (t.id == id) return t.displayTitle;
-    }
-    return 'Chat #$id';
-  }
 
   // ----------------------------------------------------------------------- //
   // Auth                                                                    //
@@ -80,7 +76,7 @@ class AiProvider extends ChangeNotifier {
     _threads.clear();
     _folders.clear();
     _pendingExpandFolderId = null;
-    _lastError = null;
+    _lastErrorCode = null;
     notifyListeners();
 
     if (userId != null) {
@@ -234,7 +230,7 @@ class AiProvider extends ChangeNotifier {
     if (uid == null) return false;
     if (_sending) return false;
 
-    _lastError = null;
+    _lastErrorCode = null;
     _historyLoading = true;
     _messages.clear();
     notifyListeners();
@@ -260,14 +256,13 @@ class AiProvider extends ChangeNotifier {
     if (uid == null) return false;
     if (_sending) return false;
 
-    _lastError = null;
+    _lastErrorCode = null;
     final t = await _api.createChatThread(
       userId: uid,
       folderId: folderId,
     );
     if (t == null) {
-      _lastError =
-          "Couldn't start a new chat. Check your connection and try again.";
+      _lastErrorCode = 'AI_COACH_NEW_CHAT_FAILED';
       notifyListeners();
       return false;
     }
@@ -345,7 +340,7 @@ class AiProvider extends ChangeNotifier {
     final int? threadWhenSendStarted = _threadId;
 
     _sending = true;
-    _lastError = null;
+    _lastErrorCode = null;
     _messages.add(AiChatMessage(
       role: 'user',
       content: trimmed,
@@ -357,13 +352,16 @@ class AiProvider extends ChangeNotifier {
       userId: uid,
       message: trimmed,
       threadId: threadWhenSendStarted,
+      preferredLocale: _locale.preferredLocaleForAi(
+        WidgetsBinding.instance.platformDispatcher.locale,
+      ),
+      timezone: _locale.timezoneIana,
     );
 
     _sending = false;
 
     if (reply == null) {
-      _lastError =
-          "The coach couldn't reply right now. Check your connection and try again.";
+      _lastErrorCode = 'AI_COACH_REPLY_FAILED';
       notifyListeners();
       return false;
     }
@@ -389,8 +387,8 @@ class AiProvider extends ChangeNotifier {
   }
 
   void clearError() {
-    if (_lastError == null) return;
-    _lastError = null;
+    if (_lastErrorCode == null) return;
+    _lastErrorCode = null;
     notifyListeners();
   }
 }

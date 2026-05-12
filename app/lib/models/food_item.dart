@@ -1,6 +1,11 @@
 class FoodItem {
   final String id;
+  /// Stored catalog name from the API (`name` / English seed label).
   final String name;
+  /// Optional localized title for curated foods (`display_name` from backend).
+  final String? displayName;
+  /// Stable canonical name when provided (`canonical_name`); else same as [name].
+  final String? canonicalName;
   final String? brand;
   final double caloriesPer100g;
   final double proteinPer100g;
@@ -12,6 +17,8 @@ class FoodItem {
   FoodItem({
     required this.id,
     required this.name,
+    this.displayName,
+    this.canonicalName,
     this.brand,
     required this.caloriesPer100g,
     required this.proteinPer100g,
@@ -21,11 +28,18 @@ class FoodItem {
     this.unit = 'g',
   });
 
-  /// Human-readable label: "Name · Brand" when brand is set, else just name.
+  /// Primary human-readable food name (localized when [displayName] is set).
+  String get primaryLabel {
+    final d = displayName?.trim();
+    if (d != null && d.isNotEmpty) return d;
+    return name;
+  }
+
+  /// Human-readable label: "Name · Brand" when brand is set, else primary name.
   String get displayTitle {
     final b = brand?.trim();
-    if (b == null || b.isEmpty) return name;
-    return '$name · $b';
+    if (b == null || b.isEmpty) return primaryLabel;
+    return '$primaryLabel · $b';
   }
 
   /// Does the row have any useful macro information at all?
@@ -76,6 +90,8 @@ class FoodItem {
     return FoodItem(
       id: id,
       name: json['name'] as String? ?? '',
+      displayName: optStr('display_name'),
+      canonicalName: optStr('canonical_name'),
       brand: optStr('brand'),
       caloriesPer100g: per100('calories_per_100g', 'calories'),
       proteinPer100g:  per100('protein_per_100g',  'protein'),
@@ -112,6 +128,8 @@ class FoodItem {
     return FoodItem(
       id: j['food_id']?.toString() ?? '',
       name: j['food_name'] as String? ?? '',
+      displayName: null,
+      canonicalName: null,
       brand: null,
       caloriesPer100g: calories * factor,
       proteinPer100g:  protein * factor,
@@ -126,6 +144,8 @@ class FoodItem {
     return {
       'id': id,
       'name': name,
+      if (displayName != null) 'display_name': displayName,
+      if (canonicalName != null) 'canonical_name': canonicalName,
       'brand': brand,
       'caloriesPer100g': caloriesPer100g,
       'proteinPer100g': proteinPer100g,

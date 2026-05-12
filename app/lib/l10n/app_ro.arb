@@ -1,0 +1,778 @@
+{
+  "@@locale": "ro",
+  "appTitle": "Nutrition AI",
+  "settingsScreenTitle": "Setări",
+  "settingsSectionAppearance": "Aspect",
+  "settingsSectionLanguage": "Limbă",
+  "settingsSectionProfileGoals": "Profil și obiective",
+  "settingsSectionPreferences": "Preferințe",
+  "settingsSectionAccount": "Cont",
+  "settingsSectionHelp": "Ajutor",
+  "settingsSectionAbout": "Despre",
+  "settingsLanguageTitle": "Limba aplicației",
+  "settingsLanguageSubtitle": "Controlează meniurile și butoanele din aplicație (nu numele alimentelor din baze externe).",
+  "settingsLanguageSystemDefault": "Implicit sistem",
+  "settingsLanguageEnglish": "Engleză",
+  "settingsLanguageRomanian": "Română",
+  "settingsThemeTitle": "Temă",
+  "settingsThemeSubtitle": "Luminos, întunecat sau ca pe dispozitiv",
+  "settingsThemeLight": "Luminos",
+  "settingsThemeDark": "Întunecat",
+  "settingsThemeSystem": "Sistem",
+  "settingsWeightUnitTitle": "Unitate greutate",
+  "settingsWeightUnitSubtitle": "Folosită la Progres și log greutate",
+  "settingsWeightUnitKg": "Kilograme (kg)",
+  "settingsWeightUnitLb": "Livre (lb)",
+  "settingsCoachTipsTitle": "Afișează sfaturi coach",
+  "settingsCoachTipsSubtitle": "Indicații pe tabloul de bord și Jurnal",
+  "settingsConfirmDeleteTitle": "Confirmă înainte de ștergere",
+  "settingsConfirmDeleteSubtitle": "Întreabă înainte de a elimina un aliment",
+  "settingsHapticsTitle": "Feedback haptic",
+  "settingsHapticsSubtitle": "Vibrație subtilă la acțiuni",
+  "settingsEditProfileTitle": "Editează profilul",
+  "settingsEditProfileSubtitle": "Statistici corporale, obiectiv, nivel activitate",
+  "settingsDailyTargetsTitle": "Ținte zilnice",
+  "settingsDailyTargetsSubtitle": "Obiectiv calorii + macronutrienți",
+  "settingsEmailTitle": "E-mail",
+  "settingsEmailNotSignedIn": "Nu ești autentificat",
+  "settingsChangePasswordTitle": "Schimbă parola",
+  "settingsChangePasswordSubtitleSignIn": "Autentifică-te mai întâi",
+  "settingsChangePasswordSubtitle": "Trimite un link de reset pe e-mail",
+  "settingsSnackResetEmailSent": "E-mail de reset trimis",
+  "settingsSnackResetFailed": "Trimitere eșuată: {detail}",
+  "@settingsSnackResetFailed": {
+    "description": "Password reset error snackbar",
+    "placeholders": {
+      "detail": {
+        "type": "String",
+        "example": "Eroare rețea"
+      }
+    }
+  },
+  "settingsSignOutTitle": "Deconectare",
+  "settingsSignOutSubtitle": "Înapoi la ecranul de autentificare",
+  "authSignOutConfirmTitle": "Te deconectezi?",
+  "authSignOutConfirmBody": "Te poți autentifica din nou oricând.",
+  "commonCancel": "Anulează",
+  "commonSignOut": "Deconectare",
+  "commonDismiss": "Închide",
+  "commonRetry": "Reîncearcă",
+  "settingsFeedbackTitle": "Trimite feedback",
+  "settingsFeedbackSubtitle": "Spune-ne ce ai vrea să vezi mai departe",
+  "settingsFeedbackSnack": "Mulțumim! E-mail pentru feedback în curând.",
+  "settingsRateTitle": "Evaluează aplicația",
+  "settingsRateSubtitle": "O evaluare rapidă ajută mult",
+  "settingsRateSnack": "Mulțumim pentru susținere!",
+  "settingsAboutAppTitle": "Nutrition AI",
+  "settingsAboutVersionSubtitle": "Versiunea 1.0.0",
+  "settingsPrivacyTitle": "Confidențialitate",
+  "settingsPrivacySubtitle": "Alimentele, obiectivele și greutățile tale sunt stocate în siguranță.",
+  "errorNetworkTimeout": "Conexiunea a expirat. Verifică rețeaua și încearcă din nou.",
+  "errorServerGeneric": "Ceva nu a mers bine pe server. Te rugăm să încerci din nou.",
+  "errorValidationRequiredField": "Lipsește un câmp obligatoriu. Verifică datele introduse.",
+  "errorUnknownWithDetail": "Ceva nu a mers bine: {detail}",
+  "@errorUnknownWithDetail": {
+    "description": "Fallback when the server returns an error code we do not map yet",
+    "placeholders": {
+      "detail": {
+        "type": "String",
+        "example": "Eroare 500"
+      }
+    }
+  },
+  "diaryLoadFailedGeneric": "Nu s-a putut încărca jurnalul. Verifică conexiunea și încearcă din nou.",
+  "welcomeUser": "Bun venit, {name}",
+  "@welcomeUser": {
+    "description": "Greeting example with placeholder for Phase 0",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Cristian"
+      }
+    }
+  },
+  "diaryTodayTitle": "Astăzi",
+  "diaryRelativeYesterday": "Ieri",
+  "diaryRelativeTomorrow": "Mâine",
+  "diaryDayPreviousTooltip": "Ziua anterioară",
+  "diaryDayNextTooltip": "Ziua următoare",
+  "diaryLastUpdated": "Ultima actualizare {time}",
+  "@diaryLastUpdated": {
+    "description": "Relative or absolute time label for diary refresh",
+    "placeholders": {
+      "time": {
+        "type": "String",
+        "example": "14:30"
+      }
+    }
+  },
+
+  "shellExitTitle": "Ieși din aplicație?",
+  "shellExitBody": "Sigur vrei să închizi aplicația?",
+  "shellExitConfirm": "Ieșire",
+  "shellNavDashboard": "Acasă",
+  "shellNavDiary": "Jurnal",
+  "shellNavAdd": "Adaugă",
+  "shellNavProgress": "Progres",
+  "shellNavMore": "Mai mult",
+  "shellAiCoachFabTooltip": "Coach AI",
+
+  "mealBreakfast": "Mic dejun",
+  "mealLunch": "Prânz",
+  "mealDinner": "Cină",
+  "mealSnack": "Gustare",
+
+  "dashboardReloadTooltip": "Reîncarcă ziua",
+  "dashboardEditGoalsTooltip": "Editează obiective",
+  "goalsEditCalorieLabel": "Obiectiv caloric",
+  "goalsEditSaveButton": "Salvează obiectivele",
+  "goalsUpdatedSnack": "Obiective actualizate cu succes!",
+  "goalsSavedLocalSnack": "Salvat local — verifică conexiunea pentru sincronizare.",
+  "dashboardCoachTitle": "Coach",
+  "dashboardMacrosTitle": "Macronutrienți",
+  "dashboardMacroProtein": "Proteine",
+  "dashboardMacroCarbs": "Carbohidrați",
+  "dashboardMacroFats": "Grăsimi",
+  "dashboardCaloriesToday": "Calorii (astăzi)",
+  "dashboardCaloriesForDate": "Calorii ({date})",
+  "@dashboardCaloriesForDate": {
+    "placeholders": {
+      "date": {
+        "type": "String",
+        "example": "15 ian."
+      }
+    }
+  },
+
+  "nutritionInsightViewingOtherDay": "Vizualizezi o zi trecută sau viitoare. Folosește ← → sau calendarul pentru a schimba ziua.",
+  "nutritionInsightNoFoodsToday": "Încă nu ai logat alimente astăzi. Atinge Adaugă sau alege o masă mai jos.",
+  "nutritionInsightUnderCalories": "Sub obiectivul de calorii până acum. Adaugă o masă echilibrată sau o gustare dacă încă îți este foame.",
+  "nutritionInsightOverCalories": "Caloriile depășesc obiectivul de astăzi. Mâine poți opta pentru variante mai ușoare sau ajustează obiectivele în setări dacă e intenționat.",
+  "nutritionInsightProteinLowCarbsHigh": "Carbohidrații sunt ok, dar proteinele sunt scăzute. Carne slabă, lactate, leguminoase sau tofu pot echilibra ziua.",
+  "nutritionInsightProteinHighFatLow": "Proteinele arată bine. Dacă energia scade mai târziu, o porție mică de grăsimi sănătoase (nuci, ulei de măsline) poate ajuta.",
+
+  "diaryInsightsTitle": "Indicii",
+  "diaryDeleteEntryTitle": "Elimini din jurnal?",
+  "diaryDeleteEntryMessage": "„{foodName}” va fi eliminat din această zi.",
+  "@diaryDeleteEntryMessage": {
+    "placeholders": {
+      "foodName": {
+        "type": "String",
+        "example": "Salată pui"
+      }
+    }
+  },
+  "diaryDeleteEntryConfirm": "Elimină",
+  "diaryEmptyStateBody": "Încă nimic logat în această zi. Derulează în jos și atinge Adaugă aliment la orice masă.",
+  "diaryDaySummaryTitle": "Ziua aceasta",
+  "diaryKcalFraction": " / {goal} kcal",
+  "@diaryKcalFraction": {
+    "placeholders": {
+      "goal": {
+        "type": "String",
+        "example": "2000"
+      }
+    }
+  },
+  "diaryMacroMiniLine": "{letter} {value} / {goal} g ({percent}%)",
+  "@diaryMacroMiniLine": {
+    "placeholders": {
+      "letter": { "type": "String", "example": "P" },
+      "value": { "type": "String", "example": "120" },
+      "goal": { "type": "String", "example": "150" },
+      "percent": { "type": "String", "example": "80" }
+    }
+  },
+  "diaryMacroLetterProtein": "P",
+  "diaryMacroLetterCarbs": "C",
+  "diaryMacroLetterFat": "F",
+  "diaryMealSectionEmpty": "Încă fără alimente — atinge Adaugă aliment mai jos pentru căutare și logare.",
+  "diaryMealAddFood": "Adaugă aliment",
+  "diaryCaloriesUnit": "{n} kcal",
+  "@diaryCaloriesUnit": {
+    "placeholders": {
+      "n": { "type": "String", "example": "320" }
+    }
+  },
+
+  "foodAddTitle": "Adaugă aliment",
+  "foodAddManualTooltip": "Adaugă manual",
+  "foodMyMeals": "Mesele mele",
+  "foodMyRecipes": "Rețetele mele",
+  "foodSearchHint": "Caută alimente (ex.: orez, ou, lapte)…",
+  "foodRecentTitle": "Recent logate",
+  "foodRecentRefreshTooltip": "Reîmprospătează",
+  "foodRecentEmpty": "Alimentele pe care le loghezi apar aici — cele mai noi prime — folosește + pentru a loga din nou și a alege masa.",
+  "foodSearchLoadErrorTitle": "Nu s-au putut încărca alimentele",
+  "foodSearchNoResults": "Niciun rezultat",
+  "foodSearchNoResultsHint": "Dacă baza e nouă, importă sau adaugă alimente, sau creează unul cu +.",
+  "foodLogTargetMealTitle": "Loghează „{foodName}” la",
+  "@foodLogTargetMealTitle": {
+    "placeholders": {
+      "foodName": { "type": "String", "example": "Ovăz" }
+    }
+  },
+  "foodLogNoPortionSnack": "Nu există porție salvată — atinge rândul pentru a seta cantitatea.",
+  "foodLogAddedSnack": "Adăugat la {meal}",
+  "@foodLogAddedSnack": {
+    "placeholders": {
+      "meal": { "type": "String", "example": "Mic dejun" }
+    }
+  },
+  "foodLogFailedSnack": "Nu s-a putut loga — verifică conexiunea și încearcă din nou.",
+  "foodLogAgainTooltip": "Loghează din nou",
+  "foodPortionGrams": "{grams} g",
+  "@foodPortionGrams": {
+    "placeholders": {
+      "grams": { "type": "String", "example": "100" }
+    }
+  },
+  "foodPortionServings": "{count} × porție",
+  "@foodPortionServings": {
+    "placeholders": {
+      "count": { "type": "String", "example": "1" }
+    }
+  },
+  "foodPortionDash": "—",
+
+  "moreScreenTitle": "Mai mult",
+  "moreNoEmail": "Fără e-mail",
+  "moreAiCoachTitle": "Coach AI",
+  "moreAiCoachSubtitle": "Chat, idei de mese, recenzii zilnice și săptămânale",
+  "moreSettingsSubtitle": "Temă, profil, obiective, cont, despre",
+
+  "progressTitle": "Progres",
+  "progressRefreshTooltip": "Reîmprospătează",
+
+  "commonRemove": "Elimină",
+
+  "aiCoachTitle": "Coach AI",
+  "aiCoachThreadTitle": "Chat #{id}",
+  "@aiCoachThreadTitle": {
+    "placeholders": {
+      "id": { "type": "String", "example": "3" }
+    }
+  },
+  "aiCoachNewChatTooltip": "Chat nou",
+  "aiCoachEditOnboardingTooltip": "Editează onboarding",
+  "aiCoachSnackWaitReply": "Așteaptă să se termine răspunsul înainte de a schimba chatul.",
+  "aiCoachSnackOpenChatFailed": "Nu s-a putut deschide acel chat.",
+  "aiCoachOnboardingHeadline": "Cunoaște-ți coachul nutrițional",
+  "aiCoachOnboardingBody": "Răspunde la câteva întrebări rapide ca sa îți personalizeze sfaturile după obiectiv, preferințe alimentare și obiceiuri.",
+  "aiCoachOnboardingStart": "Începe onboarding",
+  "aiCoachInputHint": "Întreabă coachul…",
+  "aiCoachSendTooltip": "Trimite",
+  "aiCoachQuick1Label": "Cum merge ziua?",
+  "aiCoachQuick1Prompt": "Cum decurge astăzi pentru obiectivul meu?",
+  "aiCoachQuick2Label": "Sugerează mâncare",
+  "aiCoachQuick2Prompt": "Ce ar trebui să mănânc în continuare ca să rămân pe drumul bun?",
+  "aiCoachQuick3Label": "Revizuire săptămână",
+  "aiCoachQuick3Prompt": "Dă-mi o scurtă revizuire a ultimelor 7 zile.",
+  "aiCoachQuick4Label": "Poftă dulce",
+  "aiCoachQuick4Prompt": "Mi-e poftă de ceva dulce — ce variante sunt mai ok?",
+  "aiCoachDrawerTitle": "Chaturi coach",
+  "aiCoachDrawerSubtitle": "Dosarele țin chaturile în afara inboxului până le extinzi.",
+  "aiCoachDrawerNewChat": "Chat nou",
+  "aiCoachDrawerNewFolderTooltip": "Dosar nou",
+  "aiCoachInboxTitle": "Inbox",
+  "aiCoachInboxSubtitle": "Doar chaturile care nu sunt într-un dosar. Mută unul într-un dosar ca să dispară de aici.",
+  "aiCoachInboxEmptyNoFolders": "Încă niciun chat. Începe unul mai sus.",
+  "aiCoachInboxEmptyWithFolders": "Niciun chat neclasat — deschide un dosar mai sus pentru restul.",
+  "aiCoachFoldersHeading": "Dosare",
+  "aiCoachNoChatsYet": "Încă niciun chat.\nAtinge „Chat nou” sau creează un dosar.",
+  "aiCoachUnfiled": "Neclasat",
+  "aiCoachDrawerRename": "Redenumește",
+  "aiCoachDrawerMoveToFolder": "Mută în dosar…",
+  "aiCoachFolderOptions": "Opțiuni dosar",
+  "aiCoachNewChatInFolder": "Chat nou în acest dosar",
+  "aiCoachRenameChatTitle": "Redenumește chatul",
+  "aiCoachRenameChatNameLabel": "Nume",
+  "aiCoachRenameChatNameHint": "ex.: Planificare mese",
+  "aiCoachRenameFolderTitle": "Redenumește dosarul",
+  "aiCoachNewFolderTitle": "Dosar nou",
+  "aiCoachFolderNameLabel": "Nume dosar",
+  "aiCoachDeleteFolderTitle": "Ștergi dosarul?",
+  "aiCoachDeleteFolderBody": "„{name}” va fi eliminat. Chaturile din el trec la neclasate.",
+  "@aiCoachDeleteFolderBody": {
+    "placeholders": {
+      "name": { "type": "String", "example": "Planificare" }
+    }
+  },
+  "commonDelete": "Șterge",
+  "commonCreate": "Creează",
+  "commonSave": "Salvează",
+  "aiCoachSnackRenameChatFailed": "Nu s-a putut redenumi chatul.",
+  "aiCoachSnackCreateFolderFailed": "Nu s-a putut crea dosarul.",
+  "aiCoachSnackRenameFolderFailed": "Nu s-a putut redenumi dosarul.",
+  "aiCoachSnackDeleteFolderFailed": "Nu s-a putut șterge dosarul.",
+  "aiCoachThreadMessages": "{count, plural, =0{Fără mesaje} one{1 mesaj} few{{count} mesaje} other{{count} mesaje}}",
+  "@aiCoachThreadMessages": {
+    "description": "Subtitle under a thread in the AI coach drawer",
+    "placeholders": {
+      "count": { "type": "int", "example": "3" }
+    }
+  },
+  "aiCoachTimeJustNow": "chiar acum",
+  "aiCoachTimeMinutesAgo": "acum {minutes} min",
+  "@aiCoachTimeMinutesAgo": { "placeholders": { "minutes": { "type": "String", "example": "5" } } },
+  "aiCoachTimeHoursAgo": "acum {hours} h",
+  "@aiCoachTimeHoursAgo": { "placeholders": { "hours": { "type": "String", "example": "2" } } },
+  "aiCoachTimeDaysAgo": "acum {days} zile",
+  "@aiCoachTimeDaysAgo": { "placeholders": { "days": { "type": "String", "example": "3" } } },
+
+  "aiCoachSnackMoveChatFailed": "Nu s-a putut muta chatul. Verifică conexiunea și încearcă din nou.",
+  "aiCoachSnackWaitReplyFirst": "Așteaptă să se termine răspunsul mai întâi.",
+  "aiCoachMoveChatSheetTitle": "Mută „{chatTitle}”",
+  "@aiCoachMoveChatSheetTitle": {
+    "placeholders": {
+      "chatTitle": { "type": "String", "example": "Prep mese" }
+    }
+  },
+  "aiCoachDeleteFolderMenuItem": "Șterge dosarul",
+  "aiCoachFolderEmptyInboxHint": "Mută un chat aici din inbox sau începe unul nou mai sus.",
+  "aiCoachFolderSubtitleThreads": "{count, plural, =0{Gol — atinge pentru a deschide} one{1 chat} few{{count} chaturi} other{{count} chaturi}}",
+  "@aiCoachFolderSubtitleThreads": {
+    "placeholders": {
+      "count": { "type": "int", "example": "2" }
+    }
+  },
+
+  "authLoginTitle": "Autentificare",
+  "authSignInButton": "Intră în cont",
+  "authRegisterPrompt": "Nu ai cont? Înregistrează-te",
+  "authLoginFailedSnack": "Autentificare eșuată. Verifică emailul și parola.",
+  "authEmailLabel": "Email",
+  "authPasswordLabel": "Parolă",
+  "authValidationEmailRequired": "Introdu emailul",
+  "authValidationEmailInvalid": "Introdu un email valid",
+  "authValidationPasswordRequired": "Introdu parola",
+  "authForgotPassword": "Ai uitat parola?",
+  "authForgotPasswordEnterEmail": "Introdu mai întâi adresa de email",
+  "authForgotPasswordSnackSent": "Emailul de resetare a fost trimis",
+  "authForgotPasswordSnackFailed": "Nu s-a putut trimite emailul de resetare — încearcă mai târziu",
+  "authRegisterTitle": "Creează cont",
+  "authRegisterSubtitle": "Înregistrează-te pentru a începe",
+  "authConfirmPasswordLabel": "Confirmă parola",
+  "authRegisterButton": "Înregistrare",
+  "authRegisterFailedSnack": "Înregistrarea a eșuat. Încearcă din nou.",
+  "authValidationPasswordMin6": "Parola trebuie să aibă cel puțin 6 caractere",
+  "authValidationConfirmRequired": "Confirmă parola",
+  "authValidationPasswordsMismatch": "Parolele nu coincid",
+  "authLoginPrompt": "Ai deja cont? Autentificare",
+
+  "progressProfileYourProfile": "Profilul tău",
+  "progressProfileSubtitleEmpty": "Completează câteva detalii pentru obiective personalizate.",
+  "progressCommonEdit": "Editează",
+  "progressProfileAgeYears": "{years} ani",
+  "@progressProfileAgeYears": {
+    "placeholders": { "years": { "type": "String", "example": "30" } }
+  },
+  "progressWeightSectionTitle": "Greutate",
+  "progressWeightLogButton": "Înregistrează",
+  "progressWeightCurrent": "Curentă",
+  "progressWeightTarget": "Țintă",
+  "progressWeightChange": "Schimbare",
+  "progressWeightToGo": "Rămas",
+  "progressWeightOnTarget": "La țintă",
+  "progressWeightEmpty": "Încă nu ai greutăți înregistrate.\nAtinge „Înregistrează” pentru prima măsurătoare.",
+  "progressIntakeToday": "Aport · astăzi",
+  "progressIntakeDate": "Aport · {date}",
+  "@progressIntakeDate": {
+    "placeholders": { "date": { "type": "String", "example": "11/5/2026" } }
+  },
+  "progressEstimatedTdee": "TDEE estimat",
+  "progressBmiStatLabel": "IMC · {category}",
+  "@progressBmiStatLabel": {
+    "placeholders": { "category": { "type": "String", "example": "Normal" } }
+  },
+  "progressBmiCategoryUnderweight": "Subponderal",
+  "progressBmiCategoryHealthy": "Greutate normală",
+  "progressBmiCategoryOverweight": "Supraponderal",
+  "progressBmiCategoryObese": "Obezitate",
+  "progressHistoryTitle": "Istoric",
+  "progressDeleteWeightTitle": "Ștergi înregistrarea?",
+  "progressDeleteWeightMessage": "Elimini înregistrarea de greutate pentru {date}?",
+  "@progressDeleteWeightMessage": {
+    "placeholders": { "date": { "type": "String", "example": "01/05/2026" } }
+  },
+  "progressWeightLogSheetTitle": "Înregistrează greutate",
+  "progressWeightFieldLabel": "Greutate",
+  "progressWeightSuffixKg": "kg",
+  "progressWeightDateLabel": "Data",
+  "progressWeightNoteLabel": "Notă (opțional)",
+  "progressWeightSave": "Salvează",
+  "progressWeightSaving": "Se salvează…",
+  "progressWeightInvalid": "Introdu o greutate validă (0–500 kg)",
+  "progressWeightLoggedSnack": "Greutate înregistrată",
+  "progressWeightSaveFailedSnack": "Nu s-a putut salva. Încearcă din nou.",
+  "progressChartTargetLabel": "țintă",
+  "progressBmiChipPrefix": "IMC {value}",
+  "@progressBmiChipPrefix": {
+    "placeholders": { "value": { "type": "String", "example": "22.4" } }
+  },
+  "mealSnack": "Gustare",
+  "mealServingDialogTitle": "Porție",
+  "mealServingAmountG": "Cantitate (g)",
+  "mealRecipeDialogAdd": "Adaugă",
+  "mealDialogCancel": "Anulează",
+
+  "createMealTitle": "Creează masă",
+  "createMealNameLabel": "Nume masă",
+  "createMealFoodItemsHeader": "Alimente",
+  "createMealAddFoodButton": "Adaugă aliment",
+  "createMealEmptyItems": "Niciun aliment adăugat",
+  "createMealTotalNutrition": "Valori totale",
+  "createMealSaveButton": "Salvează masa",
+  "createMealSnackNameRequired": "Introdu numele mesei",
+  "createMealSnackItemsRequired": "Adaugă cel puțin un aliment",
+  "createMealSnackSaved": "Masă salvată",
+  "createMealItemSubtitle": "{grams} g • {cal} cal",
+  "@createMealItemSubtitle": {
+    "placeholders": {
+      "grams": { "type": "String", "example": "100" },
+      "cal": { "type": "String", "example": "120.5" }
+    }
+  },
+
+  "createRecipeTitle": "Creează rețetă",
+  "recipeNameLabel": "Nume rețetă",
+  "recipeDescriptionLabel": "Descriere (opțional)",
+  "recipeServingsLabel": "Număr de porții",
+  "recipeIngredientsHeader": "Ingrediente",
+  "recipeAddIngredient": "Adaugă ingredient",
+  "recipeEmptyIngredients": "Niciun ingredient adăugat",
+  "recipeTotalNutritionServings": "Valori totale ({count} porții)",
+  "@recipeTotalNutritionServings": {
+    "placeholders": { "count": { "type": "String", "example": "4" } }
+  },
+  "recipeTotalCaloriesLine": "Calorii totale: {n}",
+  "@recipeTotalCaloriesLine": { "placeholders": { "n": { "type": "String", "example": "800" } } },
+  "recipeTotalProteinLine": "Proteine totale: {n} g",
+  "@recipeTotalProteinLine": { "placeholders": { "n": { "type": "String", "example": "40" } } },
+  "recipeTotalCarbsLine": "Carbohidrați totali: {n} g",
+  "@recipeTotalCarbsLine": { "placeholders": { "n": { "type": "String", "example": "80" } } },
+  "recipeTotalFatLine": "Grăsimi totale: {n} g",
+  "@recipeTotalFatLine": { "placeholders": { "n": { "type": "String", "example": "20" } } },
+  "recipePerServingHeader": "Per porție",
+  "recipePerServingCalories": "Calorii: {n}",
+  "@recipePerServingCalories": { "placeholders": { "n": { "type": "String", "example": "200" } } },
+  "recipePerServingProtein": "Proteine: {n} g",
+  "@recipePerServingProtein": { "placeholders": { "n": { "type": "String", "example": "10" } } },
+  "recipePerServingCarbs": "Carbohidrați: {n} g",
+  "@recipePerServingCarbs": { "placeholders": { "n": { "type": "String", "example": "20" } } },
+  "recipePerServingFat": "Grăsimi: {n} g",
+  "@recipePerServingFat": { "placeholders": { "n": { "type": "String", "example": "5" } } },
+  "recipeSaveButton": "Salvează rețeta",
+  "recipeSnackNameRequired": "Introdu numele rețetei",
+  "recipeSnackIngredientsRequired": "Adaugă cel puțin un ingredient",
+  "recipeSnackServingsInvalid": "Introdu un număr valid de porții",
+  "recipeSnackSaved": "Rețetă salvată",
+  "recipeIngredientSubtitle": "{grams} g • {cal} cal",
+  "@recipeIngredientSubtitle": {
+    "placeholders": {
+      "grams": { "type": "String", "example": "50" },
+      "cal": { "type": "String", "example": "80" }
+    }
+  },
+
+  "myMealsScreenTitle": "Mesele mele",
+  "myMealsCreateTooltip": "Creează masă",
+  "myMealsEmpty": "Încă nu ai mese salvate",
+  "myMealsCreateFirst": "Creează prima masă",
+  "myMealsCardSubtitle": "{cal} cal • P: {p} g • C: {c} g • F: {f} g",
+  "@myMealsCardSubtitle": {
+    "placeholders": {
+      "cal": { "type": "String", "example": "400" },
+      "p": { "type": "String", "example": "20" },
+      "c": { "type": "String", "example": "50" },
+      "f": { "type": "String", "example": "10" }
+    }
+  },
+  "myMealsAddToDiaryTooltip": "Adaugă în jurnal",
+  "myMealsDeleteTooltip": "Șterge",
+  "myMealsDeleteTitle": "Ștergi masa?",
+  "myMealsDeleteConfirm": "Ștergi „{name}”?",
+  "@myMealsDeleteConfirm": {
+    "placeholders": { "name": { "type": "String", "example": "Meal prep" } }
+  },
+  "myMealsAddedSnack": "{name} a fost adăugată în jurnal!",
+  "@myMealsAddedSnack": {
+    "placeholders": { "name": { "type": "String", "example": "Prânz" } }
+  },
+  "myMealsPartialSnack": "Adăugate {added} / {total} elemente ({failed} eșuate — alimentele pot lipsi).",
+  "@myMealsPartialSnack": {
+    "placeholders": {
+      "added": { "type": "String", "example": "2" },
+      "total": { "type": "String", "example": "3" },
+      "failed": { "type": "String", "example": "1" }
+    }
+  },
+
+  "myRecipesScreenTitle": "Rețetele mele",
+  "myRecipesCreateTooltip": "Creează rețetă",
+  "myRecipesEmpty": "Încă nu ai rețete salvate",
+  "myRecipesCreateFirst": "Creează prima rețetă",
+  "myRecipesCardSubtitle": "{cal} cal/porție • {servings} porții • P: {p} g",
+  "@myRecipesCardSubtitle": {
+    "placeholders": {
+      "cal": { "type": "String", "example": "200" },
+      "servings": { "type": "String", "example": "4" },
+      "p": { "type": "String", "example": "15" }
+    }
+  },
+  "myRecipesAddedSnack": "{name} (1 porție) adăugată în jurnal!",
+  "@myRecipesAddedSnack": {
+    "placeholders": { "name": { "type": "String", "example": "Chili" } }
+  },
+  "myRecipesPartialSnack": "{added} / {total} ingrediente înregistrate ({failed} eșuate — alimentele pot lipsi).",
+  "@myRecipesPartialSnack": {
+    "placeholders": {
+      "added": { "type": "String", "example": "2" },
+      "total": { "type": "String", "example": "3" },
+      "failed": { "type": "String", "example": "1" }
+    }
+  },
+  "myRecipesDeleteTitle": "Ștergi rețeta?",
+  "myRecipesDeleteConfirm": "Ștergi „{name}”?",
+  "@myRecipesDeleteConfirm": {
+    "placeholders": { "name": { "type": "String", "example": "Supă" } }
+  },
+
+  "addMealTitle": "Adaugă masă",
+  "addMealSearchLabel": "Caută aliment",
+  "addMealSearchHint": "ex.: orez, pui, măr",
+  "addMealNoResults": "Niciun rezultat",
+  "addMealSearchResultLine": "{cal} cal/100g • P: {p} g • C: {c} g • F: {f} g",
+  "@addMealSearchResultLine": {
+    "placeholders": {
+      "cal": { "type": "String", "example": "120" },
+      "p": { "type": "String", "example": "5" },
+      "c": { "type": "String", "example": "20" },
+      "f": { "type": "String", "example": "2" }
+    }
+  },
+  "addMealMealTypeLabel": "Tip masă",
+  "addMealSelectMealType": "Alege tipul mesei",
+  "addMealFoodNameLabel": "Nume aliment",
+  "addMealFoodNameRequired": "Introdu numele alimentului",
+  "addMealCaloriesLabel": "Calorii",
+  "addMealCaloriesRequired": "Introdu caloriile",
+  "addMealCaloriesInvalid": "Introdu un număr valid",
+  "addMealProteinLabel": "Proteine (g)",
+  "addMealProteinRequired": "Introdu proteinele",
+  "addMealProteinInvalid": "Introdu un număr valid",
+  "addMealCarbsLabel": "Carbohidrați (g)",
+  "addMealCarbsRequired": "Introdu carbohidrații",
+  "addMealCarbsInvalid": "Introdu un număr valid",
+  "addMealFatsLabel": "Grăsimi (g)",
+  "addMealFatsRequired": "Introdu grăsimile",
+  "addMealFatsInvalid": "Introdu un număr valid",
+  "addMealSubmitButton": "Adaugă masa",
+  "addMealSuccessSnack": "Masă înregistrată local",
+
+  "foodDetailTitle": "Detalii aliment",
+  "foodDetailPer100": "La 100 g",
+  "foodDetailPortionTitle": "Porție",
+  "foodDetailMealTypeLabel": "Masă",
+  "foodDetailServingSizeLabel": "Mărime porție ({unit})",
+  "@foodDetailServingSizeLabel": {
+    "placeholders": { "unit": { "type": "String", "example": "g" } }
+  },
+  "foodDetailServingsLabel": "Porții",
+  "foodDetailTotalsTitle": "Total",
+  "foodDetailValidationPortions": "Introdu mărimea porției și numărul de porții",
+  "foodDetailSaveFailedSnack": "Nu s-a putut salva în jurnal. Verifică conexiunea.",
+  "foodDetailAddedSnack": "Adăugat în jurnal",
+  "foodDetailAddToDiary": "Adaugă în jurnal",
+  "foodDetailSaving": "Se salvează…",
+
+  "foodManualTitle": "Adaugă aliment manual",
+  "foodManualSectionBasics": "Bază",
+  "foodManualSectionPortion": "Porție",
+  "foodManualSectionNutrition": "Valori (per porție)",
+  "foodManualFoodNameLabel": "Nume aliment",
+  "foodManualBrandLabel": "Marcă (opțional)",
+  "foodManualServingSizeG": "Mărime porție (g)",
+  "foodManualValidationName": "Introdu numele alimentului",
+  "foodManualValidationCalories": "Introdu caloriile",
+  "foodManualSaveFailedGeneric": "Nu s-a putut salva alimentul. Încearcă din nou.",
+  "foodManualSavedAndLoggedSnack": "Aliment salvat și adăugat în jurnal!",
+  "foodManualSavedLogFailedSnack": "Aliment salvat — adăugarea în jurnal a eșuat.",
+  "foodManualAddToDiary": "Adaugă în jurnal",
+  "foodManualSaving": "Se salvează…",
+
+  "foodEditTitle": "Editează înregistrarea",
+  "foodEditMealTypeLabel": "Masă",
+  "foodEditFoodNameLabel": "Nume aliment",
+  "foodEditServingSizeG": "Mărime porție (g)",
+  "foodEditServingsLabel": "Număr de porții",
+  "foodEditCaloriesLabel": "Calorii",
+  "foodEditProteinLabel": "Proteine (g)",
+  "foodEditCarbsLabel": "Carbohidrați (g)",
+  "foodEditFatLabel": "Grăsimi (g)",
+  "foodEditSaveButton": "Salvează modificările",
+  "foodEditSaving": "Se salvează…",
+  "foodEditMealTypeRequired": "Alege masa",
+  "foodEditNameRequired": "Introdu numele alimentului",
+  "foodEditCaloriesRequired": "Introdu caloriile",
+  "foodEditUpdatedSnack": "Înregistrare actualizată",
+  "foodEditSaveFailedSnack": "Nu s-au putut salva modificările",
+
+  "aiOnboardingIntro": "Răspunde unde e cazul. Poți combina obiective (ex. slăbit + masă musculară) și folosi câmpurile de text când opțiunile nu acoperă tot.",
+  "aiOnboardingAppBarTitle": "Configurare coach",
+  "aiOnboardingSaveDraft": "Salvează ciorna",
+  "aiOnboardingFinishButton": "Finalizează și începe chatul",
+  "aiOnboardingSnackRequiredFields": "Alege cel puțin un obiectiv, abordarea și tipul de dietă ca să termini.",
+  "aiOnboardingSnackSaveFailed": "Nu s-a putut salva. Verifică conexiunea.",
+  "aiOnboardingSnackDraftSaved": "Ciornă salvată.",
+  "aiOnboardingSectionGoalsTitle": "Obiectivele tale",
+  "aiOnboardingSectionGoalsSubtitle": "Alege unul sau mai multe",
+  "aiOnboardingNoteMainGoalLabel": "Alt obiectiv sau context?",
+  "aiOnboardingNoteMainGoalHint": "ex. semimaraton în 12 săptămâni",
+  "aiOnboardingSectionApproachTitle": "Cum vrei să abordezi?",
+  "aiOnboardingSectionTrainingTitle": "Antrenament & activitate",
+  "aiOnboardingSectionTrainingSubtitle": "Influențează țintele de calorii și proteine",
+  "aiOnboardingLabelTrainingSessionsPerWeek": "Ședințe de antrenament pe săptămână",
+  "aiOnboardingLabelTrainingTypes": "Tipuri de antrenament (bifează tot ce se aplică)",
+  "aiOnboardingLabelSessionIntensity": "Intensitate tipică a ședinței",
+  "aiOnboardingLabelJobActivity": "Activitate la serviciu",
+  "aiOnboardingLabelDailySteps": "Pași zilnici medii",
+  "aiOnboardingNoteTrainingLabel": "Note antrenament",
+  "aiOnboardingNoteTrainingHint": "ex. split push/pull/picioare",
+  "aiOnboardingSectionDietTitle": "Tip de dietă",
+  "aiOnboardingNoteDietaryLabel": "Note / restricții alimentare",
+  "aiOnboardingNoteDietaryHint": "ex. low-FODMAP, post, program de post",
+  "aiOnboardingLabelAllergies": "Alergii sau intoleranțe",
+  "aiOnboardingHintAllergies": "ex. arahide, lactoză",
+  "aiOnboardingLabelDisliked": "Alimente neplăcute",
+  "aiOnboardingHintDisliked": "ex. ciuperci, ficat",
+  "aiOnboardingLabelFavorites": "Alimente preferate",
+  "aiOnboardingHintFavorites": "ex. pui, orez, iaurt",
+  "aiOnboardingLabelCuisines": "Bucătării preferate",
+  "aiOnboardingHintCuisines": "ex. italiană, japoneză",
+  "aiOnboardingLabelEatingOut": "Frecvența mesei în oraș",
+  "aiOnboardingSectionCookingTitle": "Gătit & buget",
+  "aiOnboardingLabelCookingPreference": "Preferințe de gătit",
+  "aiOnboardingLabelBudget": "Sensibilitate la buget",
+  "aiOnboardingLabelMealsPerDay": "Mese pe zi",
+  "aiOnboardingSectionLifestyleTitle": "Stil de viață & recuperare",
+  "aiOnboardingSectionLifestyleSubtitle": "Energie, pofte, consecvență",
+  "aiOnboardingLabelSleep": "Somn mediu",
+  "aiOnboardingLabelStress": "Nivel de stres tipic",
+  "aiOnboardingLabelWater": "Consum de apă",
+  "aiOnboardingLabelAlcohol": "Frecvența alcoolului",
+  "aiOnboardingSectionStrugglesTitle": "Ce te împiedică de obicei?",
+  "aiOnboardingLabelBiggestStruggles": "Provocări principale (alege oricare)",
+  "aiOnboardingNoteStruggleLabel": "Altceva ce te ține pe loc?",
+  "aiOnboardingNoteStruggleHint": "ex. ture de noapte, weekenduri",
+  "aiOnboardingLabelStruggleWhen": "Când e cel mai greu?",
+  "aiOnboardingSectionMotivationTitle": "Motivație & structură",
+  "aiOnboardingLabelMotivation": "Nivel de motivație",
+  "aiOnboardingLabelStructure": "Cât de multă structură vrei?",
+  "aiOnboardingSectionCoachToneTitle": "Tonul coachului",
+
+  "aiOnboardingGoalLoseWeight": "Slăbit",
+  "aiOnboardingGoalGainMuscle": "Masă musculară",
+  "aiOnboardingGoalMaintain": "Menținere greutate",
+  "aiOnboardingGoalEatHealthier": "Mâncat mai sănătos",
+  "aiOnboardingGoalImproveEnergy": "Mai multă energie",
+  "aiOnboardingGoalImprovePerformance": "Performanță sportivă",
+  "aiOnboardingGoalImproveConsistency": "Consecvență",
+  "aiOnboardingApproachAggressive": "Agresiv",
+  "aiOnboardingApproachBalanced": "Echilibrat",
+  "aiOnboardingApproachFlexible": "Flexibil",
+  "aiOnboardingApproachSustainable": "Lent & durabil",
+  "aiOnboardingTrainingSessions7Plus": "7+",
+  "aiOnboardingTrainingLifting": "Forță / ridicări",
+  "aiOnboardingTrainingCardio": "Cardio",
+  "aiOnboardingTrainingHiit": "HIIT / intermitent",
+  "aiOnboardingTrainingSports": "Sport de echipă",
+  "aiOnboardingTrainingRunning": "Alergare",
+  "aiOnboardingTrainingCycling": "Ciclism",
+  "aiOnboardingTrainingSwimming": "Înot",
+  "aiOnboardingTrainingYoga": "Yoga / mobilitate",
+  "aiOnboardingTrainingWalking": "Mers pe jos",
+  "aiOnboardingTrainingNone": "Nimic momentan",
+  "aiOnboardingIntensityLight": "Ușor",
+  "aiOnboardingIntensityModerate": "Moderat",
+  "aiOnboardingIntensityHard": "Intens",
+  "aiOnboardingIntensityVeryHard": "Foarte intens",
+  "aiOnboardingJobDesk": "În mare parte la birou",
+  "aiOnboardingJobMostlySeated": "Așezat, cu mișcare ocazională",
+  "aiOnboardingJobOnFeet": "Mult timp în picioare",
+  "aiOnboardingJobPhysicalLabor": "Muncă fizică",
+  "aiOnboardingStepsUnder5k": "< 5k pași",
+  "aiOnboardingSteps5k7k": "5–7k",
+  "aiOnboardingSteps7k10k": "7–10k",
+  "aiOnboardingSteps10k15k": "10–15k",
+  "aiOnboardingStepsOver15k": "15k+",
+  "aiOnboardingDietOmnivore": "Omnivor",
+  "aiOnboardingDietVegetarian": "Vegetarian",
+  "aiOnboardingDietVegan": "Vegan",
+  "aiOnboardingDietPescatarian": "Pescetarian",
+  "aiOnboardingDietOther": "Altul",
+  "aiOnboardingEatingOutRarely": "Rareori",
+  "aiOnboardingEatingOutWeekly": "1–2× / săpt.",
+  "aiOnboardingEatingOutOften": "3–5× / săpt.",
+  "aiOnboardingEatingOutDaily": "Zilnic",
+  "aiOnboardingCookingNone": "Nu gătesc",
+  "aiOnboardingCookingSimple": "Doar mese simple",
+  "aiOnboardingCookingEnjoys": "Îmi place să gătesc",
+  "aiOnboardingBudgetLow": "Nu e o problemă",
+  "aiOnboardingBudgetMedium": "Oarecum",
+  "aiOnboardingBudgetHigh": "Buget foarte limitat",
+  "aiOnboardingSleepUnder5": "< 5 h",
+  "aiOnboardingSleep5to6": "5–6 h",
+  "aiOnboardingSleep6to7": "6–7 h",
+  "aiOnboardingSleep7to8": "7–8 h",
+  "aiOnboardingSleepOver8": "8+ h",
+  "aiOnboardingStressLow": "Scăzut",
+  "aiOnboardingStressMedium": "Mediu",
+  "aiOnboardingStressHigh": "Ridicat",
+  "aiOnboardingWaterLow": "Puțin",
+  "aiOnboardingWaterMedium": "Mediu",
+  "aiOnboardingWaterHigh": "Mult",
+  "aiOnboardingAlcoholNone": "Deloc",
+  "aiOnboardingAlcoholOccasional": "Ocazional",
+  "aiOnboardingAlcoholWeekly": "1–2× / săpt.",
+  "aiOnboardingAlcoholFrequent": "3+ / săpt.",
+  "aiOnboardingStruggleCravings": "Pofte",
+  "aiOnboardingStruggleConsistency": "Consecvență",
+  "aiOnboardingStruggleLateNight": "Mâncat noaptea",
+  "aiOnboardingStruggleEmotional": "Mâncat emoțional",
+  "aiOnboardingStruggleBoredom": "Plictiseală",
+  "aiOnboardingStruggleTime": "Lipsă de timp",
+  "aiOnboardingStruggleSocial": "Social / restaurant",
+  "aiOnboardingStruggleTravel": "Călătorii",
+  "aiOnboardingStrugglePortions": "Control porții",
+  "aiOnboardingStrugglePlanning": "Planificare mese",
+  "aiOnboardingTimingMorning": "Dimineața",
+  "aiOnboardingTimingAfternoon": "După-amiază",
+  "aiOnboardingTimingEvening": "Seara",
+  "aiOnboardingTimingNight": "Noaptea târziu",
+  "aiOnboardingTimingWeekends": "Weekend",
+  "aiOnboardingTimingStress": "Când sunt stresat",
+  "aiOnboardingMotivationLow": "Scăzută",
+  "aiOnboardingMotivationMedium": "Medie",
+  "aiOnboardingMotivationHigh": "Ridicată",
+  "aiOnboardingStructureLow": "Ghidare lejeră",
+  "aiOnboardingStructureMedium": "Plan echilibrat",
+  "aiOnboardingStructureHigh": "Plan detaliat",
+  "aiOnboardingToneDirect": "Direct",
+  "aiOnboardingToneBalanced": "Echilibrat",
+  "aiOnboardingToneGentler": "Mai blând",
+
+  "createRecipeEnterAmountTitle": "Cantitate ingredient",
+
+  "nutritionTotalCalories": "Calorii: {n}",
+  "@nutritionTotalCalories": { "placeholders": { "n": { "type": "String", "example": "400" } } },
+  "nutritionTotalProtein": "Proteine: {n} g",
+  "@nutritionTotalProtein": { "placeholders": { "n": { "type": "String", "example": "20" } } },
+  "nutritionTotalCarbs": "Carbohidrați: {n} g",
+  "@nutritionTotalCarbs": { "placeholders": { "n": { "type": "String", "example": "50" } } },
+  "nutritionTotalFat": "Grăsimi: {n} g",
+  "@nutritionTotalFat": { "placeholders": { "n": { "type": "String", "example": "10" } } },
+
+  "aiCoachErrorReplyFailed": "Coachul nu poate răspunde acum. Verifică conexiunea și încearcă din nou.",
+  "aiCoachErrorNewChatFailed": "Nu s-a putut începe un chat nou. Verifică conexiunea și încearcă din nou."
+}

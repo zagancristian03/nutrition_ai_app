@@ -1,5 +1,24 @@
 import 'package:flutter/foundation.dart';
 
+/// How the app picks UI language: follow OS, or [preferredLocale] when [manual].
+enum UserLocaleMode {
+  system,
+  manual;
+
+  String get wire => name;
+
+  static UserLocaleMode? fromWire(String? s) {
+    switch (s) {
+      case 'system':
+        return UserLocaleMode.system;
+      case 'manual':
+        return UserLocaleMode.manual;
+      default:
+        return null;
+    }
+  }
+}
+
 /// Biological sex used for BMR calculations.
 enum Sex {
   male,
@@ -128,6 +147,13 @@ class UserProfile {
   final double? weeklyRateKg;
   final DateTime? updatedAt;
 
+  /// Mirrors `user_profiles.locale_mode` — BCP‑47 / AI language prefs live separately.
+  final UserLocaleMode? localeMode;
+  final String? preferredLocale;
+  final String? timezone;
+  final DateTime? localeUpdatedAt;
+  final String? measurementSystem;
+
   const UserProfile({
     required this.userId,
     this.displayName,
@@ -140,6 +166,11 @@ class UserProfile {
     this.activityLevel,
     this.weeklyRateKg,
     this.updatedAt,
+    this.localeMode,
+    this.preferredLocale,
+    this.timezone,
+    this.localeUpdatedAt,
+    this.measurementSystem,
   });
 
   factory UserProfile.empty(String userId) => UserProfile(userId: userId);
@@ -155,9 +186,15 @@ class UserProfile {
     ActivityLevel? activityLevel,
     double? weeklyRateKg,
     DateTime? updatedAt,
+    UserLocaleMode? localeMode,
+    String? preferredLocale,
+    String? timezone,
+    DateTime? localeUpdatedAt,
+    String? measurementSystem,
     bool clearDisplayName = false,
     bool clearDateOfBirth = false,
     bool clearWeeklyRate  = false,
+    bool clearPreferredLocale = false,
   }) {
     return UserProfile(
       userId: userId,
@@ -171,8 +208,21 @@ class UserProfile {
       activityLevel:                        activityLevel   ?? this.activityLevel,
       weeklyRateKg:    clearWeeklyRate  ? null : (weeklyRateKg    ?? this.weeklyRateKg),
       updatedAt:                            updatedAt       ?? this.updatedAt,
+      localeMode:                           localeMode       ?? this.localeMode,
+      preferredLocale: clearPreferredLocale
+          ? null
+          : (preferredLocale ?? this.preferredLocale),
+      timezone:                             timezone         ?? this.timezone,
+      localeUpdatedAt:                      localeUpdatedAt  ?? this.localeUpdatedAt,
+      measurementSystem:                   measurementSystem ?? this.measurementSystem,
     );
   }
+
+  /// Explicit locale or timezone on the server profile (remote wins on login).
+  bool get hasExplicitRemoteLocaleSettings =>
+      localeMode == UserLocaleMode.manual ||
+      (preferredLocale       != null && preferredLocale!.trim().isNotEmpty) ||
+      (timezone              != null && timezone!.trim().isNotEmpty);
 
   /// Age in whole years based on [dateOfBirth]; null if unknown.
   int? get ageYears {
@@ -222,6 +272,18 @@ class UserProfile {
       activityLevel:   ActivityLevel.fromWire(j['activity_level'] as String?),
       weeklyRateKg:    asDouble(j['weekly_rate_kg']),
       updatedAt:       asDate(j['updated_at']),
+      localeMode:      UserLocaleMode.fromWire(j['locale_mode'] as String?) ??
+          UserLocaleMode.system,
+      preferredLocale: (j['preferred_locale'] as String?)?.trim().isEmpty == true
+          ? null
+          : j['preferred_locale'] as String?,
+      timezone:        (j['timezone'] as String?)?.trim().isEmpty == true
+          ? null
+          : j['timezone'] as String?,
+      localeUpdatedAt: asDate(j['locale_updated_at']),
+      measurementSystem: (j['measurement_system'] as String?)?.trim().isEmpty == true
+          ? null
+          : j['measurement_system'] as String?,
     );
   }
 
@@ -245,5 +307,15 @@ class UserProfile {
     if (activityLevel   != null) out['activity_level']    = activityLevel!.wire;
     if (weeklyRateKg    != null) out['weekly_rate_kg']    = weeklyRateKg;
     return out;
+  }
+
+  /// Partial PUT body for locale + timezone fields only (always sends keys).
+  Map<String, dynamic> toLocaleSettingsJson() {
+    return {
+      'locale_mode': (localeMode ?? UserLocaleMode.system).wire,
+      'preferred_locale': preferredLocale,
+      'timezone': timezone,
+      if (measurementSystem != null) 'measurement_system': measurementSystem,
+    };
   }
 }

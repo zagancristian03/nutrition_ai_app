@@ -1,17 +1,17 @@
 """
 Food catalog endpoints.
 
-GET  /foods/search  — trigram-ranked fuzzy + substring + prefix search.
+GET  /foods/search  — curated `food_aliases` + legacy `search_text` merge.
+
 POST /foods         — insert a user-provided food (from the "add manually" UI)
                       and return the row so the client can diary it.
 
-All three search operators share the single GIN(gin_trgm_ops) index on
-`foods.search_text`.
+Seed foods (`source = 'seed'`) use multilingual aliases; manual and third-party
+rows continue to match `foods.search_text` only (no auto-translation).
 """
 from __future__ import annotations
 
 import logging
-import re
 import time
 from uuid import uuid4
 
@@ -20,71 +20,20 @@ from psycopg2.extras import RealDictCursor
 
 from cache import TTLCache
 from db import get_conn
+from food_search import run_food_search
+from food_search_text import normalize_food_search_text, primary_locale_tag
 from schemas import FoodCreate
 
 router = APIRouter(prefix="/foods", tags=["foods"])
 log = logging.getLogger("foods")
 
-# Cache the final JSON payload keyed by normalized query.
+# Cache the final JSON payload keyed by normalized query + locale.
 _SEARCH_CACHE: TTLCache[list[dict]] = TTLCache(maxsize=512, ttl_seconds=60.0)
 
 # Single-character queries are allowed so short searches still hit the DB
 # (still capped by LIMIT). Empty string is rejected by FastAPI min_length=1.
 _MIN_QUERY_LEN = 1
 _RESULT_LIMIT = 20
-_WS_RE = re.compile(r"\s+")
-
-
-# NOTE: `%%` is psycopg2's literal-percent escape when using %(name)s params,
-# so `search_text %% %(q)s` becomes `search_text % :q` — the pg_trgm operator.
-#
-# NOTE 2: macro columns are explicitly cast to `float8`. The Supabase tables
-# use `numeric`, which psycopg2 maps to Python `Decimal`; FastAPI then
-# serializes Decimals as JSON *strings* (to preserve precision), which the
-# Flutter client can't read as numbers. Casting pins them to JSON numbers.
-_SEARCH_SQL = """
-SELECT
-    id::text                        AS id,
-    name,
-    brand,
-    calories_per_100g::float8       AS calories_per_100g,
-    protein_per_100g::float8        AS protein_per_100g,
-    carbs_per_100g::float8          AS carbs_per_100g,
-    fat_per_100g::float8            AS fat_per_100g,
-    serving_size_g::float8          AS serving_size_g
-FROM foods
-WHERE
-    (
-            search_text %% %(q)s
-        OR  search_text LIKE %(prefix)s
-        OR  search_text LIKE %(substr)s
-    )
-    -- Quality gate:
-    --   * non-zero calories
-    --   * implausibly high kcal (> 900 per 100 g) indicates bad source data
-    --     (e.g. kJ values accidentally stored as kcal); hide those too
-    --   * at least one macro must be present — a calorie-only row is useless
-    AND coalesce(calories_per_100g, 0) between 1 and 900
-    AND (
-            coalesce(protein_per_100g, 0) > 0
-         OR coalesce(carbs_per_100g,   0) > 0
-         OR coalesce(fat_per_100g,     0) > 0
-    )
-ORDER BY
-    CASE
-        WHEN search_text LIKE %(prefix)s THEN 1
-        WHEN search_text LIKE %(substr)s THEN 2
-        ELSE 3
-    END,
-    similarity(search_text, %(q)s) DESC,
-    length(search_text) ASC
-LIMIT %(limit)s;
-"""
-
-
-def _normalize(raw: str) -> str:
-    """lowercase, trim, collapse whitespace — matches `foods.search_text`."""
-    return _WS_RE.sub(" ", raw.strip().lower())
 
 
 def _compact(row: dict | None) -> str:
@@ -162,6 +111,11 @@ def debug_stats() -> dict:
 def search_foods(
     response: Response,
     q: str = Query(..., min_length=1, max_length=100, description="Search term"),
+    locale: str | None = Query(
+        default=None,
+        max_length=32,
+        description="BCP-47 language tag for alias/display preference (e.g. ro, en).",
+    ),
     seq: int | None = Query(
         default=None,
         ge=0,
@@ -171,7 +125,8 @@ def search_foods(
         ),
     ),
 ) -> list[dict]:
-    term = _normalize(q)
+    term = normalize_food_search_text(q)
+    locale_key = primary_locale_tag(locale)
 
     if len(term) < _MIN_QUERY_LEN:
         response.headers["X-Cache"] = "BYPASS"
@@ -179,7 +134,8 @@ def search_foods(
             response.headers["X-Seq"] = str(seq)
         return []
 
-    cached = _SEARCH_CACHE.get(term)
+    cache_key = f"{term}\x1f{locale_key}"
+    cached = _SEARCH_CACHE.get(cache_key)
     if cached is not None:
         response.headers["X-Cache"] = "HIT"
         if seq is not None:
@@ -188,30 +144,26 @@ def search_foods(
 
     started = time.perf_counter()
     try:
-        with get_conn() as conn, conn.cursor(cursor_factory=RealDictCursor) as cur:
-            cur.execute(
-                _SEARCH_SQL,
-                {
-                    "q":      term,
-                    "prefix": f"{term}%",
-                    "substr": f"%{term}%",
-                    "limit":  _RESULT_LIMIT,
-                },
+        with get_conn() as conn:
+            rows = run_food_search(
+                conn,
+                raw_query=q,
+                locale=locale,
+                limit=_RESULT_LIMIT,
             )
-            rows = [dict(r) for r in cur.fetchall()]
     except Exception as e:  # noqa: BLE001
-        log.exception("search failed q=%r", term)
+        log.exception("search failed q=%r locale=%r", term, locale_key)
         raise HTTPException(status_code=503, detail="search failed") from e
 
     elapsed_ms = (time.perf_counter() - started) * 1000.0
     sample = rows[0] if rows else None
     log.info(
-        "search q=%r rows=%d took=%.1fms sample=%s",
-        term, len(rows), elapsed_ms,
+        "search q=%r locale=%r rows=%d took=%.1fms sample=%s",
+        term, locale_key, len(rows), elapsed_ms,
         _compact(sample),
     )
 
-    _SEARCH_CACHE.set(term, rows)
+    _SEARCH_CACHE.set(cache_key, rows)
 
     response.headers["X-Cache"] = "MISS"
     response.headers["X-Elapsed-Ms"] = f"{elapsed_ms:.1f}"
@@ -241,7 +193,9 @@ RETURNING
     protein_per_100g::float8    AS protein_per_100g,
     carbs_per_100g::float8      AS carbs_per_100g,
     fat_per_100g::float8        AS fat_per_100g,
-    serving_size_g::float8      AS serving_size_g
+    serving_size_g::float8      AS serving_size_g,
+    name                        AS canonical_name,
+    name                        AS display_name
 """
 
 
@@ -292,4 +246,8 @@ def create_food(payload: FoodCreate) -> dict:
     _SEARCH_CACHE.clear()
 
     assert row is not None
-    return dict(row)
+    out = dict(row)
+    # Manual entries: stable canonical + UI display = user-entered name.
+    out.setdefault("canonical_name", out.get("name"))
+    out.setdefault("display_name", out.get("name"))
+    return out

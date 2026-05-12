@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
+import 'package:provider/provider.dart';
+
 import '../../models/food_item.dart';
+import '../../providers/locale_controller.dart';
 import '../../services/food_api_service.dart';
 import '../../services/food_search_service.dart';
 import 'food_result_tile.dart';
@@ -49,7 +52,12 @@ class _FoodPickerScreenState extends State<FoodPickerScreen> {
 
     final q = query.trim();
     _debounceTimer.run(() async {
-      final FoodSearchOutcome outcome = await _foodSearchService.searchWithOutcome(q);
+      final lc = context.read<LocaleController>();
+      final localeTag = lc.preferredLocaleForAi(
+        WidgetsBinding.instance.platformDispatcher.locale,
+      );
+      final FoodSearchOutcome outcome =
+          await _foodSearchService.searchWithOutcome(q, locale: localeTag);
       if (!mounted) return;
       if (_searchController.text.trim() != q) return;
       setState(() {

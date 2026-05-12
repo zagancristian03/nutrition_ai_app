@@ -1,3 +1,4 @@
+import 'package:app/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -92,13 +93,14 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
     return showDialog<bool>(
       context: context,
       builder: (ctx) {
+        final loc = AppLocalizations.of(ctx)!;
         return AlertDialog(
-          title: const Text('Exit app?'),
-          content: const Text('Are you sure you want to close the app?'),
+          title: Text(loc.shellExitTitle),
+          content: Text(loc.shellExitBody),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(ctx).pop(false),
-              child: const Text('Cancel'),
+              child: Text(loc.commonCancel),
             ),
             FilledButton(
               style: FilledButton.styleFrom(
@@ -106,7 +108,7 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
                 foregroundColor: Theme.of(ctx).colorScheme.onError,
               ),
               onPressed: () => Navigator.of(ctx).pop(true),
-              child: const Text('Exit'),
+              child: Text(loc.shellExitConfirm),
             ),
           ],
         );
@@ -116,6 +118,7 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
     // PopScope (Flutter 3.12+) replaces the deprecated WillPopScope.
     // We always prevent the framework from popping this route and take over
     // the behavior in [_handleSystemBack].
@@ -131,7 +134,7 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
         // Uses `endFloat` so it sits above the bottom nav bar, not over it.
         floatingActionButton: FloatingActionButton(
           heroTag: 'ai_coach_fab',
-          tooltip: 'AI Coach',
+          tooltip: loc.shellAiCoachFabTooltip,
           onPressed: () => Navigator.of(context).push(
             MaterialPageRoute(builder: (_) => const AiCoachScreen()),
           ),
@@ -142,26 +145,26 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
           type: BottomNavigationBarType.fixed,
           currentIndex: _selectedIndex,
           onTap: _onItemTapped,
-          items: const [
+          items: [
             BottomNavigationBarItem(
-              icon: Icon(Icons.home),
-              label: 'Dashboard',
+              icon: const Icon(Icons.home),
+              label: loc.shellNavDashboard,
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.book),
-              label: 'Diary',
+              icon: const Icon(Icons.book),
+              label: loc.shellNavDiary,
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.add_circle),
-              label: 'Add',
+              icon: const Icon(Icons.add_circle),
+              label: loc.shellNavAdd,
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.show_chart),
-              label: 'Progress',
+              icon: const Icon(Icons.show_chart),
+              label: loc.shellNavProgress,
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.more_horiz),
-              label: 'More',
+              icon: const Icon(Icons.more_horiz),
+              label: loc.shellNavMore,
             ),
           ],
         ),

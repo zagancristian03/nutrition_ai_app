@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:app/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 
+import '../../l10n/api_error_mapper.dart';
+import '../../l10n/meal_labels.dart';
 import '../../models/food_entry.dart';
 import '../../providers/daily_log_provider.dart';
 import '../../providers/preferences_provider.dart';
@@ -30,16 +33,17 @@ class DiaryScreen extends StatelessWidget {
   }
 
   Future<bool> _confirmRemove(BuildContext context, String foodName) async {
+    final loc = AppLocalizations.of(context)!;
     final cs = Theme.of(context).colorScheme;
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Remove from diary?'),
-        content: Text('“$foodName” will be removed from this day.'),
+        title: Text(loc.diaryDeleteEntryTitle),
+        content: Text(loc.diaryDeleteEntryMessage(foodName)),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancel'),
+            child: Text(loc.commonCancel),
           ),
           FilledButton(
             style: FilledButton.styleFrom(
@@ -47,7 +51,7 @@ class DiaryScreen extends StatelessWidget {
               foregroundColor: cs.onError,
             ),
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Remove'),
+            child: Text(loc.diaryDeleteEntryConfirm),
           ),
         ],
       ),
@@ -63,8 +67,10 @@ class DiaryScreen extends StatelessWidget {
         const mealTypes = ['Breakfast', 'Lunch', 'Dinner', 'Snack'];
         final cs = Theme.of(context).colorScheme;
         final prefs = context.watch<PreferencesProvider>();
+        final loc = AppLocalizations.of(context)!;
 
         final insights = NutritionInsights.build(
+          loc: loc,
           selectedDate: provider.selectedDate,
           isLoading: provider.isLoading,
           entryCount: provider.entries.length,
@@ -94,7 +100,7 @@ class DiaryScreen extends StatelessWidget {
             children: [
               if (provider.isLoading)
                 const LinearProgressIndicator(minHeight: 2),
-              if (provider.diaryLoadError != null)
+              if (provider.diaryLoadErrorCode != null)
                 Material(
                   color: cs.errorContainer,
                   child: Padding(
@@ -111,17 +117,20 @@ class DiaryScreen extends StatelessWidget {
                         const SizedBox(width: 10),
                         Expanded(
                           child: Text(
-                            provider.diaryLoadError!,
+                            localizedApiMessage(
+                              context,
+                              provider.diaryLoadErrorCode!,
+                            ),
                             style: TextStyle(color: cs.onErrorContainer),
                           ),
                         ),
                         TextButton(
                           onPressed: () => provider.clearDiaryLoadError(),
-                          child: const Text('Dismiss'),
+                          child: Text(loc.commonDismiss),
                         ),
                         TextButton(
                           onPressed: () => provider.refresh(),
-                          child: const Text('Retry'),
+                          child: Text(loc.commonRetry),
                         ),
                       ],
                     ),
@@ -170,7 +179,7 @@ class DiaryScreen extends StatelessWidget {
                                         ),
                                         const SizedBox(width: 8),
                                         Text(
-                                          'Insights',
+                                          loc.diaryInsightsTitle,
                                           style: Theme.of(context)
                                               .textTheme
                                               .titleSmall
@@ -199,7 +208,7 @@ class DiaryScreen extends StatelessWidget {
                         ),
                       if (provider.entries.isEmpty &&
                           !provider.isLoading &&
-                          provider.diaryLoadError == null)
+                          provider.diaryLoadErrorCode == null)
                         SliverPadding(
                           padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
                           sliver: SliverToBoxAdapter(
@@ -218,8 +227,7 @@ class DiaryScreen extends StatelessWidget {
                                     const SizedBox(width: 12),
                                     Expanded(
                                       child: Text(
-                                        'Nothing logged for this day yet. '
-                                        'Scroll down and tap Add food under any meal.',
+                                        loc.diaryEmptyStateBody,
                                         style: Theme.of(context)
                                             .textTheme
                                             .bodyMedium
@@ -256,7 +264,7 @@ class DiaryScreen extends StatelessWidget {
                                   .toList();
 
                               return MealSection(
-                                mealName: mealType,
+                                mealName: mealTypeLabel(loc, mealType),
                                 foods: foods,
                                 totalCalories: totalCalories.toInt(),
                                 onAddFood: () {
@@ -338,7 +346,10 @@ class _DaySummaryCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('This day', style: tt.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
+            Text(
+              AppLocalizations.of(context)!.diaryDaySummaryTitle,
+              style: tt.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+            ),
             const SizedBox(height: 10),
             Row(
               crossAxisAlignment: CrossAxisAlignment.baseline,
@@ -352,7 +363,8 @@ class _DaySummaryCard extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  ' / ${goal.round()} kcal',
+                  AppLocalizations.of(context)!
+                      .diaryKcalFraction(goal.round().toString()),
                   style: tt.titleMedium?.copyWith(color: cs.onSurfaceVariant),
                 ),
               ],
@@ -373,19 +385,19 @@ class _DaySummaryCard extends StatelessWidget {
               runSpacing: 8,
               children: [
                 _MiniMacro(
-                  label: 'P',
+                  label: AppLocalizations.of(context)!.diaryMacroLetterProtein,
                   value: protein,
                   goal: proteinGoal,
                   color: cs.error,
                 ),
                 _MiniMacro(
-                  label: 'C',
+                  label: AppLocalizations.of(context)!.diaryMacroLetterCarbs,
                   value: carbs,
                   goal: carbsGoal,
                   color: cs.tertiary,
                 ),
                 _MiniMacro(
-                  label: 'F',
+                  label: AppLocalizations.of(context)!.diaryMacroLetterFat,
                   value: fat,
                   goal: fatGoal,
                   color: cs.secondary,
@@ -414,6 +426,7 @@ class _MiniMacro extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
     final g = goal <= 0 ? 1.0 : goal;
     final pct = (value / g * 100).clamp(0.0, 999.0);
     return Container(
@@ -424,7 +437,12 @@ class _MiniMacro extends StatelessWidget {
         border: Border.all(color: color.withValues(alpha: 0.35)),
       ),
       child: Text(
-        '$label ${value.round()} / ${goal.round()} g (${pct.round()}%)',
+        loc.diaryMacroMiniLine(
+          label,
+          value.round().toString(),
+          goal.round().toString(),
+          pct.round().toString(),
+        ),
         style: Theme.of(context).textTheme.labelMedium?.copyWith(
               fontWeight: FontWeight.w600,
               color: color,

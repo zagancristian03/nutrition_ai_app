@@ -1,5 +1,3 @@
-import 'food_item.dart';
-
 class SavedMeal {
   final String id;
   final String name;

@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:app/l10n/app_localizations.dart';
+import 'package:app/l10n/meal_labels.dart';
+
 import '../../providers/daily_log_provider.dart';
 import '../../services/food_api_service.dart';
 
@@ -37,9 +40,13 @@ class _ManualFoodEntryScreenState extends State<ManualFoodEntryScreen> {
   @override
   void initState() {
     super.initState();
-    _selectedMealType = _mealTypes.contains(widget.initialMealType)
-        ? widget.initialMealType!
-        : 'Breakfast';
+    _selectedMealType = _normalizedMealKey(widget.initialMealType);
+  }
+
+  String _normalizedMealKey(String? m) {
+    if (m == null || m.isEmpty) return 'Breakfast';
+    if (m == 'Snacks') return 'Snack';
+    return _mealTypes.contains(m) ? m : 'Breakfast';
   }
 
   @override
@@ -56,6 +63,7 @@ class _ManualFoodEntryScreenState extends State<ManualFoodEntryScreen> {
   }
 
   Future<void> _handleAdd() async {
+    final loc = AppLocalizations.of(context)!;
     if (!_formKey.currentState!.validate()) return;
     if (_isSaving) return;
 
@@ -94,7 +102,10 @@ class _ManualFoodEntryScreenState extends State<ManualFoodEntryScreen> {
     setState(() => _isSaving = false);
 
     if (result.food == null) {
-      final msg = result.errorMessage ?? 'Could not save food. Please try again.';
+      final raw = result.errorMessage;
+      final msg = (raw != null && raw.isNotEmpty)
+          ? raw
+          : loc.foodManualSaveFailedGeneric;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(msg, maxLines: 3, overflow: TextOverflow.ellipsis),
@@ -108,21 +119,31 @@ class _ManualFoodEntryScreenState extends State<ManualFoodEntryScreen> {
     final created = result.food!;
 
     final totalGrams = servingSize * servings;
-    final entry = await context.read<DailyLogProvider>().addEntryForFood(
+    final outcome = await context.read<DailyLogProvider>().addEntryForFood(
           foodId:   created.id,
           mealType: _selectedMealType,
           grams:    totalGrams,
           servings: servings,
+          foodDisplayName: created.primaryLabel,
         );
 
     if (!mounted) return;
 
+    final ok = outcome.entry != null;
+    final err = outcome.failureMessage?.trim();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(entry != null
-            ? 'Food saved and added to diary!'
-            : 'Food saved, but logging to diary failed.'),
-        backgroundColor: entry != null ? Colors.green : Colors.orange,
+        content: Text(
+          ok
+              ? loc.foodManualSavedAndLoggedSnack
+              : (err != null && err.isNotEmpty
+                  ? err
+                  : loc.foodManualSavedLogFailedSnack),
+          maxLines: 5,
+          overflow: TextOverflow.ellipsis,
+        ),
+        backgroundColor: ok ? Colors.green : Colors.orange,
+        duration: const Duration(seconds: 4),
       ),
     );
 
@@ -136,10 +157,11 @@ class _ManualFoodEntryScreenState extends State<ManualFoodEntryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
-        title: const Text('Add food manually'),
+        title: Text(loc.foodManualTitle),
         elevation: 0,
       ),
       body: SingleChildScrollView(
@@ -150,18 +172,22 @@ class _ManualFoodEntryScreenState extends State<ManualFoodEntryScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               _SectionCard(
-                title: 'Basics',
+                title: loc.foodManualSectionBasics,
                 children: [
                   DropdownButtonFormField<String>(
-                    value: _selectedMealType,
-                    decoration: const InputDecoration(
-                      labelText: 'Meal type',
-                      prefixIcon: Icon(Icons.restaurant),
-                      border: OutlineInputBorder(),
+                    key: ValueKey(_selectedMealType),
+                    initialValue: _selectedMealType,
+                    decoration: InputDecoration(
+                      labelText: loc.foodDetailMealTypeLabel,
+                      prefixIcon: const Icon(Icons.restaurant),
+                      border: const OutlineInputBorder(),
                       isDense: true,
                     ),
                     items: _mealTypes
-                        .map((t) => DropdownMenuItem(value: t, child: Text(t)))
+                        .map((t) => DropdownMenuItem(
+                              value: t,
+                              child: Text(mealTypeLabel(loc, t)),
+                            ))
                         .toList(),
                     onChanged: (v) {
                       if (v != null) setState(() => _selectedMealType = v);
@@ -171,23 +197,25 @@ class _ManualFoodEntryScreenState extends State<ManualFoodEntryScreen> {
                   TextFormField(
                     controller: _nameController,
                     textCapitalization: TextCapitalization.sentences,
-                    decoration: const InputDecoration(
-                      labelText: 'Food name',
-                      prefixIcon: Icon(Icons.fastfood),
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      labelText: loc.foodManualFoodNameLabel,
+                      prefixIcon: const Icon(Icons.fastfood),
+                      border: const OutlineInputBorder(),
                       isDense: true,
                     ),
                     validator: (v) =>
-                        (v == null || v.trim().isEmpty) ? 'Please enter a food name' : null,
+                        (v == null || v.trim().isEmpty)
+                            ? loc.foodManualValidationName
+                            : null,
                   ),
                   const SizedBox(height: 12),
                   TextFormField(
                     controller: _brandController,
                     textCapitalization: TextCapitalization.words,
-                    decoration: const InputDecoration(
-                      labelText: 'Brand (optional)',
-                      prefixIcon: Icon(Icons.local_offer_outlined),
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      labelText: loc.foodManualBrandLabel,
+                      prefixIcon: const Icon(Icons.local_offer_outlined),
+                      border: const OutlineInputBorder(),
                       isDense: true,
                     ),
                   ),
@@ -195,14 +223,14 @@ class _ManualFoodEntryScreenState extends State<ManualFoodEntryScreen> {
               ),
               const SizedBox(height: 16),
               _SectionCard(
-                title: 'Portion',
+                title: loc.foodManualSectionPortion,
                 children: [
                   Row(
                     children: [
                       Expanded(
                         child: _numField(
                           controller: _servingSizeController,
-                          label: 'Serving size (g)',
+                          label: loc.foodManualServingSizeG,
                           icon: Icons.scale,
                         ),
                       ),
@@ -210,7 +238,7 @@ class _ManualFoodEntryScreenState extends State<ManualFoodEntryScreen> {
                       Expanded(
                         child: _numField(
                           controller: _servingsController,
-                          label: 'Servings',
+                          label: loc.foodDetailServingsLabel,
                           icon: Icons.numbers,
                         ),
                       ),
@@ -220,14 +248,16 @@ class _ManualFoodEntryScreenState extends State<ManualFoodEntryScreen> {
               ),
               const SizedBox(height: 16),
               _SectionCard(
-                title: 'Nutrition (per serving)',
+                title: loc.foodManualSectionNutrition,
                 children: [
                   _numField(
                     controller: _caloriesController,
-                    label: 'Calories',
+                    label: loc.foodEditCaloriesLabel,
                     icon: Icons.local_fire_department,
                     validator: (v) =>
-                        (v == null || v.trim().isEmpty) ? 'Please enter calories' : null,
+                        (v == null || v.trim().isEmpty)
+                            ? loc.foodManualValidationCalories
+                            : null,
                   ),
                   const SizedBox(height: 12),
                   Row(
@@ -235,7 +265,7 @@ class _ManualFoodEntryScreenState extends State<ManualFoodEntryScreen> {
                       Expanded(
                         child: _numField(
                           controller: _proteinController,
-                          label: 'Protein (g)',
+                          label: loc.foodEditProteinLabel,
                           icon: Icons.fitness_center,
                         ),
                       ),
@@ -243,7 +273,7 @@ class _ManualFoodEntryScreenState extends State<ManualFoodEntryScreen> {
                       Expanded(
                         child: _numField(
                           controller: _carbsController,
-                          label: 'Carbs (g)',
+                          label: loc.foodEditCarbsLabel,
                           icon: Icons.grain,
                         ),
                       ),
@@ -252,7 +282,7 @@ class _ManualFoodEntryScreenState extends State<ManualFoodEntryScreen> {
                   const SizedBox(height: 12),
                   _numField(
                     controller: _fatController,
-                    label: 'Fat (g)',
+                    label: loc.foodEditFatLabel,
                     icon: Icons.opacity,
                   ),
                 ],
@@ -273,7 +303,7 @@ class _ManualFoodEntryScreenState extends State<ManualFoodEntryScreen> {
                         )
                       : const Icon(Icons.check),
                   label: Text(
-                    _isSaving ? 'Saving…' : 'Add to diary',
+                    _isSaving ? loc.foodManualSaving : loc.foodManualAddToDiary,
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,

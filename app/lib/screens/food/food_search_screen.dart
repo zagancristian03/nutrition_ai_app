@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 
+import 'package:app/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
+
+import '../../l10n/meal_labels.dart';
 
 import '../../models/food_item.dart';
 import '../../models/recent_logged_food.dart';
 import '../../providers/daily_log_provider.dart';
+import '../../providers/locale_controller.dart';
 import '../../services/diary_api_service.dart';
 import '../../services/food_api_service.dart';
 import '../../services/food_search_service.dart';
@@ -101,7 +105,12 @@ class _FoodSearchScreenState extends State<FoodSearchScreen> {
 
     final q = query.trim();
     _debounceTimer.run(() async {
-      final FoodSearchOutcome outcome = await _foodSearchService.searchWithOutcome(q);
+      final lc = context.read<LocaleController>();
+      final localeTag = lc.preferredLocaleForAi(
+        WidgetsBinding.instance.platformDispatcher.locale,
+      );
+      final FoodSearchOutcome outcome =
+          await _foodSearchService.searchWithOutcome(q, locale: localeTag);
       if (!mounted) return;
       if (_searchController.text.trim() != q) return;
       setState(() {
@@ -124,32 +133,35 @@ class _FoodSearchScreenState extends State<FoodSearchScreen> {
     final meal = await showModalBottomSheet<String>(
       context: context,
       showDragHandle: true,
-      builder: (ctx) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-              child: Text(
-                'Log "${recent.foodName}" to',
-                style: Theme.of(ctx).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
+      builder: (ctx) {
+        final sheetLoc = AppLocalizations.of(ctx)!;
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+                child: Text(
+                  sheetLoc.foodLogTargetMealTitle(recent.foodName),
+                  style: Theme.of(ctx).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                ),
               ),
-            ),
-            const Divider(height: 1),
-            ..._mealTypes.map(
-              (m) => ListTile(
-                title: Text(m),
-                leading: Icon(_mealIcon(m)),
-                onTap: () => Navigator.of(ctx).pop(m),
+              const Divider(height: 1),
+              ..._mealTypes.map(
+                (m) => ListTile(
+                  title: Text(mealTypeLabel(sheetLoc, m)),
+                  leading: Icon(_mealIcon(m)),
+                  onTap: () => Navigator.of(ctx).pop(m),
+                ),
               ),
-            ),
-            const SizedBox(height: 8),
-          ],
-        ),
-      ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        );
+      },
     );
     if (!mounted || meal == null) return;
 
@@ -157,36 +169,46 @@ class _FoodSearchScreenState extends State<FoodSearchScreen> {
     final g = recent.grams;
     final s = recent.servings;
     if (g == null && s == null) {
+      final loc = AppLocalizations.of(context)!;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('No portion saved for this item — tap the row to set amount.'),
+        SnackBar(
+          content: Text(loc.foodLogNoPortionSnack),
           backgroundColor: Colors.orange,
         ),
       );
       return;
     }
 
-    final created = await provider.addEntryForFood(
+    final outcome = await provider.addEntryForFood(
       foodId:   recent.foodId,
       mealType: meal,
       grams:    g,
       servings: s,
+      foodDisplayName: recent.foodName.isNotEmpty ? recent.foodName : null,
     );
 
     if (!mounted) return;
 
-    if (created != null) {
+    if (outcome.entry != null) {
+      final loc = AppLocalizations.of(context)!;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Added to $meal'),
+          content: Text(loc.foodLogAddedSnack(mealTypeLabel(loc, meal))),
           backgroundColor: Colors.green,
         ),
       );
       await _loadRecentFoods();
     } else {
+      final loc = AppLocalizations.of(context)!;
+      final detail = outcome.failureMessage?.trim();
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Could not log — check connection and try again.'),
+        SnackBar(
+          content: Text(
+            detail != null && detail.isNotEmpty
+                ? detail
+                : loc.foodLogFailedSnack,
+            maxLines: 6,
+          ),
           backgroundColor: Colors.redAccent,
         ),
       );
@@ -214,12 +236,13 @@ class _FoodSearchScreenState extends State<FoodSearchScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
     final cs = Theme.of(context).colorScheme;
 
     return Scaffold(
       backgroundColor: cs.surface,
       appBar: AppBar(
-        title: const Text('Add Food'),
+        title: Text(loc.foodAddTitle),
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
@@ -232,7 +255,7 @@ class _FoodSearchScreenState extends State<FoodSearchScreen> {
                 ),
               ).then((_) => _loadRecentFoods());
             },
-            tooltip: 'Add manually',
+            tooltip: loc.foodAddManualTooltip,
           ),
         ],
       ),
@@ -254,7 +277,7 @@ class _FoodSearchScreenState extends State<FoodSearchScreen> {
                       );
                     },
                     icon: const Icon(Icons.restaurant_menu),
-                    label: const Text('My Meals'),
+                    label: Text(loc.foodMyMeals),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -269,7 +292,7 @@ class _FoodSearchScreenState extends State<FoodSearchScreen> {
                       );
                     },
                     icon: const Icon(Icons.book),
-                    label: const Text('My Recipes'),
+                    label: Text(loc.foodMyRecipes),
                   ),
                 ),
               ],
@@ -282,7 +305,7 @@ class _FoodSearchScreenState extends State<FoodSearchScreen> {
               controller: _searchController,
               autofocus: false,
               decoration: InputDecoration(
-                hintText: 'Search foods (try: rice, egg, milk)...',
+                hintText: loc.foodSearchHint,
                 prefixIcon: const Icon(Icons.search),
                 suffixIcon: _searchController.text.isNotEmpty
                     ? IconButton(
@@ -317,7 +340,7 @@ class _FoodSearchScreenState extends State<FoodSearchScreen> {
               child: Row(
                 children: [
                   Text(
-                    'Recently logged',
+                    loc.foodRecentTitle,
                     style: Theme.of(context).textTheme.titleSmall?.copyWith(
                           fontWeight: FontWeight.w700,
                           color: cs.onSurfaceVariant,
@@ -333,7 +356,7 @@ class _FoodSearchScreenState extends State<FoodSearchScreen> {
                   else
                     IconButton(
                       icon: const Icon(Icons.refresh, size: 20),
-                      tooltip: 'Refresh',
+                      tooltip: loc.foodRecentRefreshTooltip,
                       onPressed: _loadRecentFoods,
                     ),
                 ],
@@ -341,21 +364,20 @@ class _FoodSearchScreenState extends State<FoodSearchScreen> {
             ),
           ],
           Expanded(
-            child: _hasActiveSearch ? _buildSearchResults(cs) : _buildRecentList(cs),
+            child: _hasActiveSearch ? _buildSearchResults(cs, loc) : _buildRecentList(cs, loc),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildRecentList(ColorScheme cs) {
+  Widget _buildRecentList(ColorScheme cs, AppLocalizations loc) {
     if (_recentFoods.isEmpty && !_loadingRecent) {
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: Text(
-            'Foods you log will appear here — newest first — '
-            'use + to log again and pick a meal.',
+            loc.foodRecentEmpty,
             textAlign: TextAlign.center,
             style: TextStyle(color: cs.onSurfaceVariant, fontSize: 15),
           ),
@@ -371,10 +393,12 @@ class _FoodSearchScreenState extends State<FoodSearchScreen> {
         final recent = _recentFoods[index];
         final g = recent.grams;
         final portion = g != null && g > 0
-            ? '${g == g.roundToDouble() ? g.toInt().toString() : g.toStringAsFixed(1)} g'
+            ? loc.foodPortionGrams(
+                g == g.roundToDouble() ? g.toInt().toString() : g.toStringAsFixed(1),
+              )
             : (recent.servings != null
-                ? '${recent.servings} × serving'
-                : '—');
+                ? loc.foodPortionServings(recent.servings!.toString())
+                : loc.foodPortionDash);
         return ListTile(
           contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
           leading: CircleAvatar(
@@ -393,7 +417,7 @@ class _FoodSearchScreenState extends State<FoodSearchScreen> {
           ),
           trailing: IconButton.filledTonal(
             icon: const Icon(Icons.add),
-            tooltip: 'Log again',
+            tooltip: loc.foodLogAgainTooltip,
             onPressed: () => _pickMealAndQuickAdd(recent),
           ),
           onTap: () {
@@ -412,7 +436,7 @@ class _FoodSearchScreenState extends State<FoodSearchScreen> {
     );
   }
 
-  Widget _buildSearchResults(ColorScheme cs) {
+  Widget _buildSearchResults(ColorScheme cs, AppLocalizations loc) {
     if (_isSearching) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -427,7 +451,7 @@ class _FoodSearchScreenState extends State<FoodSearchScreen> {
               Icon(Icons.cloud_off, size: 64, color: cs.outlineVariant),
               const SizedBox(height: 16),
               Text(
-                'Could not load foods',
+                loc.foodSearchLoadErrorTitle,
                 style: TextStyle(
                   color: cs.onSurface,
                   fontSize: 16,
@@ -454,14 +478,14 @@ class _FoodSearchScreenState extends State<FoodSearchScreen> {
             Icon(Icons.search_off, size: 64, color: cs.outlineVariant),
             const SizedBox(height: 16),
             Text(
-              'No results found',
+              loc.foodSearchNoResults,
               style: TextStyle(color: cs.onSurfaceVariant, fontSize: 16),
             ),
             const SizedBox(height: 8),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 32),
               child: Text(
-                'If the database is new, import or seed foods, or add a food with +.',
+                loc.foodSearchNoResultsHint,
                 textAlign: TextAlign.center,
                 style: TextStyle(color: cs.onSurfaceVariant, fontSize: 13),
               ),

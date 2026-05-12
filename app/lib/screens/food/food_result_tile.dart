@@ -20,7 +20,7 @@ class FoodResultTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final title = _titleCase(food.name);
+    final title = _titleCase(food.primaryLabel);
     final brand = food.brand?.trim();
 
     return InkWell(

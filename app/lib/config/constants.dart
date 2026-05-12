@@ -8,12 +8,19 @@
 ///
 /// Keep [kBackendLanHost] in sync with that IPv4, or rely on the define only.
 ///
-/// Presets you use — switch [kBackendLanHost] between them when you change network.
-const String kBackendLanHostHome = '192.168.1.16';
+/// Presets — use the one that matches how the **phone** reaches this PC:
+///
+/// * **Windows Mobile Hotspot:** the phone is on `192.168.137.x`; this PC is
+///   almost always `192.168.137.1` (check `ipconfig` → “Local Area Connection*” /
+///   vEthernet / Wi‑Fi hotstop). This is **not** the same IPv4 as your home router LAN.
+/// * **Same Wi‑Fi / LAN as the phone:** use this PC’s IPv4 on that network
+///   (e.g. `192.168.1.17` from `ipconfig`).
+const String kBackendLanHostWindowsMobileHotspot = '192.168.137.1';
+const String kBackendLanHostHomeLan = '192.168.1.17';
 const String kBackendLanHostHotspot = '10.186.89.122';
 
-/// Active host (same subnet as the phone for HTTP API).
-const String kBackendLanHost = kBackendLanHostHome;
+/// Active API host (must be reachable from the phone’s browser at `http://HOST:8000/docs`).
+const String kBackendLanHost = kBackendLanHostWindowsMobileHotspot;
 
 const int kBackendPort = 8000;
 

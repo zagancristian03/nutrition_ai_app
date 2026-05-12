@@ -114,20 +114,28 @@ class FoodApiService {
   /// Search foods via `GET /foods/search?q=...`.
   ///
   /// On failure, returns an empty list; use [searchFoodWithOutcome] for the reason.
-  Future<List<FoodItem>> searchFood(String query) async =>
-      (await searchFoodWithOutcome(query)).items;
+  Future<List<FoodItem>> searchFood(String query, {String? locale}) async =>
+      (await searchFoodWithOutcome(query, locale: locale)).items;
 
   /// On success, [FoodSearchOutcome.errorMessage] is null (even when [items] is
   /// empty). On network/HTTP/parse failure, [items] is empty and
   /// [errorMessage] explains why.
-  Future<FoodSearchOutcome> searchFoodWithOutcome(String query) async {
+  Future<FoodSearchOutcome> searchFoodWithOutcome(
+    String query, {
+    String? locale,
+  }) async {
     final trimmed = query.trim();
     if (trimmed.isEmpty) {
       return const FoodSearchOutcome(items: []);
     }
 
+    final params = <String, String>{
+      'q': trimmed,
+      if (locale != null && locale.trim().isNotEmpty) 'locale': locale.trim(),
+    };
+
     final uri = Uri.parse('$baseUrl$_searchPath').replace(
-      queryParameters: {'q': trimmed},
+      queryParameters: params,
     );
 
     debugPrint('[FoodApiService] searchFood baseUrl=$baseUrl');
@@ -170,8 +178,8 @@ class FoodApiService {
         if (items.isNotEmpty) {
           final f = items.first;
           debugPrint(
-            '[FoodApiService] searchFood parsed[0] name=${f.name} '
-            'brand=${f.brand} kcal=${f.caloriesPer100g} '
+            '[FoodApiService] searchFood parsed[0] primary=${f.primaryLabel} '
+            'name=${f.name} brand=${f.brand} kcal=${f.caloriesPer100g} '
             'p=${f.proteinPer100g} c=${f.carbsPer100g} f=${f.fatPer100g}',
           );
         }
