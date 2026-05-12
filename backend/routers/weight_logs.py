@@ -9,10 +9,12 @@ from __future__ import annotations
 
 import logging
 from datetime import date, timedelta
+from typing import Annotated
 
-from fastapi import APIRouter, HTTPException, Query, Response
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from psycopg2.extras import RealDictCursor
 
+from auth_firebase import get_current_uid, require_same_user
 from db import get_conn
 from schemas import WeightLogCreate, WeightLogOut
 
@@ -31,12 +33,16 @@ _SELECT_COLUMNS = """
 
 
 @router.post("", response_model=WeightLogOut, status_code=201)
-def create_weight_log(payload: WeightLogCreate) -> dict:
+def create_weight_log(
+    payload: WeightLogCreate,
+    uid: Annotated[str, Depends(get_current_uid)] = ...,
+) -> dict:
     """
     Upsert on (user_id, logged_on) — a user editing their weight for the same
     day replaces the previous entry rather than creating duplicates. This
     matches the UX: the chart shows one point per day.
     """
+    require_same_user(uid, payload.user_id)
     logged_on = payload.logged_on or date.today()
     try:
         with get_conn() as conn:
@@ -83,9 +89,11 @@ def create_weight_log(payload: WeightLogCreate) -> dict:
 @router.get("", response_model=list[WeightLogOut])
 def list_weight_logs(
     user_id: str = Query(..., min_length=1, max_length=128),
-    days:    int = Query(default=180, ge=1, le=3650),
+    days: int = Query(default=180, ge=1, le=3650),
+    uid: Annotated[str, Depends(get_current_uid)] = ...,
 ) -> list[dict]:
     """Chronological list (oldest first) — ready to feed straight into a chart."""
+    require_same_user(uid, user_id)
     since = date.today() - timedelta(days=days)
     try:
         with get_conn() as conn, conn.cursor(cursor_factory=RealDictCursor) as cur:
@@ -111,9 +119,11 @@ def list_weight_logs(
 
 @router.delete("/{log_id}", response_class=Response)
 def delete_weight_log(
-    log_id:  int,
+    log_id: int,
     user_id: str = Query(..., min_length=1, max_length=128),
+    uid: Annotated[str, Depends(get_current_uid)] = ...,
 ) -> Response:
+    require_same_user(uid, user_id)
     try:
         with get_conn() as conn:
             conn.autocommit = False

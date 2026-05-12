@@ -7,6 +7,7 @@ import 'package:http/http.dart' as http;
 
 import '../config/constants.dart';
 import '../models/food_entry.dart';
+import 'api_auth_headers.dart';
 import 'food_api_service.dart';
 
 /// HTTP client for the diary endpoints:
@@ -120,7 +121,7 @@ class DiaryApiService {
 
     try {
       final response = await http
-          .get(uri, headers: {'Content-Type': 'application/json'})
+          .get(uri, headers: await apiAuthJsonHeaders())
           .timeout(_timeout);
 
       if (response.statusCode != 200) {
@@ -157,7 +158,7 @@ class DiaryApiService {
 
     try {
       final response = await http
-          .get(uri, headers: {'Content-Type': 'application/json'})
+          .get(uri, headers: await apiAuthJsonHeaders())
           .timeout(_timeout);
 
       if (response.statusCode != 200) {
@@ -213,7 +214,7 @@ class DiaryApiService {
       final response = await http
           .post(
             uri,
-            headers: {'Content-Type': 'application/json'},
+            headers: await apiAuthJsonHeaders(),
             body: json.encode(body),
           )
           .timeout(_timeout);
@@ -302,7 +303,7 @@ class DiaryApiService {
       final response = await http
           .put(
             uri,
-            headers: {'Content-Type': 'application/json'},
+            headers: await apiAuthJsonHeaders(),
             body: json.encode(body),
           )
           .timeout(_timeout);
@@ -330,7 +331,9 @@ class DiaryApiService {
         .replace(queryParameters: {'user_id': userId});
 
     try {
-      final response = await http.delete(uri).timeout(_timeout);
+      final response = await http
+          .delete(uri, headers: await apiAuthJsonHeaders())
+          .timeout(_timeout);
       return response.statusCode == 204;
     } catch (e) {
       debugPrint('[DiaryApiService] deleteFoodLog error: $e');
@@ -371,7 +374,9 @@ class DiaryApiService {
   Future<UserGoalsDto> getGoals(String userId) async {
     final uri = Uri.parse('$_baseUrl/user-goals/$userId');
     try {
-      final response = await http.get(uri).timeout(_timeout);
+      final response = await http
+          .get(uri, headers: await apiAuthJsonHeaders())
+          .timeout(_timeout);
       if (response.statusCode == 200) {
         final decoded = json.decode(response.body);
         if (decoded is Map<String, dynamic>) {
@@ -407,7 +412,7 @@ class DiaryApiService {
       final response = await http
           .put(
             uri,
-            headers: {'Content-Type': 'application/json'},
+            headers: await apiAuthJsonHeaders(),
             body: json.encode(body),
           )
           .timeout(_timeout);

@@ -23,11 +23,13 @@ from __future__ import annotations
 
 import logging
 from datetime import date, datetime
+from typing import Annotated
 
-from fastapi import APIRouter, Body, HTTPException, Path, Query
+from fastapi import APIRouter, Body, Depends, HTTPException, Path, Query
 from zoneinfo import ZoneInfo
 
 from ai import services
+from auth_firebase import get_current_uid, require_same_user
 from schemas import (
     AiChatHistory,
     AiChatRequest,
@@ -69,7 +71,9 @@ def post_onboarding(
     payload: AiOnboardingPayload,
     user_id: str = Query(..., min_length=1, max_length=128),
     mark_completed: bool = Query(default=True),
+    uid: Annotated[str, Depends(get_current_uid)] = ...,
 ) -> dict:
+    require_same_user(uid, user_id)
     data = payload.model_dump(exclude_none=True)
     extras = data.pop("extras", None)
 
@@ -93,7 +97,9 @@ def post_onboarding(
 @router.get("/profile/{user_id}", response_model=AiProfileOut)
 def get_profile(
     user_id: str = Path(..., min_length=1, max_length=128),
+    uid: Annotated[str, Depends(get_current_uid)] = ...,
 ) -> dict:
+    require_same_user(uid, user_id)
     return services.get_profile(user_id)
 
 
@@ -101,10 +107,14 @@ def get_profile(
 # Chat                                                                        #
 # --------------------------------------------------------------------------- #
 @router.post("/chat", response_model=AiChatResponse)
-def post_chat(payload: AiChatRequest) -> dict:
+def post_chat(
+    payload: AiChatRequest,
+    uid: Annotated[str, Depends(get_current_uid)] = ...,
+) -> dict:
+    require_same_user(uid, payload.user_id)
     try:
         result = services.chat_reply(
-            user_id=payload.user_id,
+            user_id=uid,
             message=payload.message.strip(),
             thread_id=payload.thread_id,
             today=_coaching_today(payload.timezone),
@@ -130,7 +140,9 @@ def get_chat_history(
     user_id: str = Query(..., min_length=1, max_length=128),
     thread_id: int | None = Query(default=None),
     limit: int = Query(default=100, ge=1, le=200),
+    uid: Annotated[str, Depends(get_current_uid)] = ...,
 ) -> dict:
+    require_same_user(uid, user_id)
     return services.list_chat_history(user_id, thread_id=thread_id, limit=limit)
 
 
@@ -138,19 +150,25 @@ def get_chat_history(
 def list_threads(
     user_id: str = Query(..., min_length=1, max_length=128),
     limit: int = Query(default=100, ge=1, le=250),
+    uid: Annotated[str, Depends(get_current_uid)] = ...,
 ) -> list[dict]:
+    require_same_user(uid, user_id)
     # Late import to keep the router file tiny.
     from ai import memory
     return memory.list_threads(user_id, limit=limit)
 
 
 @router.post("/chat/threads", response_model=AiThreadOut)
-def create_thread(payload: AiThreadCreate) -> dict:
+def create_thread(
+    payload: AiThreadCreate,
+    uid: Annotated[str, Depends(get_current_uid)] = ...,
+) -> dict:
+    require_same_user(uid, payload.user_id)
     from ai import memory
 
     try:
         return memory.create_thread(
-            payload.user_id,
+            uid,
             payload.title,
             folder_id=payload.folder_id,
         )
@@ -163,7 +181,9 @@ def patch_thread(
     thread_id: int,
     user_id: str = Query(..., min_length=1, max_length=128),
     payload: AiThreadUpdate = Body(...),
+    uid: Annotated[str, Depends(get_current_uid)] = ...,
 ) -> dict:
+    require_same_user(uid, user_id)
     from ai import memory
 
     try:
@@ -179,17 +199,23 @@ def patch_thread(
 @router.get("/chat/folders", response_model=list[AiFolderOut])
 def list_chat_folders(
     user_id: str = Query(..., min_length=1, max_length=128),
+    uid: Annotated[str, Depends(get_current_uid)] = ...,
 ) -> list[dict]:
+    require_same_user(uid, user_id)
     from ai import memory
     return memory.list_folders(user_id)
 
 
 @router.post("/chat/folders", response_model=AiFolderOut)
-def create_chat_folder(payload: AiFolderCreate) -> dict:
+def create_chat_folder(
+    payload: AiFolderCreate,
+    uid: Annotated[str, Depends(get_current_uid)] = ...,
+) -> dict:
+    require_same_user(uid, payload.user_id)
     from ai import memory
 
     try:
-        return memory.create_folder(payload.user_id, payload.name)
+        return memory.create_folder(uid, payload.name)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
     except Exception as e:  # noqa: BLE001
@@ -205,7 +231,9 @@ def rename_chat_folder(
     folder_id: int,
     user_id: str = Query(..., min_length=1, max_length=128),
     payload: AiFolderRename = Body(...),
+    uid: Annotated[str, Depends(get_current_uid)] = ...,
 ) -> dict:
+    require_same_user(uid, user_id)
     from ai import memory
 
     try:
@@ -221,7 +249,9 @@ def rename_chat_folder(
 def delete_chat_folder(
     folder_id: int,
     user_id: str = Query(..., min_length=1, max_length=128),
+    uid: Annotated[str, Depends(get_current_uid)] = ...,
 ) -> dict:
+    require_same_user(uid, user_id)
     from ai import memory
 
     if not memory.delete_folder(user_id, folder_id):
@@ -236,7 +266,9 @@ def delete_chat_folder(
 def post_review_day(
     user_id: str = Query(..., min_length=1, max_length=128),
     on_date: date | None = Query(default=None),
+    uid: Annotated[str, Depends(get_current_uid)] = ...,
 ) -> dict:
+    require_same_user(uid, user_id)
     try:
         return services.daily_review(user_id, on_date or date.today())
     except RuntimeError as e:
@@ -247,7 +279,9 @@ def post_review_day(
 def post_review_week(
     user_id: str = Query(..., min_length=1, max_length=128),
     today: date | None = Query(default=None),
+    uid: Annotated[str, Depends(get_current_uid)] = ...,
 ) -> dict:
+    require_same_user(uid, user_id)
     try:
         return services.weekly_review(user_id, today or date.today())
     except RuntimeError as e:
@@ -261,7 +295,9 @@ def post_review_week(
 def post_recommend_meal(
     user_id: str = Query(..., min_length=1, max_length=128),
     today: date | None = Query(default=None),
+    uid: Annotated[str, Depends(get_current_uid)] = ...,
 ) -> dict:
+    require_same_user(uid, user_id)
     try:
         return services.recommend_meal(user_id, today or date.today())
     except RuntimeError as e:

@@ -1,5 +1,6 @@
 fastapi==0.104.1
 uvicorn[standard]==0.24.0
+firebase-admin==6.6.0
 pydantic==2.5.0
 # IANA time zones for zoneinfo on Windows (and slim Unix installs).
 tzdata>=2024.1

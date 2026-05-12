@@ -2,17 +2,19 @@
 -- 001_foods.sql
 -- Canonical food catalog, optimized for trigram search.
 --
+-- `foods.id` is UUID — matches `002_food_logs.food_id` and `012_food_aliases`.
 -- Idempotent: safe to run on a fresh DB or on an existing `foods` table that
 -- was created by an earlier import. All additive changes use IF NOT EXISTS.
 -- =============================================================================
 
 create extension if not exists pg_trgm;
+create extension if not exists "pgcrypto";
 
 -- -----------------------------------------------------------------------------
 -- Base table (new installs)
 -- -----------------------------------------------------------------------------
 create table if not exists foods (
-    id                  bigserial primary key,
+    id                  uuid primary key default gen_random_uuid(),
     name                text              not null,
     brand               text,
     calories_per_100g   double precision,

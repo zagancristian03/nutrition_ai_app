@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
+import 'api_auth_headers.dart';
 import '../config/constants.dart';
 import '../models/food_item.dart';
 
@@ -223,7 +224,7 @@ class FoodApiService {
     try {
       final response = await http.get(
         uri,
-        headers: {'Content-Type': 'application/json'},
+        headers: await apiAuthJsonHeaders(),
       ).timeout(_timeout);
 
       if (response.statusCode != 200) {
@@ -296,7 +297,7 @@ class FoodApiService {
       final response = await http
           .post(
             uri,
-            headers: {'Content-Type': 'application/json'},
+            headers: await apiAuthJsonHeaders(),
             body: json.encode(body),
           )
           .timeout(_timeout);

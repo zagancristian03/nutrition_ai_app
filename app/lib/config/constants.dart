@@ -1,3 +1,16 @@
+import 'package:flutter/foundation.dart' show kReleaseMode;
+
+/// Backend base URL resolution.
+///
+/// **Debug / profile:** If [kApiBaseUrlFromEnvironment] is empty, the app uses
+/// the LAN fallback `http://[kBackendLanHost]:kBackendPort` so physical
+/// devices, emulators, and local FastAPI work without a dart-define.
+///
+/// **Release:** `API_BASE_URL` **must** be set via
+/// `--dart-define=API_BASE_URL=https://...` (your public HTTPS API). Release
+/// builds **fail fast** if it is missing, so you cannot accidentally ship an
+/// APK/AAB that calls a local IP. The real hostname is not hardcoded here.
+
 /// LAN API — when this drifts from your PC’s Wi‑Fi IPv4, search/diary will
 /// time out on a physical phone. Run `ipconfig` (Windows) and set the address
 /// that shares a subnet with the phone (often `192.168.x.x`).
@@ -32,11 +45,19 @@ const String kApiBaseUrlFromEnvironment = String.fromEnvironment(
   defaultValue: '',
 );
 
-/// Resolves to dart-define if set, otherwise `http://[kBackendLanHost]:port`.
+/// Resolves to dart-define if set; otherwise LAN fallback in debug/profile only.
+///
+/// In **release**, an empty [kApiBaseUrlFromEnvironment] throws [StateError].
 String get kBackendBaseUrl {
   final v = kApiBaseUrlFromEnvironment.trim();
   if (v.isNotEmpty) {
     return v.endsWith('/') ? v.substring(0, v.length - 1) : v;
+  }
+  if (kReleaseMode) {
+    throw StateError(
+      'API_BASE_URL must be provided for release builds using '
+      '--dart-define=API_BASE_URL=https://...',
+    );
   }
   return 'http://$kBackendLanHost:$kBackendPort';
 }

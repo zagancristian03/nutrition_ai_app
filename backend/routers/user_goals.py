@@ -11,10 +11,12 @@ The Flutter client stores nothing locally — it calls:
 from __future__ import annotations
 
 import logging
+from typing import Annotated
 
-from fastapi import APIRouter, HTTPException, Path
+from fastapi import APIRouter, Depends, HTTPException, Path
 from psycopg2.extras import RealDictCursor
 
+from auth_firebase import get_current_uid, require_same_user
 from db import get_conn
 from schemas import UserGoals, UserGoalsUpdate
 
@@ -43,12 +45,12 @@ _SELECT_COLUMNS = """
 @router.get("/{user_id}", response_model=UserGoals)
 def get_user_goals(
     user_id: str = Path(..., min_length=1, max_length=128),
+    uid: Annotated[str, Depends(get_current_uid)] = ...,
 ) -> dict:
-    """
-    Never 404. If a row doesn't exist we return the defaults — the client
+    """Never 404. If a row doesn't exist we return the defaults — the client
     never has to special-case "new user" and the row is created lazily on
-    the first PUT.
-    """
+    the first PUT."""
+    require_same_user(uid, user_id)
     try:
         with get_conn() as conn, conn.cursor(cursor_factory=RealDictCursor) as cur:
             cur.execute(
@@ -72,8 +74,10 @@ def get_user_goals(
 def put_user_goals(
     payload: UserGoalsUpdate,
     user_id: str = Path(..., min_length=1, max_length=128),
+    uid: Annotated[str, Depends(get_current_uid)] = ...,
 ) -> dict:
     """Upsert — creates the row on first call, updates it afterwards."""
+    require_same_user(uid, user_id)
     try:
         with get_conn() as conn:
             conn.autocommit = False

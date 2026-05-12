@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 
 import '../models/user_profile.dart';
 import '../models/weight_entry.dart';
+import 'api_auth_headers.dart';
 import 'food_api_service.dart';
 
 /// HTTP client for the user-profile + weight-tracking endpoints:
@@ -32,7 +33,9 @@ class ProfileApiService {
   Future<UserProfile> getProfile(String userId) async {
     final uri = Uri.parse('$_baseUrl/user-profile/$userId');
     try {
-      final response = await http.get(uri).timeout(_timeout);
+      final response = await http
+          .get(uri, headers: await apiAuthJsonHeaders())
+          .timeout(_timeout);
       if (response.statusCode == 200) {
         final decoded = json.decode(response.body);
         if (decoded is Map<String, dynamic>) {
@@ -56,7 +59,7 @@ class ProfileApiService {
       final response = await http
           .put(
             uri,
-            headers: {'Content-Type': 'application/json'},
+            headers: await apiAuthJsonHeaders(),
             body: json.encode(profile.toUpdateJson()),
           )
           .timeout(_timeout);
@@ -83,7 +86,7 @@ class ProfileApiService {
       final response = await http
           .put(
             uri,
-            headers: {'Content-Type': 'application/json'},
+            headers: await apiAuthJsonHeaders(),
             body: json.encode(profile.toLocaleSettingsJson()),
           )
           .timeout(_timeout);
@@ -118,7 +121,9 @@ class ProfileApiService {
       'days':    '$days',
     });
     try {
-      final response = await http.get(uri).timeout(_timeout);
+      final response = await http
+          .get(uri, headers: await apiAuthJsonHeaders())
+          .timeout(_timeout);
       if (response.statusCode == 200) {
         final decoded = json.decode(response.body);
         if (decoded is List) {
@@ -157,7 +162,7 @@ class ProfileApiService {
       final response = await http
           .post(
             uri,
-            headers: {'Content-Type': 'application/json'},
+            headers: await apiAuthJsonHeaders(),
             body: json.encode(body),
           )
           .timeout(_timeout);
@@ -183,7 +188,9 @@ class ProfileApiService {
     final uri = Uri.parse('$_baseUrl/weight-logs/$id')
         .replace(queryParameters: {'user_id': userId});
     try {
-      final response = await http.delete(uri).timeout(_timeout);
+      final response = await http
+          .delete(uri, headers: await apiAuthJsonHeaders())
+          .timeout(_timeout);
       return response.statusCode == 204;
     } catch (e) {
       debugPrint('[ProfileApiService] deleteWeightLog error: $e');

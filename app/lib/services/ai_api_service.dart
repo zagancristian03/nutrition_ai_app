@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
+import 'api_auth_headers.dart';
 import 'food_api_service.dart';
 
 /// JSON integers may decode as [int], [double], or [String]. Avoid
@@ -36,7 +37,7 @@ class AiApiService {
   Future<AiProfile?> getProfile(String userId) async {
     final uri = Uri.parse('$_baseUrl/ai/profile/$userId');
     try {
-      final r = await http.get(uri).timeout(_shortTimeout);
+      final r = await http.get(uri, headers: await apiAuthJsonHeaders()).timeout(_shortTimeout);
       if (r.statusCode == 200) {
         final decoded = json.decode(r.body);
         if (decoded is Map<String, dynamic>) return AiProfile.fromJson(decoded);
@@ -64,7 +65,7 @@ class AiApiService {
       final r = await http
           .post(
             uri,
-            headers: {'Content-Type': 'application/json'},
+            headers: await apiAuthJsonHeaders(),
             body: json.encode(answers),
           )
           .timeout(_longTimeout);
@@ -107,7 +108,7 @@ class AiApiService {
       final r = await http
           .post(
             uri,
-            headers: {'Content-Type': 'application/json'},
+            headers: await apiAuthJsonHeaders(),
             body: json.encode(body),
           )
           .timeout(_longTimeout);
@@ -138,7 +139,7 @@ class AiApiService {
       },
     );
     try {
-      final r = await http.get(uri).timeout(_shortTimeout);
+      final r = await http.get(uri, headers: await apiAuthJsonHeaders()).timeout(_shortTimeout);
       if (r.statusCode == 200) {
         final decoded = json.decode(r.body);
         if (decoded is Map) {
@@ -169,7 +170,7 @@ class AiApiService {
       },
     );
     try {
-      final r = await http.get(uri).timeout(_shortTimeout);
+      final r = await http.get(uri, headers: await apiAuthJsonHeaders()).timeout(_shortTimeout);
       if (r.statusCode == 200) {
         final decoded = json.decode(r.body);
         if (decoded is List) {
@@ -202,7 +203,7 @@ class AiApiService {
       final r = await http
           .post(
             uri,
-            headers: {'Content-Type': 'application/json'},
+            headers: await apiAuthJsonHeaders(),
             body: json.encode(body),
           )
           .timeout(_shortTimeout);
@@ -235,7 +236,7 @@ class AiApiService {
       final r = await http
           .patch(
             uri,
-            headers: {'Content-Type': 'application/json'},
+            headers: await apiAuthJsonHeaders(),
             body: json.encode(patch),
           )
           .timeout(_shortTimeout);
@@ -258,7 +259,7 @@ class AiApiService {
       queryParameters: {'user_id': userId},
     );
     try {
-      final r = await http.get(uri).timeout(_shortTimeout);
+      final r = await http.get(uri, headers: await apiAuthJsonHeaders()).timeout(_shortTimeout);
       if (r.statusCode == 200) {
         final decoded = json.decode(r.body);
         if (decoded is List) {
@@ -285,7 +286,7 @@ class AiApiService {
       final r = await http
           .post(
             uri,
-            headers: {'Content-Type': 'application/json'},
+            headers: await apiAuthJsonHeaders(),
             body: json.encode({'user_id': userId, 'name': name.trim()}),
           )
           .timeout(_shortTimeout);
@@ -315,7 +316,7 @@ class AiApiService {
       final r = await http
           .patch(
             uri,
-            headers: {'Content-Type': 'application/json'},
+            headers: await apiAuthJsonHeaders(),
             body: json.encode({'name': name.trim()}),
           )
           .timeout(_shortTimeout);
@@ -341,7 +342,7 @@ class AiApiService {
       queryParameters: {'user_id': userId},
     );
     try {
-      final r = await http.delete(uri).timeout(_shortTimeout);
+      final r = await http.delete(uri, headers: await apiAuthJsonHeaders()).timeout(_shortTimeout);
       if (r.statusCode == 200) return true;
       debugPrint('[AiApiService] deleteFolder ${r.statusCode} ${r.body}');
     } catch (e) {
@@ -382,7 +383,7 @@ class AiApiService {
 
   Future<String?> _postForReviewText(Uri uri) async {
     try {
-      final r = await http.post(uri).timeout(_longTimeout);
+      final r = await http.post(uri, headers: await apiAuthJsonHeaders()).timeout(_longTimeout);
       if (r.statusCode == 200) {
         final decoded = json.decode(r.body);
         if (decoded is Map<String, dynamic>) {
@@ -413,7 +414,7 @@ class AiApiService {
     final uri = Uri.parse('$_baseUrl/ai/recommend/meal')
         .replace(queryParameters: params);
     try {
-      final r = await http.post(uri).timeout(_longTimeout);
+      final r = await http.post(uri, headers: await apiAuthJsonHeaders()).timeout(_longTimeout);
       if (r.statusCode == 200) {
         final decoded = json.decode(r.body);
         if (decoded is Map<String, dynamic>) {

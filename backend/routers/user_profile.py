@@ -10,10 +10,12 @@ Every column is nullable — the client fills them in progressively on the
 from __future__ import annotations
 
 import logging
+from typing import Annotated
 
-from fastapi import APIRouter, HTTPException, Path
+from fastapi import APIRouter, Depends, HTTPException, Path
 from psycopg2.extras import RealDictCursor
 
+from auth_firebase import get_current_uid, require_same_user
 from db import get_conn
 from schemas import UserProfile, UserProfileUpdate
 
@@ -84,7 +86,9 @@ def _empty_profile(user_id: str) -> dict:
 @router.get("/{user_id}", response_model=UserProfile)
 def get_user_profile(
     user_id: str = Path(..., min_length=1, max_length=128),
+    uid: Annotated[str, Depends(get_current_uid)] = ...,
 ) -> dict:
+    require_same_user(uid, user_id)
     try:
         with get_conn() as conn, conn.cursor(cursor_factory=RealDictCursor) as cur:
             cur.execute(
@@ -106,12 +110,12 @@ def get_user_profile(
 def put_user_profile(
     payload: UserProfileUpdate,
     user_id: str = Path(..., min_length=1, max_length=128),
+    uid: Annotated[str, Depends(get_current_uid)] = ...,
 ) -> dict:
-    """
-    Upsert. Missing fields in the payload are *not* overwritten on an existing
+    """Upsert. Missing fields in the payload are *not* overwritten on an existing
     row — we only write the fields the client explicitly sent. On first call
-    (insert) any unset field just defaults to NULL.
-    """
+    (insert) any unset field just defaults to NULL."""
+    require_same_user(uid, user_id)
     provided = payload.model_dump(exclude_unset=True)
 
     # Always use INSERT ... ON CONFLICT. For missing columns we pass NULL and

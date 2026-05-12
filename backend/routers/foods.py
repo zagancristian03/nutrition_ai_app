@@ -13,11 +13,13 @@ from __future__ import annotations
 
 import logging
 import time
+from typing import Annotated
 from uuid import uuid4
 
-from fastapi import APIRouter, HTTPException, Query, Response
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from psycopg2.extras import RealDictCursor
 
+from auth_firebase import get_current_uid
 from cache import TTLCache
 from db import get_conn
 from food_search import run_food_search
@@ -83,7 +85,7 @@ limit 5;
 
 
 @router.get("/_debug/stats")
-def debug_stats() -> dict:
+def debug_stats(_uid: Annotated[str, Depends(get_current_uid)]) -> dict:
     """
     Return a snapshot of what's actually in the `foods` table.
 
@@ -200,7 +202,7 @@ RETURNING
 
 
 @router.post("", status_code=201)
-def create_food(payload: FoodCreate) -> dict:
+def create_food(payload: FoodCreate, _uid: Annotated[str, Depends(get_current_uid)]) -> dict:
     name  = payload.name.strip().lower()
     brand = payload.brand.strip().lower() if payload.brand else None
     if not name:

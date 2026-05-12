@@ -3,30 +3,30 @@
 -- One-shot migration for the Nutrition AI backend. Idempotent: safe to paste
 -- into Supabase SQL Editor and re-run any time.
 --
--- What it does, in order:
---   1. Enables pg_trgm.
---   2. Creates `foods` (or patches an existing table with any missing columns).
---   3. Adds `search_text` as a STORED generated column (lowercased, trimmed,
---      single-spaced concatenation of name + brand).
---   4. Creates the unique source constraint + GIN trigram index.
---   5. Creates `food_logs` (diary) with a snapshot of macros at log time.
---   6. Prints counts so you can verify everything actually landed.
+-- **Prefer** applying numbered files `001`–`012` in order for production.
+-- This file is a **convenience rollup** for early `foods` + `food_logs` only.
+-- It does **not** include user_profiles, user_goals, AI tables, locale columns,
+-- seeds, or `food_aliases`. See `database/schema/DEPLOYMENT_ORDER.md`.
 --
--- Also run `database/schema/012_food_aliases.sql` for multilingual curated search
--- (after seed foods exist). See `docs/food_search_i18n.md`.
+-- NEW INSTALLS: `foods.id` is UUID (matches `002_food_logs.sql`, backend, and
+-- `012_food_aliases.sql`). If you already have `foods.id` as bigint, do not run
+-- the `foods` DDL here on that database; migrate deliberately.
+--
+-- After base foods exist, run `010_seed_common_foods.sql` then `012_food_aliases.sql`.
 -- =============================================================================
 
 -- -----------------------------------------------------------------------------
 -- 1. Extensions
 -- -----------------------------------------------------------------------------
 create extension if not exists pg_trgm;
+create extension if not exists "pgcrypto";
 
 
 -- -----------------------------------------------------------------------------
 -- 2. foods (base + additive migrations for older installs)
 -- -----------------------------------------------------------------------------
 create table if not exists foods (
-    id                  bigserial primary key,
+    id                  uuid primary key default gen_random_uuid(),
     name                text              not null,
     brand               text,
     calories_per_100g   double precision,
@@ -78,7 +78,6 @@ create index if not exists idx_foods_source
 -- -----------------------------------------------------------------------------
 -- 5. food_logs (diary with nutritional snapshot)
 -- -----------------------------------------------------------------------------
--- NOTE: `foods.id` in Supabase is UUID, so `food_logs.food_id` must match.
 create table if not exists food_logs (
     id              bigserial primary key,
     user_id         text              not null,

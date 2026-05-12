@@ -10,11 +10,13 @@ from __future__ import annotations
 
 import logging
 from datetime import date, datetime, timezone
+from typing import Annotated
 from zoneinfo import ZoneInfo
 
-from fastapi import APIRouter, HTTPException, Query, Response
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from psycopg2.extras import RealDictCursor
 
+from auth_firebase import get_current_uid, require_same_user
 from db import get_conn
 from schemas import FoodLogCreate, FoodLogOut, FoodLogUpdate
 
@@ -121,7 +123,11 @@ def _snapshot_macros(
 # POST /food-logs                                                             #
 # --------------------------------------------------------------------------- #
 @router.post("", response_model=FoodLogOut, status_code=201)
-def create_food_log(payload: FoodLogCreate) -> dict:
+def create_food_log(
+    payload: FoodLogCreate,
+    uid: Annotated[str, Depends(get_current_uid)] = ...,
+) -> dict:
+    require_same_user(uid, payload.user_id)
     with get_conn() as conn:
         conn.autocommit = False
         try:
@@ -188,7 +194,7 @@ def create_food_log(payload: FoodLogCreate) -> dict:
                     RETURNING {_LOG_COLUMNS}
                     """,
                     (
-                        payload.user_id,
+                        uid,
                         str(payload.food_id),
                         snapshot_name,
                         logged_date,
@@ -254,12 +260,12 @@ _RECENT_FOODS_SQL = f"""
 def list_recent_distinct_foods(
     user_id: str = Query(..., min_length=1, max_length=128),
     limit: int = Query(default=30, ge=1, le=100),
+    uid: Annotated[str, Depends(get_current_uid)] = ...,
 ) -> list[dict]:
-    """
-    Foods the user has logged before, ordered by most recently logged instance
+    """Foods the user has logged before, ordered by most recently logged instance
     (any meal). Each `food_id` appears once — the row is the latest diary
-    entry for that catalog item (includes snapshot grams/servings for quick re-log).
-    """
+    entry for that catalog item (includes snapshot grams/servings for quick re-log)."""
+    require_same_user(uid, user_id)
     with get_conn() as conn, conn.cursor(cursor_factory=RealDictCursor) as cur:
         cur.execute(_RECENT_FOODS_SQL, (user_id, limit))
         return [dict(r) for r in cur.fetchall()]
@@ -273,7 +279,9 @@ def list_food_logs(
     user_id: str = Query(..., min_length=1, max_length=128),
     logged_date: date | None = Query(default=None, description="Filter by date (YYYY-MM-DD)"),
     limit: int = Query(default=200, ge=1, le=500),
+    uid: Annotated[str, Depends(get_current_uid)] = ...,
 ) -> list[dict]:
+    require_same_user(uid, user_id)
     clauses = ["user_id = %s"]
     params: list = [user_id]
     if logged_date is not None:
@@ -302,12 +310,12 @@ def update_food_log(
     log_id: int,
     payload: FoodLogUpdate,
     user_id: str = Query(..., min_length=1, max_length=128),
+    uid: Annotated[str, Depends(get_current_uid)] = ...,
 ) -> dict:
-    """
-    Partial update. Only the fields present in the payload are written; all
+    """Partial update. Only the fields present in the payload are written; all
     others are preserved. The user_id from the query string must match the
-    row — prevents a user from editing another user's diary.
-    """
+    row — prevents a user from editing another user's diary."""
+    require_same_user(uid, user_id)
     updates: dict = payload.model_dump(exclude_none=True)
 
     if not updates:
@@ -353,7 +361,9 @@ def update_food_log(
 def delete_food_log(
     log_id: int,
     user_id: str = Query(..., min_length=1, max_length=128),
+    uid: Annotated[str, Depends(get_current_uid)] = ...,
 ) -> Response:
+    require_same_user(uid, user_id)
     with get_conn() as conn:
         conn.autocommit = True
         with conn.cursor() as cur:
